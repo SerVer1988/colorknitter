@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
-<head> 
+<head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ColorKnitter</title>
@@ -154,12 +154,12 @@ function ColorKnitter() {
   const getPos = (n) => { if(!n)return 0; const b={D:1,C:66,A:131,B:196}; return n-b[getSector(n)]+1; };
   const getAngle = (sec,pos) => { const b={A:Math.PI,B:Math.PI*1.5,C:Math.PI*0.5,D:0}; return b[sec]+(pos-1)*(Math.PI*0.5/65); };
   const colorName = ([r,g,b]) => {
-    if(r===0&&g===0&&b===0)return'÷¸ðíûé';
-    if(r===255&&g===255&&b===255)return'áåëûé';
-    if(r===0&&g===0&&b===255)return'ñèíèé';
-    if(r===255&&g===255&&b===0)return'æ¸ëòûé';
-    if(r===0&&g===255&&b===255)return'ãîëóáîé';
-    return'ðîçîâûé';
+    if(r===0&&g===0&&b===0)return'чёрный';
+    if(r===255&&g===255&&b===255)return'белый';
+    if(r===0&&g===0&&b===255)return'синий';
+    if(r===255&&g===255&&b===0)return'жёлтый';
+    if(r===0&&g===255&&b===255)return'голубой';
+    return'розовый';
   };
   const speak = (item) => {
     if(!item)return;
@@ -227,7 +227,7 @@ function ColorKnitter() {
       setRemainingSteps(targetSteps-stepCountRef.current);
       if(stepCountRef.current>=targetSteps){
         setIsPlaying(false);stopAutoPlay();goalReachedRef.current=true;
-        window.speechSynthesis.speak(new SpeechSynthesisUtterance("Öåëü âûïîëíåíà!"));
+        window.speechSynthesis.speak(new SpeechSynthesisUtterance("Цель выполнена!"));
       }
     }
   };
@@ -356,7 +356,7 @@ function ColorKnitter() {
   const statusText = () => {
     if(!sequence.length)return'';
     let t=`${currentIndex+1}/${sequence.length} (${Math.round((currentIndex+1)/sequence.length*100)}%)`;
-    if(targetSteps>0)t+=` | Öåëü: ${remainingSteps}`;
+    if(targetSteps>0)t+=` | Цель: ${remainingSteps}`;
     t+=` | ${fmt(elapsedTime)}`;
     return t;
   };
@@ -374,7 +374,7 @@ function ColorKnitter() {
       <div className="nav-row">
         <button className="btn btn-nav" onClick={()=>moveSteps(-1)} disabled={currentIndex<=0}>&#8592;</button>
         <button className={`btn btn-play${isPlaying?' pause':''}`} onClick={()=>setIsPlaying(p=>!p)} disabled={!sequence.length}>
-          {isPlaying?'Ïàóçà':'Ñòàðò'}
+          {isPlaying?'Пауза':'Старт'}
         </button>
         <button className="btn btn-nav" onClick={()=>moveSteps(1)} disabled={currentIndex>=sequence.length-1}>&#8594;</button>
       </div>
@@ -382,20 +382,20 @@ function ColorKnitter() {
       <hr className="divider" />
 
       <button className="btn-toggle" onClick={()=>setIsMenuOpen(v=>!v)}>
-        <span>Äîïîëíèòåëüíûå íàñòðîéêè</span>
-        <span>{isMenuOpen?'^':'¡'}</span>
+        <span>Дополнительные настройки</span>
+        <span>{isMenuOpen?'▲':'▼'}</span>
       </button>
 
       {isMenuOpen&&(
         <div className="settings">
 
           <div className="setting-row">
-            <span className="setting-label"><span>Ñêîðîñòü:</span><span>{speedMultiplier}x</span></span>
+            <span className="setting-label"><span>Скорость:</span><span>{speedMultiplier}x</span></span>
             <input type="range" min="1" max="5" step="0.5" value={speedMultiplier} onChange={e=>setSpeedMultiplier(Number(e.target.value))} />
           </div>
 
           <div className="toggle-switch-row">
-            <span style={{fontSize:13}}>Ëèíèÿ ñëåäóþùåãî õîäà:</span>
+            <span style={{fontSize:13}}>Линия следующего хода:</span>
             <label className="toggle-switch">
               <input type="checkbox" checked={showNextLine} onChange={e=>setShowNextLine(e.target.checked)} />
               <span className="toggle-slider"></span>
@@ -404,10 +404,10 @@ function ColorKnitter() {
 
           <div className="setting-row">
             <input ref={imageInputRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleImageUpload} />
-            <button className="btn-full btn-outline" onClick={()=>imageInputRef.current.click()}>??? Çàãðóçèòü ôîòî</button>
+            <button className="btn-full btn-outline" onClick={()=>imageInputRef.current.click()}>🖼️ Загрузить фото</button>
             {circleImage&&(
               <div className="opacity-row" style={{marginTop:6}}>
-                <span className="opacity-label">Ïðîçðà÷íîñòü:</span>
+                <span className="opacity-label">Прозрачность:</span>
                 <input type="range" min="0" max="1" step="0.05" value={imageOpacity} onChange={e=>setImageOpacity(Number(e.target.value))} style={{flex:1}} />
                 <span className="opacity-val">{Math.round(imageOpacity*100)}%</span>
               </div>
@@ -416,37 +416,37 @@ function ColorKnitter() {
 
           <div className="grid2">
             <div>
-              <span className="input-label">Öåëü (øàãîâ):</span>
+              <span className="input-label">Цель (шагов):</span>
               <input type="number" value={targetSteps} min={0} onChange={e=>{const v=Number(e.target.value);setTargetSteps(v);stepCountRef.current=0;setRemainingSteps(v);goalReachedRef.current=false;}} />
             </div>
             <div>
-              <span className="input-label">Ïåðåéòè ê øàãó:</span>
+              <span className="input-label">Перейти к шагу:</span>
               <input type="number" value={findStep} min={1} max={sequence.length||1} onChange={e=>{const v=Number(e.target.value);if(v>=1&&v<=sequence.length){setFindStep(v);setCurrentIndex(v-1);speak(sequence[v-1]);}}} />
             </div>
           </div>
 
           <div className="btn-row">
             <input ref={fileInputRef} type="file" accept=".txt" style={{display:'none'}} onChange={handleFileUpload} />
-            <button className="btn-full btn-primary" onClick={()=>fileInputRef.current.click()}>?? Çàãðóçèòü ôàéë</button>
-            <button className="btn-full btn-outline" onClick={saveProgress} disabled={!sequence.length}>?? Ñîõðàíèòü</button>
+            <button className="btn-full btn-primary" onClick={()=>fileInputRef.current.click()}>📂 Загрузить файл</button>
+            <button className="btn-full btn-outline" onClick={saveProgress} disabled={!sequence.length}>💾 Сохранить</button>
           </div>
 
           <button className="btn-full btn-secondary" onClick={()=>setShowSaved(v=>!v)}>
-            {showSaved?'Ñêðûòü ñîõðàí¸ííûå':'Ïîêàçàòü ñîõðàí¸ííûå'} ({savedStates.length})
+            {showSaved?'Скрыть сохранённые':'Показать сохранённые'} ({savedStates.length})
           </button>
 
           {showSaved&&(
             <div className="saved-list">
-              {savedStates.length===0&&<div style={{fontSize:13,color:'#6b7280',textAlign:'center'}}>Íåò ñîõðàíåíèé</div>}
+              {savedStates.length===0&&<div style={{fontSize:13,color:'#6b7280',textAlign:'center'}}>Нет сохранений</div>}
               {savedStates.map(s=>(
                 <div key={s.id} className="saved-item">
                   <div className="saved-item-top">
                     <span>{new Date(s.timestamp).toLocaleString()}</span>
-                    <span>Øàã {s.currentIndex+1}/{s.sequenceLength||'?'}{s.autoSaved&&' ?'}</span>
+                    <span>Шаг {s.currentIndex+1}/{s.sequenceLength||'?'}{s.autoSaved&&' ✅'}</span>
                   </div>
                   <div className="saved-item-btns">
-                    <button className="btn-sm btn-sm-outline" onClick={()=>loadProgress(s)}>Çàãðóçèòü</button>
-                    <button className="btn-sm btn-sm-danger" onClick={()=>deleteSaved(s.id)}>Óäàëèòü</button>
+                    <button className="btn-sm btn-sm-outline" onClick={()=>loadProgress(s)}>Загрузить</button>
+                    <button className="btn-sm btn-sm-danger" onClick={()=>deleteSaved(s.id)}>Удалить</button>
                   </div>
                 </div>
               ))}
