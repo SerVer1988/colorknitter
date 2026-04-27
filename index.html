@@ -15,9 +15,6 @@
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
     }
   </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: #f3f4f6; font-family: Arial, sans-serif; display: flex; justify-content: center; padding: 12px; }
@@ -86,29 +83,51 @@
     .opacity-row { display: flex; align-items: center; gap: 10px; }
     .opacity-label { font-size: 12px; color: #6b7280; white-space: nowrap; }
     .opacity-val { font-size: 12px; color: #6b7280; width: 32px; text-align: right; }
+
+    .restore-banner { background: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 10px; padding: 8px 12px; font-size: 13px; color: #065f46; text-align: center; }
   </style>
 </head>
 <body>
 <div id="root"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
 
+const STORAGE_KEY = 'ck_state_v1';
+
+function saveToStorage(data) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {
+    // если фото слишком большое — сохраним без него
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({...data, circleImage: null})); } catch(_) {}
+  }
+}
+
+function loadFromStorage() {
+  try { const s = localStorage.getItem(STORAGE_KEY); return s ? JSON.parse(s) : null; } catch(_) { return null; }
+}
+
 function ColorKnitter() {
-  const [sequence, setSequence] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const restored = loadFromStorage();
+
+  const [sequence, setSequence] = useState(restored?.sequence || []);
+  const [currentIndex, setCurrentIndex] = useState(restored?.currentIndex || 0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [speedMultiplier, setSpeedMultiplier] = useState(2.5);
-  const [targetSteps, setTargetSteps] = useState(0);
-  const [findStep, setFindStep] = useState(1);
-  const [savedStates, setSavedStates] = useState([]);
+  const [speedMultiplier, setSpeedMultiplier] = useState(restored?.speedMultiplier || 2.5);
+  const [targetSteps, setTargetSteps] = useState(restored?.targetSteps || 0);
+  const [findStep, setFindStep] = useState(restored?.findStep || 1);
+  const [savedStates, setSavedStates] = useState(restored?.savedStates || []);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const [remainingSteps, setRemainingSteps] = useState(0);
-  const [showNextLine, setShowNextLine] = useState(false);
-  const [circleImage, setCircleImage] = useState(null);
-  const [imageOpacity, setImageOpacity] = useState(0.55);
+  const [elapsedTime, setElapsedTime] = useState(restored?.elapsedTime || 0);
+  const [remainingSteps, setRemainingSteps] = useState(restored?.remainingSteps || 0);
+  const [showNextLine, setShowNextLine] = useState(restored?.showNextLine || false);
+  const [circleImage, setCircleImage] = useState(restored?.circleImage || null);
+  const [imageOpacity, setImageOpacity] = useState(restored?.imageOpacity ?? 0.55);
   const [showSaved, setShowSaved] = useState(false);
+  const [wasRestored] = useState(!!restored?.sequence?.length);
 
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
@@ -123,14 +142,29 @@ function ColorKnitter() {
   sequenceRef.current = sequence;
   currentIndexRef.current = currentIndex;
 
+  // Загружаем фото если было сохранено
+  useEffect(() => {
+    if (restored?.circleImage) {
+      const img = new Image();
+      img.onload = () => { loadedImgRef.current = img; };
+      img.src = restored.circleImage;
+    }
+  }, []);
+
+  // Автосохранение при каждом изменении состояния
+  useEffect(() => {
+    saveToStorage({
+      sequence, currentIndex, speedMultiplier, targetSteps, findStep,
+      savedStates, elapsedTime, remainingSteps, showNextLine,
+      circleImage, imageOpacity
+    });
+  }, [sequence, currentIndex, speedMultiplier, targetSteps, findStep,
+      savedStates, elapsedTime, remainingSteps, showNextLine, circleImage, imageOpacity]);
+
   const fmt = (s) => {
     const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sc = s%60;
     return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;
   };
-
-  useEffect(() => {
-    try { const s = localStorage.getItem('colorKnitterStates'); if (s) setSavedStates(JSON.parse(s)); } catch(_) {}
-  }, []);
 
   useEffect(() => {
     if (isPlaying) { timerRef.current = setInterval(() => setElapsedTime(p => p+1), 1000); }
@@ -206,7 +240,11 @@ function ColorKnitter() {
   const handleImageUpload = (e) => {
     const file=e.target.files[0]; if(!file)return;
     const r=new FileReader();
-    r.onload=(ev)=>{const img=new Image();img.onload=()=>{loadedImgRef.current=img;setCircleImage(ev.target.result);};img.src=ev.target.result;};
+    r.onload=(ev)=>{
+      const img=new Image();
+      img.onload=()=>{ loadedImgRef.current=img; setCircleImage(ev.target.result); };
+      img.src=ev.target.result;
+    };
     r.readAsDataURL(file);
   };
 
@@ -214,7 +252,6 @@ function ColorKnitter() {
     const s={id:Date.now(),currentIndex,findStep,targetSteps,remainingSteps,elapsedTime,sequenceLength:sequence.length,timestamp:new Date().toISOString()};
     const updated=[s,...savedStates].slice(0,20);
     setSavedStates(updated);
-    try{localStorage.setItem('colorKnitterStates',JSON.stringify(updated));}catch(_){}
   };
 
   const loadProgress = (s) => {
@@ -225,9 +262,7 @@ function ColorKnitter() {
   };
 
   const deleteSaved = (id) => {
-    const updated=savedStates.filter(s=>s.id!==id);
-    setSavedStates(updated);
-    try{localStorage.setItem('colorKnitterStates',JSON.stringify(updated));}catch(_){}
+    setSavedStates(prev => prev.filter(s=>s.id!==id));
   };
 
   const stopAutoPlay = () => { if(playIntervalRef.current){clearInterval(playIntervalRef.current);playIntervalRef.current=null;} };
@@ -280,7 +315,6 @@ function ColorKnitter() {
     ctx.fillStyle='#f5f5f5'; ctx.fillRect(0,0,w,h);
     ctx.beginPath(); ctx.arc(cx,cy,radius+5,0,2*Math.PI); ctx.fillStyle='white'; ctx.fill();
 
-    // Lines (background)
     if(sequence.length>0){
       ctx.globalAlpha=0.7;
       for(let i=0;i<currentIndex;i++){
@@ -317,7 +351,6 @@ function ColorKnitter() {
       }
     }
 
-    // Photo (foreground)
     if(circleImage&&imageOpacity>0&&loadedImgRef.current){
       const img=loadedImgRef.current;
       const scale=(radius*2)/Math.min(img.width,img.height);
@@ -374,6 +407,12 @@ function ColorKnitter() {
 
   return(
     <div className="card">
+      {wasRestored && (
+        <div className="restore-banner" style={{marginBottom:8}}>
+          ✅ Восстановлено с последнего сеанса
+        </div>
+      )}
+
       <div className="status">{statusText()}</div>
 
       <div style={{display:'flex',justifyContent:'center'}}>
