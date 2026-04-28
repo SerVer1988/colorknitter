@@ -456,16 +456,7 @@ function ColorKnitter() {
       {/* Steps */}
       {renderSteps()}
 
-      {/* Radio panel */}
-      <div className={`radio-panel${showRadio?' open':''}`}>
-        <div className="radio-title">🎹 Piano Solo Radio</div>
-        <div className="radio-status">{radioPlaying?'● В эфире':'○ Остановлено'}</div>
-        <div className="radio-vol-row">
-          <span>🔈</span>
-          <input type="range" min="0" max="1" step="0.05" value={radioVolume} onChange={e=>setRadioVolume(Number(e.target.value))} style={{flex:1}} />
-          <span>🔊</span>
-        </div>
-      </div>
+
 
       {/* Settings panel */}
       <div className={`settings-panel${showSettings?' open':''}`}>
@@ -539,7 +530,7 @@ function ColorKnitter() {
 
       {/* Bottom bar */}
       <div className="bottom-bar">
-        <button className={`bar-btn${radioPlaying?' active-radio':''}`} onClick={()=>{togglePanel('radio');}}>🎵</button>
+        <button className={`bar-btn${radioPlaying?' active-radio':''}`} onClick={()=>setRadioPlaying(p=>!p)}>🎵</button>
         <button className="bar-btn" onClick={()=>moveSteps(-1)} disabled={currentIndex<=0}>←</button>
         <button className={`bar-btn play${isPlaying?' pause':''}`} onClick={()=>setIsPlaying(p=>!p)} disabled={!sequence.length}>
           {isPlaying?'⏸':'▶'}
