@@ -350,7 +350,7 @@ function ColorKnitter() {
         const x2=cx+radius*Math.cos(a2),y2=cy+radius*Math.sin(a2);
         ctx.beginPath(); ctx.strokeStyle='black'; ctx.lineWidth=2;
         ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-        const ang=Math.atan2(y2-y1,x2-x1),al=10,aw=Math.PI/7;
+        const ang=Math.atan2(y2-y1,x2-x1),al=14,aw=Math.PI/7;
         ctx.beginPath();
         ctx.moveTo(x2,y2);
         ctx.lineTo(x2-al*Math.cos(ang-aw),y2-al*Math.sin(ang-aw));
@@ -361,9 +361,16 @@ function ColorKnitter() {
       if(showNextLine&&currentIndex<sequence.length-1){
         const a1=getAngle(getSector(sequence[currentIndex].value),getPos(sequence[currentIndex].value));
         const a2=getAngle(getSector(sequence[currentIndex+1].value),getPos(sequence[currentIndex+1].value));
+        const nx1=cx+radius*Math.cos(a1),ny1=cy+radius*Math.sin(a1);
+        const nx2=cx+radius*Math.cos(a2),ny2=cy+radius*Math.sin(a2);
         ctx.beginPath(); ctx.strokeStyle='#3b82f6'; ctx.lineWidth=2; ctx.setLineDash([6,4]);
-        ctx.moveTo(cx+radius*Math.cos(a1),cy+radius*Math.sin(a1));
-        ctx.lineTo(cx+radius*Math.cos(a2),cy+radius*Math.sin(a2)); ctx.stroke(); ctx.setLineDash([]);
+        ctx.moveTo(nx1,ny1); ctx.lineTo(nx2,ny2); ctx.stroke(); ctx.setLineDash([]);
+        const na=Math.atan2(ny2-ny1,nx2-nx1),nal=14,naw=Math.PI/7;
+        ctx.beginPath();
+        ctx.moveTo(nx2,ny2);
+        ctx.lineTo(nx2-nal*Math.cos(na-naw),ny2-nal*Math.sin(na-naw));
+        ctx.lineTo(nx2-nal*Math.cos(na+naw),ny2-nal*Math.sin(na+naw));
+        ctx.closePath(); ctx.fillStyle='#3b82f6'; ctx.fill();
       }
     }
 
@@ -384,8 +391,7 @@ function ColorKnitter() {
       ctx.moveTo(cx+radius*Math.cos(a),cy+radius*Math.sin(a));
       ctx.lineTo(cx+(radius+8)*Math.cos(a),cy+(radius+8)*Math.sin(a));
       ctx.strokeStyle='#ff0000'; ctx.lineWidth=2; ctx.stroke();
-    }
-  },[currentIndex,sequence,showNextLine,circleImage,imageOpacity]);
+    }  },[currentIndex,sequence,showNextLine,circleImage,imageOpacity]);
 
   const renderSteps = () => {
     if(!sequence.length)return null;
