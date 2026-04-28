@@ -44,8 +44,14 @@
     .speed-btn.active { background: white; color: black; border-color: white; }
 
     /* CANVAS */
-    .canvas-wrap { display: flex; justify-content: center; padding: 6px 12px; }
+    .canvas-wrap { display: flex; justify-content: center; padding: 6px 12px; position: relative; }
     canvas { border-radius: 50%; display: block; }
+    .sector-labels { position: absolute; top: 6px; left: 12px; right: 12px; bottom: 6px; pointer-events: none; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+    .sector-label { font-size: 2rem; font-weight: 900; color: white; text-shadow: 0 0 6px black, 0 0 3px black; display: flex; }
+    .sector-label.tl { align-items: flex-start; justify-content: flex-start; padding: 10px 0 0 10px; }
+    .sector-label.tr { align-items: flex-start; justify-content: flex-end; padding: 10px 10px 0 0; }
+    .sector-label.bl { align-items: flex-end; justify-content: flex-start; padding: 0 0 10px 10px; }
+    .sector-label.br { align-items: flex-end; justify-content: flex-end; padding: 0 10px 10px 0; }
 
     /* STEPS */
     .steps-row { display: flex; justify-content: center; align-items: center; gap: 6px; margin: 8px 12px; }
@@ -379,13 +385,6 @@ function ColorKnitter() {
       ctx.lineTo(cx+(radius+8)*Math.cos(a),cy+(radius+8)*Math.sin(a));
       ctx.strokeStyle='#ff0000'; ctx.lineWidth=2; ctx.stroke();
     }
-
-    // Буквы — поверх всего
-    const fs=Math.floor(w/10);
-    ctx.font=`bold ${fs}px Arial`; ctx.textAlign='center'; ctx.textBaseline='middle';
-    const lo=Math.min(w,h)/2.2;
-    [{l:'A',x:cx-lo,y:cy-lo},{l:'B',x:cx+lo,y:cy-lo},{l:'C',x:cx-lo,y:cy+lo},{l:'D',x:cx+lo,y:cy+lo}]
-      .forEach(({l,x,y})=>{ ctx.strokeStyle='black';ctx.lineWidth=4;ctx.strokeText(l,x,y); ctx.fillStyle='white';ctx.fillText(l,x,y); });
   },[currentIndex,sequence,showNextLine,circleImage,imageOpacity]);
 
   const renderSteps = () => {
@@ -444,7 +443,15 @@ function ColorKnitter() {
       </div>
 
       {/* Canvas */}
-      <div className="canvas-wrap"><canvas ref={canvasRef} /></div>
+      <div className="canvas-wrap">
+        <canvas ref={canvasRef} />
+        <div className="sector-labels">
+          <div className="sector-label tl">A</div>
+          <div className="sector-label tr">B</div>
+          <div className="sector-label bl">C</div>
+          <div className="sector-label br">D</div>
+        </div>
+      </div>
 
       {/* Steps */}
       {renderSteps()}
