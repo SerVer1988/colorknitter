@@ -2,10 +2,10 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>ColorKnitter</title>
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#000000" />
+  <meta name="theme-color" content="#0a0a0a" />
   <link rel="apple-touch-icon" href="icon.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
@@ -14,8 +14,6 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
     }
-
-    // Разблокировка speechSynthesis после первого касания
     function unlockSpeech() {
       const u = new SpeechSynthesisUtterance('');
       u.volume = 0;
@@ -28,85 +26,85 @@
     document.addEventListener('click', unlockSpeech);
   </script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #f3f4f6; font-family: Arial, sans-serif; display: flex; justify-content: center; padding: 12px; }
-    #root { width: 100%; max-width: 440px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; background: #0a0a0a; font-family: Arial, sans-serif; color: white; }
+    body { display: flex; justify-content: center; align-items: flex-start; }
+    #root { width: 100%; max-width: 440px; min-height: 100vh; display: flex; flex-direction: column; padding: 0 0 90px 0; }
 
-    .card { background: white; border-radius: 16px; padding: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
-    .status { text-align: center; font-size: 13px; font-weight: 500; margin-bottom: 8px; color: #374151; }
+    /* LOGO */
+    .logo-row { display: flex; justify-content: center; padding: 10px 0 4px; }
+    .logo-row img { width: 52px; height: 52px; border-radius: 12px; }
 
-    canvas { border: 1px solid #d1d5db; border-radius: 12px; display: block; }
+    /* STATUS */
+    .status-box { margin: 6px 12px; border: 1.5px solid #333; border-radius: 999px; padding: 7px 16px; text-align: center; font-size: 13px; color: #ccc; }
 
-    .steps-row { display: flex; justify-content: center; align-items: center; gap: 8px; margin: 10px 0; }
-    .step-item { text-align: center; font-weight: bold; transition: font-size 0.15s; }
+    /* SPEED BUTTONS */
+    .speed-row { display: flex; justify-content: center; gap: 6px; margin: 6px 12px; }
+    .speed-btn { flex: 1; max-width: 60px; padding: 6px 0; border-radius: 999px; border: 1.5px solid #444; background: transparent; color: #aaa; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .speed-btn.active { background: white; color: black; border-color: white; }
 
-    .nav-row { display: flex; justify-content: center; align-items: center; gap: 16px; margin: 4px 0; }
-    .btn { cursor: pointer; border: none; border-radius: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; transition: opacity 0.15s; }
-    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
-    .btn:active:not(:disabled) { opacity: 0.7; }
-    .btn-nav { width: 64px; height: 64px; background: white; border: 1.5px solid #d1d5db; font-size: 28px; color: #374151; }
-    .btn-nav:hover:not(:disabled) { background: #f9fafb; }
-    .btn-play { width: 112px; height: 64px; font-size: 20px; background: #2563eb; color: white; }
-    .btn-play.pause { background: #dc2626; }
-    .btn-play:hover:not(:disabled) { filter: brightness(1.1); }
+    /* CANVAS */
+    .canvas-wrap { display: flex; justify-content: center; padding: 6px 12px; }
+    canvas { border-radius: 50%; display: block; }
 
-    .divider { border: none; border-top: 1px solid #e5e7eb; margin: 10px 0; }
+    /* STEPS */
+    .steps-row { display: flex; justify-content: center; align-items: center; gap: 6px; margin: 8px 12px; }
+    .step-item { text-align: center; font-weight: bold; }
+    .step-item.cur { border: 2px solid currentColor; border-radius: 12px; padding: 2px 8px; }
 
-    .btn-toggle { width: 100%; background: none; border: none; cursor: pointer; font-size: 12px; color: #6b7280; display: flex; justify-content: space-between; align-items: center; padding: 4px 2px; }
-    .btn-toggle:hover { color: #374151; }
+    /* BOTTOM BAR */
+    .bottom-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; padding: 10px 16px 20px; background: #1a1a1a; border-top: 1px solid #2a2a2a; border-radius: 24px 24px 0 0; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+    .bar-btn { width: 52px; height: 52px; border-radius: 50%; border: 2px solid #444; background: transparent; color: white; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .bar-btn:active { transform: scale(0.92); }
+    .bar-btn:disabled { opacity: 0.3; }
+    .bar-btn.play { width: 62px; height: 62px; background: white; color: black; border-color: white; font-size: 26px; }
+    .bar-btn.play.pause { background: #ef4444; border-color: #ef4444; color: white; }
+    .bar-btn.active-radio { border-color: #7c3aed; color: #a78bfa; }
 
-    .settings { display: flex; flex-direction: column; gap: 14px; margin-top: 4px; }
+    /* SETTINGS PANEL */
+    .settings-panel { display: none; position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); width: calc(100% - 24px); max-width: 416px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 20px; padding: 16px; z-index: 99; max-height: 70vh; overflow-y: auto; }
+    .settings-panel.open { display: flex; flex-direction: column; gap: 14px; }
 
-    .setting-row { display: flex; flex-direction: column; gap: 4px; }
-    .setting-label { font-size: 13px; color: #374151; display: flex; justify-content: space-between; }
-    input[type=range] { width: 100%; accent-color: #2563eb; }
-
-    .toggle-switch-row { display: flex; justify-content: space-between; align-items: center; }
-    .toggle-switch { position: relative; width: 40px; height: 24px; }
+    .s-label { font-size: 13px; color: #aaa; display: flex; justify-content: space-between; margin-bottom: 4px; }
+    input[type=range] { width: 100%; accent-color: #7c3aed; }
+    .toggle-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #ccc; }
+    .toggle-switch { position: relative; width: 40px; height: 24px; flex-shrink: 0; }
     .toggle-switch input { opacity: 0; width: 0; height: 0; }
-    .toggle-slider { position: absolute; inset: 0; background: #d1d5db; border-radius: 999px; cursor: pointer; transition: background 0.2s; }
-    .toggle-slider:before { content: ''; position: absolute; width: 16px; height: 16px; left: 4px; top: 4px; background: white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: transform 0.2s; }
-    input:checked + .toggle-slider { background: #3b82f6; }
+    .toggle-slider { position: absolute; inset: 0; background: #444; border-radius: 999px; cursor: pointer; transition: background 0.2s; }
+    .toggle-slider:before { content:''; position:absolute; width:16px; height:16px; left:4px; top:4px; background:white; border-radius:50%; box-shadow:0 1px 3px rgba(0,0,0,.4); transition:transform 0.2s; }
+    input:checked + .toggle-slider { background: #7c3aed; }
     input:checked + .toggle-slider:before { transform: translateX(16px); }
 
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .input-label { font-size: 13px; color: #374151; margin-bottom: 4px; display: block; }
-    input[type=number] { width: 100%; border: 1.5px solid #d1d5db; border-radius: 8px; padding: 6px; text-align: center; font-size: 15px; outline: none; }
-    input[type=number]:focus { border-color: #2563eb; }
+    .s-input-label { font-size: 12px; color: #aaa; margin-bottom: 4px; display: block; }
+    input[type=number] { width: 100%; background: #111; border: 1.5px solid #333; border-radius: 8px; padding: 7px; text-align: center; font-size: 15px; color: white; outline: none; }
+    input[type=number]:focus { border-color: #7c3aed; }
 
-    .btn-full { width: 100%; padding: 10px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; }
-    .btn-outline { background: white; border: 1.5px solid #d1d5db; color: #374151; }
-    .btn-outline:hover { background: #f9fafb; }
-    .btn-primary { background: #2563eb; color: white; }
-    .btn-primary:hover { background: #1d4ed8; }
-    .btn-secondary { background: #f3f4f6; color: #374151; }
-    .btn-secondary:hover { background: #e5e7eb; }
-    .btn-row { display: flex; gap: 8px; }
-    .btn-row .btn-full { flex: 1; }
+    .s-btn { width: 100%; padding: 10px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; }
+    .s-btn-outline { background: transparent; border: 1.5px solid #444; color: #ccc; }
+    .s-btn-primary { background: #7c3aed; color: white; }
+    .s-btn-row { display: flex; gap: 8px; }
+    .s-btn-row .s-btn { flex: 1; }
+    .s-btn-secondary { background: #222; color: #ccc; border: 1.5px solid #333; }
 
-    .saved-list { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
-    .saved-item { border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px; font-size: 12px; }
-    .saved-item-top { display: flex; justify-content: space-between; color: #6b7280; margin-bottom: 6px; }
+    .saved-list { display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; }
+    .saved-item { background: #111; border: 1px solid #2a2a2a; border-radius: 10px; padding: 8px 10px; font-size: 12px; }
+    .saved-item-top { display: flex; justify-content: space-between; color: #888; margin-bottom: 6px; }
     .saved-item-btns { display: flex; justify-content: flex-end; gap: 8px; }
-    .btn-sm { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
-    .btn-sm-outline { background: white; border: 1px solid #d1d5db; color: #374151; }
-    .btn-sm-danger { background: #dc2626; color: white; }
+    .s-btn-sm { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
+    .s-btn-sm-ol { background: transparent; border: 1px solid #444; color: #ccc; }
+    .s-btn-sm-del { background: #dc2626; color: white; }
 
-    .opacity-row { display: flex; align-items: center; gap: 10px; }
-    .opacity-label { font-size: 12px; color: #6b7280; white-space: nowrap; }
-    .opacity-val { font-size: 12px; color: #6b7280; width: 32px; text-align: right; }
+    /* RADIO PANEL */
+    .radio-panel { display: none; position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); width: calc(100% - 24px); max-width: 416px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 20px; padding: 16px; z-index: 99; }
+    .radio-panel.open { display: block; }
+    .radio-title { font-size: 14px; font-weight: 700; color: #e9d5ff; margin-bottom: 10px; }
+    .radio-status { font-size: 12px; color: #a78bfa; margin-bottom: 12px; }
+    .radio-vol-row { display: flex; align-items: center; gap: 8px; font-size: 14px; }
 
-    .restore-banner { background: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 10px; padding: 8px 12px; font-size: 13px; color: #065f46; text-align: center; }
+    .restore-banner { margin: 4px 12px; background: #052e16; border: 1px solid #166534; border-radius: 10px; padding: 7px 12px; font-size: 12px; color: #86efac; text-align: center; }
 
-    .radio-bar { display: flex; align-items: center; gap: 10px; background: #1e1b2e; border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; }
-    .radio-btn { width: 40px; height: 40px; border-radius: 50%; border: none; background: #7c3aed; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s; }
-    .radio-btn:hover { background: #6d28d9; }
-    .radio-info { flex: 1; min-width: 0; }
-    .radio-name { font-size: 12px; font-weight: 700; color: #e9d5ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .radio-status { font-size: 11px; color: #a78bfa; margin-top: 1px; }
-    .radio-vol { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-    .radio-vol span { font-size: 14px; }
-    .radio-vol input { width: 72px; accent-color: #7c3aed; }
+    .divider { border: none; border-top: 1px solid #222; }
   </style>
 </head>
 <body>
@@ -118,16 +116,13 @@
 
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
-
 const STORAGE_KEY = 'ck_state_v1';
+const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5];
 
 function saveToStorage(data) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {
-    // если фото слишком большое — сохраним без него
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({...data, circleImage: null})); } catch(_) {}
-  }
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+  catch(e) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify({...data, circleImage: null})); } catch(_) {} }
 }
-
 function loadFromStorage() {
   try { const s = localStorage.getItem(STORAGE_KEY); return s ? JSON.parse(s) : null; } catch(_) { return null; }
 }
@@ -135,55 +130,50 @@ function loadFromStorage() {
 function ColorKnitter() {
   const restored = loadFromStorage();
 
-  const [sequence, setSequence] = useState(restored?.sequence || []);
+  const [sequence, setSequence]         = useState(restored?.sequence || []);
   const [currentIndex, setCurrentIndex] = useState(restored?.currentIndex || 0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [speedMultiplier, setSpeedMultiplier] = useState(restored?.speedMultiplier || 2.5);
-  const [targetSteps, setTargetSteps] = useState(restored?.targetSteps || 0);
-  const [findStep, setFindStep] = useState(restored?.findStep || 1);
-  const [savedStates, setSavedStates] = useState(restored?.savedStates || []);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [elapsedTime, setElapsedTime] = useState(restored?.elapsedTime || 0);
+  const [isPlaying, setIsPlaying]       = useState(false);
+  const [speedMultiplier, setSpeedMultiplier] = useState(restored?.speedMultiplier || 1);
+  const [targetSteps, setTargetSteps]   = useState(restored?.targetSteps || 0);
+  const [findStep, setFindStep]         = useState(restored?.findStep || 1);
+  const [savedStates, setSavedStates]   = useState(restored?.savedStates || []);
   const [remainingSteps, setRemainingSteps] = useState(restored?.remainingSteps || 0);
   const [showNextLine, setShowNextLine] = useState(restored?.showNextLine || false);
-  const [circleImage, setCircleImage] = useState(restored?.circleImage || null);
+  const [circleImage, setCircleImage]   = useState(restored?.circleImage || null);
   const [imageOpacity, setImageOpacity] = useState(restored?.imageOpacity ?? 0.55);
-  const [showSaved, setShowSaved] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showRadio, setShowRadio]       = useState(false);
+  const [showSaved, setShowSaved]       = useState(false);
   const [radioPlaying, setRadioPlaying] = useState(false);
-  const [radioVolume, setRadioVolume] = useState(0.5);
-  const audioRef = useRef(null);
+  const [radioVolume, setRadioVolume]   = useState(0.5);
+  const [wasRestored]                   = useState(!!restored?.sequence?.length);
+
+  const fileInputRef  = useRef(null);
+  const imageInputRef = useRef(null);
+  const canvasRef     = useRef(null);
+  const playIntervalRef = useRef(null);
+  const stepCountRef  = useRef(0);
+  const goalReachedRef = useRef(false);
+  const loadedImgRef  = useRef(null);
+  const sequenceRef   = useRef(sequence);
+  const audioRef      = useRef(null);
+
+  sequenceRef.current = sequence;
 
   useEffect(() => {
     audioRef.current = new Audio('https://pianosolo.streamguys1.com/live?listenerid=8b5691fb9de68c165068d33274d23ef1&awparams=companionAds%3Atrue&aw_0_req.gdpr=true&us_privacy=1YNN');
-    audioRef.current.volume = 0.5;
+    audioRef.current.volume = radioVolume;
     return () => { audioRef.current.pause(); };
   }, []);
 
   useEffect(() => {
     if (!audioRef.current) return;
-    if (radioPlaying) { audioRef.current.play().catch(()=>{}); }
-    else { audioRef.current.pause(); }
+    if (radioPlaying) audioRef.current.play().catch(()=>{});
+    else audioRef.current.pause();
   }, [radioPlaying]);
 
-  useEffect(() => {
-    if (audioRef.current) audioRef.current.volume = radioVolume;
-  }, [radioVolume]);
-  const [wasRestored] = useState(!!restored?.sequence?.length);
+  useEffect(() => { if (audioRef.current) audioRef.current.volume = radioVolume; }, [radioVolume]);
 
-  const fileInputRef = useRef(null);
-  const imageInputRef = useRef(null);
-  const canvasRef = useRef(null);
-  const playIntervalRef = useRef(null);
-  const stepCountRef = useRef(0);
-  const timerRef = useRef(null);
-  const goalReachedRef = useRef(false);
-  const loadedImgRef = useRef(null);
-  const sequenceRef = useRef(sequence);
-  const currentIndexRef = useRef(currentIndex);
-  sequenceRef.current = sequence;
-  currentIndexRef.current = currentIndex;
-
-  // Загружаем фото если было сохранено
   useEffect(() => {
     if (restored?.circleImage) {
       const img = new Image();
@@ -192,22 +182,17 @@ function ColorKnitter() {
     }
   }, []);
 
-  // Автосохранение при каждом изменении состояния
   useEffect(() => {
-    saveToStorage({
-      sequence, currentIndex, speedMultiplier, targetSteps, findStep,
-      savedStates, elapsedTime, remainingSteps, showNextLine,
-      circleImage, imageOpacity
-    });
+    saveToStorage({ sequence, currentIndex, speedMultiplier, targetSteps, findStep,
+      savedStates, remainingSteps, showNextLine, circleImage, imageOpacity });
   }, [sequence, currentIndex, speedMultiplier, targetSteps, findStep,
-      savedStates, elapsedTime, remainingSteps, showNextLine, circleImage, imageOpacity]);
+      savedStates, remainingSteps, showNextLine, circleImage, imageOpacity]);
 
   const fmt = (s) => {
     const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sc = s%60;
     return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;
   };
 
-  // Расчётное время = текущий шаг × время на шаг
   const calcElapsed = () => {
     const secPerStep = (6 - speedMultiplier) / 1.1;
     return Math.round(currentIndex * secPerStep);
@@ -226,19 +211,15 @@ function ColorKnitter() {
       if (!sequenceRef.current.length) return;
       if (e.key==='ArrowRight'&&!e.ctrlKey){e.preventDefault();moveSteps(1);}
       else if(e.key==='ArrowLeft'&&!e.ctrlKey){e.preventDefault();moveSteps(-1);}
-      else if(e.key==='ArrowRight'&&e.ctrlKey){e.preventDefault();moveSteps(3);}
-      else if(e.key==='ArrowLeft'&&e.ctrlKey){e.preventDefault();moveSteps(-3);}
       else if(e.key===' '){e.preventDefault();setIsPlaying(p=>!p);}
-      else if(e.key==='ArrowUp'){e.preventDefault();setSpeedMultiplier(p=>Math.min(5,p+0.5));}
-      else if(e.key==='ArrowDown'){e.preventDefault();setSpeedMultiplier(p=>Math.max(1,p-0.5));}
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
   const getSector = (n) => { if(!n)return''; if(n<=65)return'D'; if(n<=130)return'C'; if(n<=195)return'A'; return'B'; };
-  const getPos = (n) => { if(!n)return 0; const b={D:1,C:66,A:131,B:196}; return n-b[getSector(n)]+1; };
-  const getAngle = (sec,pos) => { const b={A:Math.PI,B:Math.PI*1.5,C:Math.PI*0.5,D:0}; return b[sec]+(pos-1)*(Math.PI*0.5/65); };
+  const getPos    = (n) => { if(!n)return 0; const b={D:1,C:66,A:131,B:196}; return n-b[getSector(n)]+1; };
+  const getAngle  = (sec,pos) => { const b={A:Math.PI,B:Math.PI*1.5,C:Math.PI*0.5,D:0}; return b[sec]+(pos-1)*(Math.PI*0.5/65); };
   const colorName = ([r,g,b]) => {
     if(r===0&&g===0&&b===0)return'чёрный';
     if(r===255&&g===255&&b===255)return'белый';
@@ -256,8 +237,8 @@ function ColorKnitter() {
   };
 
   const parseFile = (text) => {
-    const lines = text.split('\n'); const temp=[]; let color=[0,0,0],hasZero=false;
-    lines.forEach(line => {
+    const lines=text.split('\n'); const temp=[]; let color=[0,0,0],hasZero=false;
+    lines.forEach(line=>{
       line=line.trim(); if(!line)return;
       if(line.startsWith('Thread:')){const m=line.match(/\[(\d+),\s*(\d+),\s*(\d+)\]/);if(m)color=[+m[1],+m[2],+m[3]];}
       else{
@@ -273,45 +254,33 @@ function ColorKnitter() {
     const file=e.target.files[0]; if(!file)return;
     const text=await file.text(); const seq=parseFile(text);
     setSequence(seq); setCurrentIndex(0); setIsPlaying(false);
-    setRemainingSteps(targetSteps); setElapsedTime(0);
-    stepCountRef.current=0; goalReachedRef.current=false;
+    setRemainingSteps(targetSteps); stepCountRef.current=0; goalReachedRef.current=false;
     if(seq.length>0)speak(seq[0]);
   };
 
   const handleImageUpload = (e) => {
     const file=e.target.files[0]; if(!file)return;
     const r=new FileReader();
-    r.onload=(ev)=>{
-      const img=new Image();
-      img.onload=()=>{ loadedImgRef.current=img; setCircleImage(ev.target.result); };
-      img.src=ev.target.result;
-    };
+    r.onload=(ev)=>{const img=new Image();img.onload=()=>{loadedImgRef.current=img;setCircleImage(ev.target.result);};img.src=ev.target.result;};
     r.readAsDataURL(file);
   };
 
   const saveProgress = () => {
-    const s={id:Date.now(),currentIndex,findStep,targetSteps,remainingSteps,elapsedTime,sequenceLength:sequence.length,timestamp:new Date().toISOString()};
-    const updated=[s,...savedStates].slice(0,20);
-    setSavedStates(updated);
+    const s={id:Date.now(),currentIndex,findStep,targetSteps,remainingSteps,sequenceLength:sequence.length,timestamp:new Date().toISOString()};
+    setSavedStates(prev=>[s,...prev].slice(0,20));
   };
 
   const loadProgress = (s) => {
     setCurrentIndex(s.currentIndex); setFindStep(s.findStep||1);
     setTargetSteps(s.targetSteps); setRemainingSteps(s.remainingSteps);
-    setElapsedTime(s.elapsedTime||0); setIsPlaying(false);
-    stepCountRef.current=s.targetSteps-s.remainingSteps; goalReachedRef.current=false;
-  };
-
-  const deleteSaved = (id) => {
-    setSavedStates(prev => prev.filter(s=>s.id!==id));
+    setIsPlaying(false); stepCountRef.current=s.targetSteps-s.remainingSteps; goalReachedRef.current=false;
   };
 
   const stopAutoPlay = () => { if(playIntervalRef.current){clearInterval(playIntervalRef.current);playIntervalRef.current=null;} };
 
   const checkGoal = () => {
     if(targetSteps>0){
-      stepCountRef.current+=1;
-      setRemainingSteps(targetSteps-stepCountRef.current);
+      stepCountRef.current+=1; setRemainingSteps(targetSteps-stepCountRef.current);
       if(stepCountRef.current>=targetSteps){
         setIsPlaying(false);stopAutoPlay();goalReachedRef.current=true;
         window.speechSynthesis.speak(new SpeechSynthesisUtterance("Цель выполнена!"));
@@ -340,21 +309,21 @@ function ColorKnitter() {
     return stopAutoPlay;
   },[isPlaying,speedMultiplier]);
 
-  const rgbHex = (c) => '#'+c.map(v=>v.toString(16).padStart(2,'0')).join('');
+  const rgbHex   = (c) => '#'+c.map(v=>v.toString(16).padStart(2,'0')).join('');
   const dimColor = (c,f=0.7) => c.map(v=>Math.floor(v+(255-v)*(1-f)));
-  const strokeFor = ([r,g,b]) => (r===0&&g===0&&b===0)?'white':'black';
-  const stepLabel = (item) => item?`${getSector(item.value)}${getPos(item.value)}`:'';
+  const strokeFor= ([r,g,b]) => (r===0&&g===0&&b===0)?'white':'black';
+  const stepLabel= (item) => item?`${getSector(item.value)}${getPos(item.value)}`:'';
 
   useEffect(()=>{
     const canvas=canvasRef.current; if(!canvas)return;
-    const vw=Math.min(window.innerWidth,420);
+    const vw=Math.min(window.innerWidth,440);
     canvas.width=vw-24; canvas.height=canvas.width;
     const ctx=canvas.getContext('2d');
     const w=canvas.width,h=canvas.height,cx=w/2,cy=h/2;
-    const radius=Math.min(w,h)/2-10;
+    const radius=Math.min(w,h)/2-2;
 
-    ctx.fillStyle='#f5f5f5'; ctx.fillRect(0,0,w,h);
-    ctx.beginPath(); ctx.arc(cx,cy,radius+5,0,2*Math.PI); ctx.fillStyle='white'; ctx.fill();
+    ctx.clearRect(0,0,w,h);
+    ctx.beginPath(); ctx.arc(cx,cy,radius,0,2*Math.PI); ctx.fillStyle='#111'; ctx.fill();
 
     if(sequence.length>0){
       ctx.globalAlpha=0.7;
@@ -373,14 +342,14 @@ function ColorKnitter() {
         const a2=getAngle(getSector(sequence[currentIndex].value),getPos(sequence[currentIndex].value));
         const x1=cx+radius*Math.cos(a1),y1=cy+radius*Math.sin(a1);
         const x2=cx+radius*Math.cos(a2),y2=cy+radius*Math.sin(a2);
-        ctx.beginPath(); ctx.strokeStyle='black'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.strokeStyle='white'; ctx.lineWidth=2;
         ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
         const ang=Math.atan2(y2-y1,x2-x1),al=10,aw=Math.PI/7;
         ctx.beginPath();
         ctx.moveTo(x2,y2);
         ctx.lineTo(x2-al*Math.cos(ang-aw),y2-al*Math.sin(ang-aw));
         ctx.lineTo(x2-al*Math.cos(ang+aw),y2-al*Math.sin(ang+aw));
-        ctx.closePath(); ctx.fillStyle='black'; ctx.fill();
+        ctx.closePath(); ctx.fillStyle='white'; ctx.fill();
       }
 
       if(showNextLine&&currentIndex<sequence.length-1){
@@ -401,19 +370,19 @@ function ColorKnitter() {
       ctx.globalAlpha=1; ctx.restore();
     }
 
-    ctx.beginPath(); ctx.arc(cx,cy,radius,0,2*Math.PI); ctx.strokeStyle='#808080'; ctx.lineWidth=1; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx,cy,radius,0,2*Math.PI); ctx.strokeStyle='#333'; ctx.lineWidth=1; ctx.stroke();
 
     const fs=Math.floor(w/10);
     ctx.font=`bold ${fs}px Arial`; ctx.textAlign='center'; ctx.textBaseline='middle';
     const lo=Math.min(w,h)/2.2;
     [{l:'A',x:cx-lo,y:cy-lo},{l:'B',x:cx+lo,y:cy-lo},{l:'C',x:cx-lo,y:cy+lo},{l:'D',x:cx+lo,y:cy+lo}]
-      .forEach(({l,x,y})=>{ ctx.strokeStyle='white';ctx.lineWidth=3;ctx.strokeText(l,x,y); ctx.fillStyle='black';ctx.fillText(l,x,y); });
+      .forEach(({l,x,y})=>{ ctx.strokeStyle='black';ctx.lineWidth=3;ctx.strokeText(l,x,y); ctx.fillStyle='white';ctx.fillText(l,x,y); });
 
     if(sequence[currentIndex]){
       const a=getAngle(getSector(sequence[currentIndex].value),getPos(sequence[currentIndex].value));
       ctx.beginPath();
       ctx.moveTo(cx+radius*Math.cos(a),cy+radius*Math.sin(a));
-      ctx.lineTo(cx+(radius+10)*Math.cos(a),cy+(radius+10)*Math.sin(a));
+      ctx.lineTo(cx+(radius+8)*Math.cos(a),cy+(radius+8)*Math.sin(a));
       ctx.strokeStyle='#ff0000'; ctx.lineWidth=2; ctx.stroke();
     }
   },[currentIndex,sequence,showNextLine,circleImage,imageOpacity]);
@@ -429,8 +398,8 @@ function ColorKnitter() {
     return(
       <div className="steps-row">
         {steps.map(({i,item,cur})=>(
-          <div key={i} className="step-item"
-            style={{color:rgbHex(item.color),WebkitTextStroke:`0.5px ${strokeFor(item.color)}`,fontSize:cur?'2.4rem':'1.4rem',minWidth:cur?64:44}}>
+          <div key={i} className={`step-item${cur?' cur':''}`}
+            style={{color:rgbHex(item.color),WebkitTextStroke:`0.5px ${strokeFor(item.color)}`,fontSize:cur?'2.6rem':'1.4rem',minWidth:cur?72:44}}>
             {stepLabel(item)}
           </div>
         ))}
@@ -439,130 +408,137 @@ function ColorKnitter() {
   };
 
   const statusText = () => {
-    if(!sequence.length)return'';
+    if(!sequence.length)return'Загрузите файл';
     let t=`${currentIndex+1}/${sequence.length} (${Math.round((currentIndex+1)/sequence.length*100)}%)`;
     if(targetSteps>0)t+=` | Цель: ${remainingSteps}`;
     t+=` | ${fmt(calcElapsed())}`;
     return t;
   };
 
-  return(
-    <div className="card">
-      {wasRestored && (
-        <div className="restore-banner" style={{marginBottom:8}}>
-          ✅ Восстановлено с последнего сеанса
-        </div>
-      )}
+  const togglePanel = (panel) => {
+    if(panel==='settings'){setShowSettings(p=>!p);setShowRadio(false);}
+    if(panel==='radio'){setShowRadio(p=>!p);setShowSettings(false);}
+  };
 
-      {/* Радио */}
-      <div className="radio-bar">
-        <button className="radio-btn" onClick={()=>setRadioPlaying(p=>!p)}>
-          {radioPlaying ? '⏸' : '▶'}
-        </button>
-        <div className="radio-info">
-          <div className="radio-name">🎹 Piano Solo Radio</div>
-          <div className="radio-status">{radioPlaying ? '● В эфире' : '○ Остановлено'}</div>
-        </div>
-        <div className="radio-vol">
+  return(
+    <div id="app">
+      {/* Logo */}
+      <div className="logo-row">
+        <img src="icon.png" alt="CK" onError={e=>e.target.style.display='none'} />
+      </div>
+
+      {wasRestored && <div className="restore-banner">✅ Восстановлено с последнего сеанса</div>}
+
+      {/* Status */}
+      <div className="status-box">{statusText()}</div>
+
+      {/* Speed */}
+      <div className="speed-row">
+        {SPEEDS.map(s=>(
+          <button key={s} className={`speed-btn${speedMultiplier===s?' active':''}`}
+            onClick={()=>setSpeedMultiplier(s)}>
+            {s}x
+          </button>
+        ))}
+      </div>
+
+      {/* Canvas */}
+      <div className="canvas-wrap"><canvas ref={canvasRef} /></div>
+
+      {/* Steps */}
+      {renderSteps()}
+
+      {/* Radio panel */}
+      <div className={`radio-panel${showRadio?' open':''}`}>
+        <div className="radio-title">🎹 Piano Solo Radio</div>
+        <div className="radio-status">{radioPlaying?'● В эфире':'○ Остановлено'}</div>
+        <div className="radio-vol-row">
           <span>🔈</span>
-          <input type="range" min="0" max="1" step="0.05" value={radioVolume}
-            onChange={e=>setRadioVolume(Number(e.target.value))} />
+          <input type="range" min="0" max="1" step="0.05" value={radioVolume} onChange={e=>setRadioVolume(Number(e.target.value))} style={{flex:1}} />
           <span>🔊</span>
         </div>
       </div>
 
-      <div className="status">{statusText()}</div>
+      {/* Settings panel */}
+      <div className={`settings-panel${showSettings?' open':''}`}>
 
-      <div style={{display:'flex',justifyContent:'center'}}>
-        <canvas ref={canvasRef} />
-      </div>
+        <div className="toggle-row">
+          <span>Линия следующего хода</span>
+          <label className="toggle-switch">
+            <input type="checkbox" checked={showNextLine} onChange={e=>setShowNextLine(e.target.checked)} />
+            <span className="toggle-slider"></span>
+          </label>
+        </div>
 
-      {renderSteps()}
+        <hr className="divider" />
 
-      <div className="nav-row">
-        <button className="btn btn-nav" onClick={()=>moveSteps(-1)} disabled={currentIndex<=0}>&#8592;</button>
-        <button className={`btn btn-play${isPlaying?' pause':''}`} onClick={()=>setIsPlaying(p=>!p)} disabled={!sequence.length}>
-          {isPlaying?'Пауза':'Старт'}
-        </button>
-        <button className="btn btn-nav" onClick={()=>moveSteps(1)} disabled={currentIndex>=sequence.length-1}>&#8594;</button>
-      </div>
-
-      <hr className="divider" />
-
-      <button className="btn-toggle" onClick={()=>setIsMenuOpen(v=>!v)}>
-        <span>Дополнительные настройки</span>
-        <span>{isMenuOpen?'▲':'▼'}</span>
-      </button>
-
-      {isMenuOpen&&(
-        <div className="settings">
-
-          <div className="setting-row">
-            <span className="setting-label"><span>Скорость:</span><span>{speedMultiplier}x</span></span>
-            <input type="range" min="1" max="5" step="0.5" value={speedMultiplier} onChange={e=>setSpeedMultiplier(Number(e.target.value))} />
-          </div>
-
-          <div className="toggle-switch-row">
-            <span style={{fontSize:13}}>Линия следующего хода:</span>
-            <label className="toggle-switch">
-              <input type="checkbox" checked={showNextLine} onChange={e=>setShowNextLine(e.target.checked)} />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div className="setting-row">
-            <input ref={imageInputRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleImageUpload} />
-            <button className="btn-full btn-outline" onClick={()=>imageInputRef.current.click()}>🖼️ Загрузить фото</button>
-            {circleImage&&(
-              <div className="opacity-row" style={{marginTop:6}}>
-                <span className="opacity-label">Прозрачность:</span>
-                <input type="range" min="0" max="1" step="0.05" value={imageOpacity} onChange={e=>setImageOpacity(Number(e.target.value))} style={{flex:1}} />
-                <span className="opacity-val">{Math.round(imageOpacity*100)}%</span>
-              </div>
-            )}
-          </div>
-
-          <div className="grid2">
-            <div>
-              <span className="input-label">Цель (шагов):</span>
-              <input type="number" value={targetSteps} min={0} onChange={e=>{const v=Number(e.target.value);setTargetSteps(v);stepCountRef.current=0;setRemainingSteps(v);goalReachedRef.current=false;}} />
-            </div>
-            <div>
-              <span className="input-label">Перейти к шагу:</span>
-              <input type="number" value={findStep} min={1} max={sequence.length||1} onChange={e=>{const v=Number(e.target.value);if(v>=1&&v<=sequence.length){setFindStep(v);setCurrentIndex(v-1);speak(sequence[v-1]);}}} />
-            </div>
-          </div>
-
-          <div className="btn-row">
-            <input ref={fileInputRef} type="file" accept=".txt" style={{display:'none'}} onChange={handleFileUpload} />
-            <button className="btn-full btn-primary" onClick={()=>fileInputRef.current.click()}>📂 Загрузить файл</button>
-            <button className="btn-full btn-outline" onClick={saveProgress} disabled={!sequence.length}>💾 Сохранить</button>
-          </div>
-
-          <button className="btn-full btn-secondary" onClick={()=>setShowSaved(v=>!v)}>
-            {showSaved?'Скрыть сохранённые':'Показать сохранённые'} ({savedStates.length})
-          </button>
-
-          {showSaved&&(
-            <div className="saved-list">
-              {savedStates.length===0&&<div style={{fontSize:13,color:'#6b7280',textAlign:'center'}}>Нет сохранений</div>}
-              {savedStates.map(s=>(
-                <div key={s.id} className="saved-item">
-                  <div className="saved-item-top">
-                    <span>{new Date(s.timestamp).toLocaleString()}</span>
-                    <span>Шаг {s.currentIndex+1}/{s.sequenceLength||'?'}{s.autoSaved&&' ✅'}</span>
-                  </div>
-                  <div className="saved-item-btns">
-                    <button className="btn-sm btn-sm-outline" onClick={()=>loadProgress(s)}>Загрузить</button>
-                    <button className="btn-sm btn-sm-danger" onClick={()=>deleteSaved(s.id)}>Удалить</button>
-                  </div>
-                </div>
-              ))}
+        <div>
+          <input ref={imageInputRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleImageUpload} />
+          <button className="s-btn s-btn-outline" onClick={()=>imageInputRef.current.click()}>🖼️ Загрузить фото</button>
+          {circleImage&&(
+            <div style={{display:'flex',alignItems:'center',gap:8,marginTop:8}}>
+              <span style={{fontSize:12,color:'#aaa',whiteSpace:'nowrap'}}>Прозрачность:</span>
+              <input type="range" min="0" max="1" step="0.05" value={imageOpacity} onChange={e=>setImageOpacity(Number(e.target.value))} style={{flex:1}} />
+              <span style={{fontSize:12,color:'#aaa',width:32,textAlign:'right'}}>{Math.round(imageOpacity*100)}%</span>
             </div>
           )}
-
         </div>
-      )}
+
+        <hr className="divider" />
+
+        <div className="grid2">
+          <div>
+            <span className="s-input-label">Цель (шагов):</span>
+            <input type="number" value={targetSteps} min={0} onChange={e=>{const v=Number(e.target.value);setTargetSteps(v);stepCountRef.current=0;setRemainingSteps(v);goalReachedRef.current=false;}} />
+          </div>
+          <div>
+            <span className="s-input-label">Перейти к шагу:</span>
+            <input type="number" value={findStep} min={1} max={sequence.length||1}
+              onChange={e=>{const v=Number(e.target.value);if(v>=1&&v<=sequence.length){setFindStep(v);setCurrentIndex(v-1);speak(sequence[v-1]);}}} />
+          </div>
+        </div>
+
+        <hr className="divider" />
+
+        <div className="s-btn-row">
+          <input ref={fileInputRef} type="file" accept=".txt" style={{display:'none'}} onChange={handleFileUpload} />
+          <button className="s-btn s-btn-primary" onClick={()=>fileInputRef.current.click()}>📂 Загрузить файл</button>
+          <button className="s-btn s-btn-outline" onClick={saveProgress} disabled={!sequence.length}>💾 Сохранить</button>
+        </div>
+
+        <button className="s-btn s-btn-secondary" onClick={()=>setShowSaved(v=>!v)}>
+          {showSaved?'Скрыть':'Показать'} сохранения ({savedStates.length})
+        </button>
+
+        {showSaved&&(
+          <div className="saved-list">
+            {savedStates.length===0&&<div style={{fontSize:13,color:'#666',textAlign:'center'}}>Нет сохранений</div>}
+            {savedStates.map(s=>(
+              <div key={s.id} className="saved-item">
+                <div className="saved-item-top">
+                  <span>{new Date(s.timestamp).toLocaleString()}</span>
+                  <span>Шаг {s.currentIndex+1}/{s.sequenceLength||'?'}</span>
+                </div>
+                <div className="saved-item-btns">
+                  <button className="s-btn-sm s-btn-sm-ol" onClick={()=>loadProgress(s)}>Загрузить</button>
+                  <button className="s-btn-sm s-btn-sm-del" onClick={()=>setSavedStates(p=>p.filter(x=>x.id!==s.id))}>Удалить</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Bottom bar */}
+      <div className="bottom-bar">
+        <button className={`bar-btn${radioPlaying?' active-radio':''}`} onClick={()=>{togglePanel('radio');}}>🎵</button>
+        <button className="bar-btn" onClick={()=>moveSteps(-1)} disabled={currentIndex<=0}>←</button>
+        <button className={`bar-btn play${isPlaying?' pause':''}`} onClick={()=>setIsPlaying(p=>!p)} disabled={!sequence.length}>
+          {isPlaying?'⏸':'▶'}
+        </button>
+        <button className="bar-btn" onClick={()=>moveSteps(1)} disabled={currentIndex>=sequence.length-1}>→</button>
+        <button className={`bar-btn${showSettings?' active-radio':''}`} onClick={()=>togglePanel('settings')}>⚙️</button>
+      </div>
     </div>
   );
 }
