@@ -415,10 +415,10 @@ function ColorKnitter() {
 
   const statusText = () => {
     if(!sequence.length)return'Загрузите файл';
-    let t=`${currentIndex+1}/${sequence.length} (${Math.round((currentIndex+1)/sequence.length*100)}%)`;
-    if(targetSteps>0)t+=` | Цель: ${remainingSteps}`;
-    t+=` | ${fmt(calcElapsed())}`;
-    return t;
+    const parts = [`${currentIndex+1}/${sequence.length} (${Math.round((currentIndex+1)/sequence.length*100)}%)`];
+    if(targetSteps>0)parts.push(`Цель: ${remainingSteps}`);
+    parts.push(fmt(calcElapsed()));
+    return parts;
   };
 
   const togglePanel = (panel) => {
@@ -436,7 +436,16 @@ function ColorKnitter() {
       {wasRestored && <div className="restore-banner">✅ Восстановлено с последнего сеанса</div>}
 
       {/* Status */}
-      <div className="status-box">{statusText()}</div>
+      <div className="status-box">
+        {typeof statusText()==='string' ? statusText() :
+          statusText().map((part,i,arr)=>(
+            <span key={i}>
+              {part}
+              {i < arr.length-1 && <span style={{margin:'0 8px',color:'#555'}}>|</span>}
+            </span>
+          ))
+        }
+      </div>
 
       {/* Speed */}
       <div className="speed-row">
