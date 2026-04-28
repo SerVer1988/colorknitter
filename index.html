@@ -372,10 +372,10 @@ function ColorKnitter() {
 
     ctx.beginPath(); ctx.arc(cx,cy,radius,0,2*Math.PI); ctx.strokeStyle='#333'; ctx.lineWidth=1; ctx.stroke();
 
-    // Буквы снаружи круга по углам
     const fs=Math.floor(w/10);
     ctx.font=`bold ${fs}px Arial`; ctx.textAlign='center'; ctx.textBaseline='middle';
-    const lo=radius * 0.82;
+    const lo=Math.min(w,h)/2.6;
+    // Буквы рисуем ЗА пределами круга — в углах снаружи
     [{l:'A',x:cx-lo,y:cy-lo},{l:'B',x:cx+lo,y:cy-lo},{l:'C',x:cx-lo,y:cy+lo},{l:'D',x:cx+lo,y:cy+lo}]
       .forEach(({l,x,y})=>{
         ctx.strokeStyle='black'; ctx.lineWidth=5; ctx.strokeText(l,x,y);
