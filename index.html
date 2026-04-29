@@ -64,7 +64,6 @@
     .settings-panel { display: none; position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); width: calc(100% - 24px); max-width: 416px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 20px; padding: 16px; z-index: 99; max-height: 70vh; overflow-y: auto; }
     .settings-panel.open { display: flex; flex-direction: column; gap: 14px; }
 
-    .s-label { font-size: 13px; color: #aaa; display: flex; justify-content: space-between; margin-bottom: 4px; }
     input[type=range] { width: 100%; accent-color: #7c3aed; }
     .toggle-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #ccc; }
     .toggle-switch { position: relative; width: 40px; height: 24px; flex-shrink: 0; }
@@ -94,9 +93,11 @@
     .s-btn-sm-ol { background: transparent; border: 1px solid #444; color: #ccc; }
     .s-btn-sm-del { background: #dc2626; color: white; }
 
-    .goal-msg { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: #EFCA46; color: black; font-size: 28px; font-weight: 900; padding: 20px 36px; border-radius: 20px; z-index: 200; box-shadow: 0 4px 32px rgba(0,0,0,0.5); animation: popIn 0.3s ease; }
-    @keyframes popIn { from { transform: translate(-50%,-50%) scale(0.7); opacity:0; } to { transform: translate(-50%,-50%) scale(1); opacity:1; } }
+    .opacity-row { display: flex; align-items: center; gap: 8px; }
     .divider { border: none; border-top: 1px solid #2a2a2a; }
+
+    .goal-msg { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: #EFCA46; color: black; font-size: 28px; font-weight: 900; padding: 20px 36px; border-radius: 20px; z-index: 200; box-shadow: 0 4px 32px rgba(0,0,0,0.5); animation: popIn 0.3s ease; pointer-events: none; }
+    @keyframes popIn { from { transform: translate(-50%,-50%) scale(0.7); opacity:0; } to { transform: translate(-50%,-50%) scale(1); opacity:1; } }
   </style>
 </head>
 <body>
@@ -122,31 +123,32 @@ function loadFromStorage() {
 function ColorKnitter() {
   const restored = loadFromStorage();
 
-  const [sequence, setSequence]         = useState(restored?.sequence || []);
-  const [currentIndex, setCurrentIndex] = useState(restored?.currentIndex || 0);
-  const [isPlaying, setIsPlaying]       = useState(false);
+  const [sequence, setSequence]               = useState(restored?.sequence || []);
+  const [currentIndex, setCurrentIndex]       = useState(restored?.currentIndex || 0);
+  const [isPlaying, setIsPlaying]             = useState(false);
   const [speedMultiplier, setSpeedMultiplier] = useState(restored?.speedMultiplier || 1);
-  const [targetSteps, setTargetSteps]   = useState(restored?.targetSteps || 0);
-  const [findStep, setFindStep]         = useState(restored?.findStep || 1);
-  const [savedStates, setSavedStates]   = useState(restored?.savedStates || []);
-  const [remainingSteps, setRemainingSteps] = useState(restored?.remainingSteps || 0);
-  const [showNextLine, setShowNextLine] = useState(restored?.showNextLine || false);
-  const [circleImage, setCircleImage]   = useState(restored?.circleImage || null);
-  const [imageOpacity, setImageOpacity] = useState(restored?.imageOpacity ?? 0.55);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showSaved, setShowSaved]       = useState(false);
-  const [goalMessage, setGoalMessage] = useState(false);
+  const [targetSteps, setTargetSteps]         = useState(restored?.targetSteps || 0);
+  const [findStep, setFindStep]               = useState(restored?.findStep || 1);
+  const [savedStates, setSavedStates]         = useState(restored?.savedStates || []);
+  const [remainingSteps, setRemainingSteps]   = useState(restored?.remainingSteps || 0);
+  const [showNextLine, setShowNextLine]       = useState(restored?.showNextLine || false);
+  const [circleImage, setCircleImage]         = useState(restored?.circleImage || null);
+  const [imageOpacity, setImageOpacity]       = useState(restored?.imageOpacity ?? 0.55);
+  const [showSettings, setShowSettings]       = useState(false);
+  const [showSaved, setShowSaved]             = useState(false);
+  const [radioPlaying, setRadioPlaying]       = useState(false);
+  const [goalMessage, setGoalMessage]         = useState(false);
 
-  const [radioPlaying, setRadioPlaying] = useState(false);
-  const imageInputRef = useRef(null);
-  const canvasRef     = useRef(null);
+  const fileInputRef    = useRef(null);
+  const imageInputRef   = useRef(null);
+  const canvasRef       = useRef(null);
   const playIntervalRef = useRef(null);
-  const stepCountRef  = useRef(0);
-  const goalReachedRef = useRef(false);
-  const loadedImgRef  = useRef(null);
-  const sequenceRef   = useRef(sequence);
-  const audioRef      = useRef(null);
-  sequenceRef.current = sequence;
+  const stepCountRef    = useRef(0);
+  const goalReachedRef  = useRef(false);
+  const loadedImgRef    = useRef(null);
+  const sequenceRef     = useRef(sequence);
+  const audioRef        = useRef(null);
+  sequenceRef.current   = sequence;
 
   useEffect(() => {
     audioRef.current = new Audio('https://pianosolo.streamguys1.com/live?listenerid=8b5691fb9de68c165068d33274d23ef1&awparams=companionAds%3Atrue&aw_0_req.gdpr=true&us_privacy=1YNN');
@@ -213,7 +215,9 @@ function ColorKnitter() {
   };
   const speak = (item) => {
     if(!item)return;
-    const t = item.isColorChange ? `${colorName(item.color)}, ${getSector(item.value)}${getPos(item.value)}` : `${getSector(item.value)}${getPos(item.value)}`;
+    const t = item.isColorChange
+      ? `${colorName(item.color)}, ${getSector(item.value)}${getPos(item.value)}`
+      : `${getSector(item.value)}${getPos(item.value)}`;
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(t); u.lang='ru-RU';
     window.speechSynthesis.speak(u);
@@ -259,13 +263,16 @@ function ColorKnitter() {
     setIsPlaying(false); stepCountRef.current=s.targetSteps-s.remainingSteps; goalReachedRef.current=false;
   };
 
-  const stopAutoPlay = () => { if(playIntervalRef.current){clearInterval(playIntervalRef.current);playIntervalRef.current=null;} };
+  const stopAutoPlay = () => {
+    if(playIntervalRef.current){clearInterval(playIntervalRef.current);playIntervalRef.current=null;}
+  };
 
   const checkGoal = () => {
     if(targetSteps>0){
-      stepCountRef.current+=1; setRemainingSteps(targetSteps-stepCountRef.current);
+      stepCountRef.current+=1;
+      setRemainingSteps(targetSteps-stepCountRef.current);
       if(stepCountRef.current>=targetSteps){
-        setIsPlaying(false);stopAutoPlay();goalReachedRef.current=true;
+        setIsPlaying(false); stopAutoPlay(); goalReachedRef.current=true;
         setGoalMessage(true);
         setTimeout(()=>setGoalMessage(false), 4000);
       }
@@ -281,7 +288,8 @@ function ColorKnitter() {
         const next=prev+1;
         if(next>=sequenceRef.current.length){setIsPlaying(false);stopAutoPlay();return prev;}
         if(sequenceRef.current[next].isColorChange){setIsPlaying(false);stopAutoPlay();}
-        checkGoal(); speak(sequenceRef.current[next]);
+        checkGoal();
+        speak(sequenceRef.current[next]);
         return next;
       });
     },delay);
