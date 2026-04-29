@@ -265,7 +265,7 @@ function ColorKnitter() {
       stepCountRef.current+=1; setRemainingSteps(targetSteps-stepCountRef.current);
       if(stepCountRef.current>=targetSteps){
         setIsPlaying(false);stopAutoPlay();goalReachedRef.current=true;
-        window.speechSynthesis.speak(new SpeechSynthesisUtterance("Цель выполнена!"));
+        window.speechSynthesis.speak(new SpeechSynthesisUtterance("Цель достигнута!"));
       }
     }
   };
