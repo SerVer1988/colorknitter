@@ -29,36 +29,30 @@
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html, body { height: 100%; background: #0a0a0a; font-family: Arial, sans-serif; color: white; }
     body { display: flex; justify-content: center; align-items: flex-start; }
-    #root { width: 100%; max-width: 440px; min-height: 100vh; display: flex; flex-direction: column; padding: 0 0 90px 0; }
+    #root { width: 100%; max-width: 440px; min-height: 100vh; display: flex; flex-direction: column; padding: 0 0 110px 0; }
 
-    /* LOGO */
-    .logo-row { display: flex; justify-content: center; padding: 10px 0 4px; }
+    .logo-row { display: flex; justify-content: center; padding: 16px 0 8px; }
     .logo-row img { width: 52px; height: 52px; border-radius: 12px; }
 
-    /* STATUS */
-    .status-box { margin: 6px 12px; border: 1.5px solid #333; border-radius: 999px; padding: 7px 16px; text-align: center; font-size: 13px; color: #ccc; }
+    .status-box { margin: 16px 12px; border: 2.5px solid #fff; border-radius: 999px; padding: 10px 20px; text-align: center; font-size: 18px; font-weight: 700; color: #fff; }
 
-    /* SPEED BUTTONS */
-    .speed-row { display: flex; justify-content: center; gap: 6px; margin: 6px 12px; }
-    .speed-btn { flex: 1; max-width: 60px; padding: 6px 0; border-radius: 999px; border: 1.5px solid #444; background: transparent; color: #aaa; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-    .speed-btn.active { background: white; color: black; border-color: white; }
+    .speed-row { display: flex; justify-content: center; gap: 8px; margin: 16px 12px; align-items: center; }
+    .speed-btn { flex: 1; max-width: 64px; padding: 7px 0; border-radius: 999px; border: 2.5px solid transparent; background: transparent; color: #aaa; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .speed-btn.active { border-color: #fff; color: #fff; }
 
-    /* CANVAS */
-    .canvas-wrap { display: flex; justify-content: center; padding: 6px 12px; position: relative; }
+    .canvas-wrap { display: flex; justify-content: center; padding: 16px 12px; position: relative; }
     canvas { border-radius: 50%; display: block; }
-    .sector-labels { position: absolute; top: 6px; left: 12px; right: 12px; bottom: 6px; pointer-events: none; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+    .sector-labels { position: absolute; top: 16px; left: 12px; right: 12px; bottom: 16px; pointer-events: none; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
     .sector-label { font-size: 2rem; font-weight: 900; color: white; text-shadow: 0 0 6px black, 0 0 3px black; display: flex; }
     .sector-label.tl { align-items: flex-start; justify-content: flex-start; padding: 10px 0 0 10px; }
     .sector-label.tr { align-items: flex-start; justify-content: flex-end; padding: 10px 10px 0 0; }
     .sector-label.bl { align-items: flex-end; justify-content: flex-start; padding: 0 0 10px 10px; }
     .sector-label.br { align-items: flex-end; justify-content: flex-end; padding: 0 10px 10px 0; }
 
-    /* STEPS */
-    .steps-row { display: flex; justify-content: center; align-items: center; gap: 6px; margin: 8px 12px; }
+    .steps-row { display: flex; justify-content: center; align-items: center; gap: 6px; margin: 16px 12px; }
     .step-item { text-align: center; font-weight: bold; }
-    .step-item.cur { border: 2px solid currentColor; border-radius: 12px; padding: 2px 8px; }
+    .step-item.cur { border: 2px solid #EFCA46; border-radius: 12px; padding: 2px 8px; }
 
-    /* BOTTOM BAR */
     .bottom-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; padding: 10px 20px 24px; background: #1a1a1a; border-top: 1px solid #2a2a2a; border-radius: 24px 24px 0 0; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
     .bar-btn { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; transition: transform 0.15s, opacity 0.15s; }
     .bar-btn:active { transform: scale(0.88); }
@@ -67,8 +61,7 @@
     .bar-btn.play img { width: 68px; height: 68px; }
     .bar-btn.active-radio img { filter: brightness(0) saturate(100%) invert(40%) sepia(80%) saturate(500%) hue-rotate(230deg); }
 
-    /* SETTINGS PANEL */
-    .settings-panel { display: none; position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); width: calc(100% - 24px); max-width: 416px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 20px; padding: 16px; z-index: 99; max-height: 70vh; overflow-y: auto; }
+    .settings-panel { display: none; position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); width: calc(100% - 24px); max-width: 416px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 20px; padding: 16px; z-index: 99; max-height: 70vh; overflow-y: auto; }
     .settings-panel.open { display: flex; flex-direction: column; gap: 14px; }
 
     .s-label { font-size: 13px; color: #aaa; display: flex; justify-content: space-between; margin-bottom: 4px; }
@@ -101,16 +94,8 @@
     .s-btn-sm-ol { background: transparent; border: 1px solid #444; color: #ccc; }
     .s-btn-sm-del { background: #dc2626; color: white; }
 
-    /* RADIO PANEL */
-    .radio-panel { display: none; position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); width: calc(100% - 24px); max-width: 416px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 20px; padding: 16px; z-index: 99; }
-    .radio-panel.open { display: block; }
-    .radio-title { font-size: 14px; font-weight: 700; color: #e9d5ff; margin-bottom: 10px; }
-    .radio-status { font-size: 12px; color: #a78bfa; margin-bottom: 12px; }
-    .radio-vol-row { display: flex; align-items: center; gap: 8px; font-size: 14px; }
-
-    .restore-banner { margin: 4px 12px; background: #052e16; border: 1px solid #166534; border-radius: 10px; padding: 7px 12px; font-size: 12px; color: #86efac; text-align: center; }
-
-    .divider { border: none; border-top: 1px solid #222; }
+    .opacity-row { display: flex; align-items: center; gap: 8px; }
+    .divider { border: none; border-top: 1px solid #2a2a2a; }
   </style>
 </head>
 <body>
@@ -148,11 +133,8 @@ function ColorKnitter() {
   const [circleImage, setCircleImage]   = useState(restored?.circleImage || null);
   const [imageOpacity, setImageOpacity] = useState(restored?.imageOpacity ?? 0.55);
   const [showSettings, setShowSettings] = useState(false);
-  const [showRadio, setShowRadio]       = useState(false);
   const [showSaved, setShowSaved]       = useState(false);
   const [radioPlaying, setRadioPlaying] = useState(false);
-  const [radioVolume, setRadioVolume]   = useState(0.5);
-  const [wasRestored]                   = useState(!!restored?.sequence?.length);
 
   const fileInputRef  = useRef(null);
   const imageInputRef = useRef(null);
@@ -163,12 +145,11 @@ function ColorKnitter() {
   const loadedImgRef  = useRef(null);
   const sequenceRef   = useRef(sequence);
   const audioRef      = useRef(null);
-
   sequenceRef.current = sequence;
 
   useEffect(() => {
     audioRef.current = new Audio('https://pianosolo.streamguys1.com/live?listenerid=8b5691fb9de68c165068d33274d23ef1&awparams=companionAds%3Atrue&aw_0_req.gdpr=true&us_privacy=1YNN');
-    audioRef.current.volume = radioVolume;
+    audioRef.current.volume = 0.5;
     return () => { audioRef.current.pause(); };
   }, []);
 
@@ -177,8 +158,6 @@ function ColorKnitter() {
     if (radioPlaying) audioRef.current.play().catch(()=>{});
     else audioRef.current.pause();
   }, [radioPlaying]);
-
-  useEffect(() => { if (audioRef.current) audioRef.current.volume = radioVolume; }, [radioVolume]);
 
   useEffect(() => {
     if (restored?.circleImage) {
@@ -199,10 +178,7 @@ function ColorKnitter() {
     return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;
   };
 
-  const calcElapsed = () => {
-    const secPerStep = (6 - speedMultiplier) / 1.1;
-    return Math.round(currentIndex * secPerStep);
-  };
+  const calcElapsed = () => Math.round(currentIndex * (6 - speedMultiplier) / 1.1);
 
   const moveSteps = (steps) => {
     setCurrentIndex(prev => {
@@ -317,7 +293,6 @@ function ColorKnitter() {
 
   const rgbHex   = (c) => '#'+c.map(v=>v.toString(16).padStart(2,'0')).join('');
   const dimColor = (c,f=0.7) => c.map(v=>Math.floor(v+(255-v)*(1-f)));
-  const strokeFor= ([r,g,b]) => (r===0&&g===0&&b===0)?'white':'black';
   const stepLabel= (item) => item?`${getSector(item.value)}${getPos(item.value)}`:'';
 
   useEffect(()=>{
@@ -383,7 +358,7 @@ function ColorKnitter() {
       ctx.globalAlpha=1; ctx.restore();
     }
 
-    ctx.beginPath(); ctx.arc(cx,cy,radius,0,2*Math.PI); ctx.strokeStyle='#333'; ctx.lineWidth=1; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx,cy,radius,0,2*Math.PI); ctx.strokeStyle='#ccc'; ctx.lineWidth=1; ctx.stroke();
 
     if(sequence[currentIndex]){
       const a=getAngle(getSector(sequence[currentIndex].value),getPos(sequence[currentIndex].value));
@@ -391,7 +366,8 @@ function ColorKnitter() {
       ctx.moveTo(cx+radius*Math.cos(a),cy+radius*Math.sin(a));
       ctx.lineTo(cx+(radius+8)*Math.cos(a),cy+(radius+8)*Math.sin(a));
       ctx.strokeStyle='#ff0000'; ctx.lineWidth=2; ctx.stroke();
-    }  },[currentIndex,sequence,showNextLine,circleImage,imageOpacity]);
+    }
+  },[currentIndex,sequence,showNextLine,circleImage,imageOpacity]);
 
   const renderSteps = () => {
     if(!sequence.length)return null;
@@ -413,51 +389,34 @@ function ColorKnitter() {
     );
   };
 
-  const statusText = () => {
-    if(!sequence.length)return'Загрузите файл';
-    const parts = [`${currentIndex+1}/${sequence.length} (${Math.round((currentIndex+1)/sequence.length*100)}%)`];
+  const statusParts = () => {
+    if(!sequence.length)return null;
+    const parts=[`${currentIndex+1}/${sequence.length} (${Math.round((currentIndex+1)/sequence.length*100)}%)`];
     if(targetSteps>0)parts.push(`Цель: ${remainingSteps}`);
     parts.push(fmt(calcElapsed()));
     return parts;
   };
 
-  const togglePanel = (panel) => {
-    if(panel==='settings'){setShowSettings(p=>!p);setShowRadio(false);}
-    if(panel==='radio'){setShowRadio(p=>!p);setShowSettings(false);}
-  };
-
   return(
     <div id="app">
-      {/* Logo */}
       <div className="logo-row">
         <img src="icon.png" alt="CK" onError={e=>e.target.style.display='none'} />
       </div>
 
-
-
-      {/* Status */}
       <div className="status-box">
-        {typeof statusText()==='string' ? statusText() :
-          statusText().map((part,i,arr)=>(
-            <span key={i}>
-              {part}
-              {i < arr.length-1 && <span style={{margin:'0 8px',color:'#555'}}>|</span>}
-            </span>
-          ))
-        }
+        {statusParts() ? statusParts().map((p,i,arr)=>(
+          <span key={i}>{p}{i<arr.length-1&&<span style={{margin:'0 8px',color:'#666'}}>|</span>}</span>
+        )) : 'Загрузите файл'}
       </div>
 
-      {/* Speed */}
       <div className="speed-row">
         {SPEEDS.map(s=>(
-          <button key={s} className={`speed-btn${speedMultiplier===s?' active':''}`}
-            onClick={()=>setSpeedMultiplier(s)}>
+          <button key={s} className={`speed-btn${speedMultiplier===s?' active':''}`} onClick={()=>setSpeedMultiplier(s)}>
             {s}x
           </button>
         ))}
       </div>
 
-      {/* Canvas */}
       <div className="canvas-wrap">
         <canvas ref={canvasRef} />
         <div className="sector-labels">
@@ -468,14 +427,9 @@ function ColorKnitter() {
         </div>
       </div>
 
-      {/* Steps */}
       {renderSteps()}
 
-
-
-      {/* Settings panel */}
       <div className={`settings-panel${showSettings?' open':''}`}>
-
         <div className="toggle-row">
           <span>Линия следующего хода</span>
           <label className="toggle-switch">
@@ -483,23 +437,19 @@ function ColorKnitter() {
             <span className="toggle-slider"></span>
           </label>
         </div>
-
         <hr className="divider" />
-
         <div>
           <input ref={imageInputRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleImageUpload} />
           <button className="s-btn s-btn-outline" onClick={()=>imageInputRef.current.click()}>🖼️ Загрузить фото</button>
           {circleImage&&(
-            <div style={{display:'flex',alignItems:'center',gap:8,marginTop:8}}>
+            <div className="opacity-row" style={{marginTop:8}}>
               <span style={{fontSize:12,color:'#aaa',whiteSpace:'nowrap'}}>Прозрачность:</span>
               <input type="range" min="0" max="1" step="0.05" value={imageOpacity} onChange={e=>setImageOpacity(Number(e.target.value))} style={{flex:1}} />
               <span style={{fontSize:12,color:'#aaa',width:32,textAlign:'right'}}>{Math.round(imageOpacity*100)}%</span>
             </div>
           )}
         </div>
-
         <hr className="divider" />
-
         <div className="grid2">
           <div>
             <span className="s-input-label">Цель (шагов):</span>
@@ -511,29 +461,15 @@ function ColorKnitter() {
               onChange={e=>{const v=Number(e.target.value);if(v>=1&&v<=sequence.length){setFindStep(v);setCurrentIndex(v-1);speak(sequence[v-1]);}}} />
           </div>
         </div>
-
         <hr className="divider" />
-
         <div className="s-btn-row">
           <input ref={fileInputRef} type="file" accept=".txt" style={{display:'none'}} onChange={handleFileUpload} />
           <button className="s-btn s-btn-primary" onClick={()=>fileInputRef.current.click()}>📂 Загрузить файл</button>
           <button className="s-btn s-btn-outline" onClick={saveProgress} disabled={!sequence.length}>💾 Сохранить</button>
         </div>
-
         <button className="s-btn s-btn-secondary" onClick={()=>setShowSaved(v=>!v)}>
           {showSaved?'Скрыть':'Показать'} сохранения ({savedStates.length})
         </button>
-
-        <hr className="divider" />
-
-        <button className="s-btn" style={{background:'#7f1d1d',color:'#fca5a5',border:'none'}} onClick={()=>{
-          if('serviceWorker' in navigator){
-            caches.keys().then(keys=>Promise.all(keys.map(k=>caches.delete(k)))).then(()=>{
-              window.location.reload(true);
-            });
-          } else { window.location.reload(true); }
-        }}>🔄 Очистить кеш и обновить</button>
-
         {showSaved&&(
           <div className="saved-list">
             {savedStates.length===0&&<div style={{fontSize:13,color:'#666',textAlign:'center'}}>Нет сохранений</div>}
@@ -551,6 +487,12 @@ function ColorKnitter() {
             ))}
           </div>
         )}
+        <hr className="divider" />
+        <button className="s-btn" style={{background:'#7f1d1d',color:'#fca5a5',border:'none'}} onClick={()=>{
+          if('serviceWorker' in navigator){
+            caches.keys().then(keys=>Promise.all(keys.map(k=>caches.delete(k)))).then(()=>window.location.reload(true));
+          } else { window.location.reload(true); }
+        }}>🔄 Очистить кеш и обновить</button>
       </div>
 
       <div className="bottom-bar">
@@ -566,7 +508,7 @@ function ColorKnitter() {
         <button className="bar-btn" onClick={()=>moveSteps(1)} disabled={currentIndex>=sequence.length-1}>
           <img src="ic_next.png" alt="next" />
         </button>
-        <button className={`bar-btn${showSettings?' active-radio':''}`} onClick={()=>togglePanel('settings')}>
+        <button className={`bar-btn${showSettings?' active-radio':''}`} onClick={()=>setShowSettings(p=>!p)}>
           <img src="ic_settings.png" alt="settings" />
         </button>
       </div>
