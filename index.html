@@ -59,13 +59,13 @@
     .step-item.cur { border: 2px solid currentColor; border-radius: 12px; padding: 2px 8px; }
 
     /* BOTTOM BAR */
-    .bottom-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; padding: 10px 16px 20px; background: #1a1a1a; border-top: 1px solid #2a2a2a; border-radius: 24px 24px 0 0; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
-    .bar-btn { width: 52px; height: 52px; border-radius: 50%; border: 2px solid #444; background: transparent; color: white; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-    .bar-btn:active { transform: scale(0.92); }
+    .bottom-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; padding: 10px 20px 24px; background: #1a1a1a; border-top: 1px solid #2a2a2a; border-radius: 24px 24px 0 0; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+    .bar-btn { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; transition: transform 0.15s, opacity 0.15s; }
+    .bar-btn:active { transform: scale(0.88); }
     .bar-btn:disabled { opacity: 0.3; }
-    .bar-btn.play { width: 62px; height: 62px; background: white; color: black; border-color: white; font-size: 26px; }
-    .bar-btn.play.pause { background: #ef4444; border-color: #ef4444; color: white; }
-    .bar-btn.active-radio { border-color: #7c3aed; color: #a78bfa; }
+    .bar-btn img { width: 52px; height: 52px; border-radius: 50%; }
+    .bar-btn.play img { width: 68px; height: 68px; }
+    .bar-btn.active-radio img { filter: brightness(0) saturate(100%) invert(40%) sepia(80%) saturate(500%) hue-rotate(230deg); }
 
     /* SETTINGS PANEL */
     .settings-panel { display: none; position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); width: calc(100% - 24px); max-width: 416px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 20px; padding: 16px; z-index: 99; max-height: 70vh; overflow-y: auto; }
@@ -543,15 +543,22 @@ function ColorKnitter() {
         )}
       </div>
 
-      {/* Bottom bar */}
       <div className="bottom-bar">
-        <button className={`bar-btn${radioPlaying?' active-radio':''}`} onClick={()=>setRadioPlaying(p=>!p)}>🎵</button>
-        <button className="bar-btn" onClick={()=>moveSteps(-1)} disabled={currentIndex<=0}>←</button>
-        <button className={`bar-btn play${isPlaying?' pause':''}`} onClick={()=>setIsPlaying(p=>!p)} disabled={!sequence.length}>
-          {isPlaying?'⏸':'▶'}
+        <button className={`bar-btn${radioPlaying?' active-radio':''}`} onClick={()=>setRadioPlaying(p=>!p)}>
+          <img src="ic_music.png" alt="radio" />
         </button>
-        <button className="bar-btn" onClick={()=>moveSteps(1)} disabled={currentIndex>=sequence.length-1}>→</button>
-        <button className={`bar-btn${showSettings?' active-radio':''}`} onClick={()=>togglePanel('settings')}>⚙️</button>
+        <button className="bar-btn" onClick={()=>moveSteps(-1)} disabled={currentIndex<=0}>
+          <img src="ic_back.png" alt="back" />
+        </button>
+        <button className="bar-btn play" onClick={()=>setIsPlaying(p=>!p)} disabled={!sequence.length}>
+          <img src={isPlaying?'ic_pause.png':'ic_play.png'} alt="play" />
+        </button>
+        <button className="bar-btn" onClick={()=>moveSteps(1)} disabled={currentIndex>=sequence.length-1}>
+          <img src="ic_next.png" alt="next" />
+        </button>
+        <button className={`bar-btn${showSettings?' active-radio':''}`} onClick={()=>togglePanel('settings')}>
+          <img src="ic_settings.png" alt="settings" />
+        </button>
       </div>
     </div>
   );
