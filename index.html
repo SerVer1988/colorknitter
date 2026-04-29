@@ -358,7 +358,7 @@ function ColorKnitter() {
       ctx.globalAlpha=1; ctx.restore();
     }
 
-    ctx.beginPath(); ctx.arc(cx,cy,radius+6,0,2*Math.PI); ctx.strokeStyle='white'; ctx.lineWidth=12; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx,cy,radius+6,0,2*Math.PI); ctx.strokeStyle='white'; ctx.lineWidth=8; ctx.stroke();
 
     if(sequence[currentIndex]){
       const a=getAngle(getSector(sequence[currentIndex].value),getPos(sequence[currentIndex].value));
