@@ -94,7 +94,8 @@
     .s-btn-sm-ol { background: transparent; border: 1px solid #444; color: #ccc; }
     .s-btn-sm-del { background: #dc2626; color: white; }
 
-    .opacity-row { display: flex; align-items: center; gap: 8px; }
+    .goal-msg { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: #EFCA46; color: black; font-size: 28px; font-weight: 900; padding: 20px 36px; border-radius: 20px; z-index: 200; box-shadow: 0 4px 32px rgba(0,0,0,0.5); animation: popIn 0.3s ease; }
+    @keyframes popIn { from { transform: translate(-50%,-50%) scale(0.7); opacity:0; } to { transform: translate(-50%,-50%) scale(1); opacity:1; } }
     .divider { border: none; border-top: 1px solid #2a2a2a; }
   </style>
 </head>
@@ -134,9 +135,9 @@ function ColorKnitter() {
   const [imageOpacity, setImageOpacity] = useState(restored?.imageOpacity ?? 0.55);
   const [showSettings, setShowSettings] = useState(false);
   const [showSaved, setShowSaved]       = useState(false);
-  const [radioPlaying, setRadioPlaying] = useState(false);
+  const [goalMessage, setGoalMessage] = useState(false);
 
-  const fileInputRef  = useRef(null);
+  const [radioPlaying, setRadioPlaying] = useState(false);
   const imageInputRef = useRef(null);
   const canvasRef     = useRef(null);
   const playIntervalRef = useRef(null);
@@ -265,7 +266,8 @@ function ColorKnitter() {
       stepCountRef.current+=1; setRemainingSteps(targetSteps-stepCountRef.current);
       if(stepCountRef.current>=targetSteps){
         setIsPlaying(false);stopAutoPlay();goalReachedRef.current=true;
-        window.speechSynthesis.speak(new SpeechSynthesisUtterance("Цель достигнута!"));
+        setGoalMessage(true);
+        setTimeout(()=>setGoalMessage(false), 4000);
       }
     }
   };
@@ -358,7 +360,7 @@ function ColorKnitter() {
       ctx.globalAlpha=1; ctx.restore();
     }
 
-    ctx.beginPath(); ctx.arc(cx,cy,radius+5.5,0,2*Math.PI); ctx.strokeStyle='white'; ctx.lineWidth=8; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx,cy,radius+6,0,2*Math.PI); ctx.strokeStyle='white'; ctx.lineWidth=12; ctx.stroke();
 
     if(sequence[currentIndex]){
       const a=getAngle(getSector(sequence[currentIndex].value),getPos(sequence[currentIndex].value));
@@ -399,6 +401,8 @@ function ColorKnitter() {
 
   return(
     <div id="app">
+      {goalMessage && <div className="goal-msg">🎯 Цель достигнута!</div>}
+
       <div className="logo-row">
         <img src="icon.png" alt="CK" onError={e=>e.target.style.display='none'} />
       </div>
