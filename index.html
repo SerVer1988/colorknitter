@@ -368,7 +368,42 @@ function ColorKnitter() {
       ctx.globalAlpha=1; ctx.restore();
     }
 
-    ctx.beginPath(); ctx.arc(cx,cy,radius+5.5,0,2*Math.PI); ctx.strokeStyle='white'; ctx.lineWidth=8; ctx.stroke();
+    // Окантовка разделена на секторы
+    const rimR = radius + 5.5;
+    const rimW = 8;
+    ctx.lineWidth = rimW;
+    // Сектор A (верх-лево) и D (низ-право) — серые: A от 180° до 270°, D от 0° до 90°
+    // Сектор B (верх-право) и C (низ-лево) — белые: B от 270° до 360°, C от 90° до 180°
+    const sectors = [
+      { start: Math.PI,       end: Math.PI * 1.5, color: '#b5b5b5' }, // A
+      { start: Math.PI * 1.5, end: Math.PI * 2,   color: 'white'   }, // B
+      { start: 0,             end: Math.PI * 0.5, color: 'white'   }, // C (D по углам — низ-право белый)
+      { start: Math.PI * 0.5, end: Math.PI,       color: '#b5b5b5' }, // C (низ-лево серый)
+    ];
+    // Пересчитаем правильно по реальному расположению секторов:
+    // D: 0–90° (правый верх), C: 90–180° (правый низ), A: 180–270° (левый низ), B: 270–360° (левый верх)
+    // Хотим: A(лево-верх) и D(право-низ) серые, B и C белые
+    // A = 180–270, D = 270–360+0–90 нет... D=0–90
+    // Серые: A(180°–270°) и... подождём — A левый верх = 180–270, D правый низ нет
+    // По getAngle: A=180°, B=270°, C=90°, D=0°
+    // Значит: A занимает 180–270, B — 270–360, C — 90–180 (нет, C=90°+65шагов*0.5PI/65)
+    // Упрощённо: каждый сектор ровно 90°
+    // Левый верх = A: 180–270° → серый
+    // Правый верх = B: 270–360° → белый  
+    // Левый низ = C: 90–180° → белый
+    // Правый низ = D: 0–90° → серый
+    const rimSectors = [
+      { start: Math.PI,       end: Math.PI * 1.5, color: '#b5b5b5' }, // A лево-верх серый
+      { start: Math.PI * 1.5, end: Math.PI * 2,   color: 'white'   }, // B право-верх белый
+      { start: 0,             end: Math.PI * 0.5, color: '#b5b5b5' }, // D право-низ серый
+      { start: Math.PI * 0.5, end: Math.PI,       color: 'white'   }, // C лево-низ белый
+    ];
+    rimSectors.forEach(({start, end, color}) => {
+      ctx.beginPath();
+      ctx.arc(cx, cy, rimR, start, end);
+      ctx.strokeStyle = color;
+      ctx.stroke();
+    });
 
     if(sequence[currentIndex]){
       const a=getAngle(getSector(sequence[currentIndex].value),getPos(sequence[currentIndex].value));
