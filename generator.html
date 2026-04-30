@@ -146,7 +146,7 @@
 
 <script>
 const NAIL_RADIUS = 1, NAIL_COLOR = '#000', PADDING = 5;
-const NAILS_COUNT = 260, LINE_WEIGHT = 8;
+const NAILS_COUNT = 260, LINE_WEIGHT = 25;
 
 let canvas = document.getElementById('canvas');
 let ctx = canvas.getContext('2d');
@@ -396,7 +396,7 @@ function startGenerate(){
   document.getElementById('save-wrap').style.display='none';
 
   let total=+document.getElementById('lines-count-box').value;
-  let lw=limitPixel(LINE_WEIGHT/100*255), t0=performance.now(), nail=0;
+  let lw=limitPixel(LINE_WEIGHT/100*255/dpr), t0=performance.now(), nail=0;
 
   function runBatch(){
     for(let b=0;b<20;b++){
@@ -409,7 +409,7 @@ function startGenerate(){
         let l=0; for(let idx of line)l+=pixels[idx]; l/=line.size;
         if(l<ml){ml=l;nn=i;nl=line;}
       }
-      for(let idx of nl)pixels[idx]=Math.min(255,pixels[idx]+lw*dpr);
+      for(let idx of nl)pixels[idx]=Math.min(255,pixels[idx]+lw);
       ctx.lineWidth=1;
       ctx.strokeStyle=mode==='bw'
         ?`rgba(0,0,0,${LINE_WEIGHT/100})`
