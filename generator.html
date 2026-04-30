@@ -162,10 +162,16 @@
 
   </div>
 
-  <div class="bottom-bar">
-    <a href="index.html">
-      <button class="bar-btn"><img src="ic_back.png" alt="back" /></button>
-    </a>
+  <!-- Фиксированная кнопка назад — левый верхний угол -->
+  <a href="index.html" style="position:fixed;top:16px;left:16px;z-index:200;">
+    <button class="bar-btn" style="width:44px;height:44px;background:#1a1a1a;border-radius:50%;border:1px solid #333;">
+      <img src="ic_back.png" alt="back" style="width:36px;height:36px;" />
+    </button>
+  </a>
+
+  <!-- Фиксированная кнопка Запустить внизу -->
+  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:440px;padding:12px 16px 24px;background:#1a1a1a;border-top:1px solid #2a2a2a;border-radius:24px 24px 0 0;z-index:100;">
+    <button class="big-btn btn-primary" id="generate-btn-fixed" onclick="startGenerate()" disabled style="width:100%;">▶ Запустить</button>
   </div>
 </div>
 
@@ -254,6 +260,7 @@ function loadImage(img) {
   initNails();
   document.getElementById('generate-btn').removeAttribute('disabled');
   document.getElementById('reset-btn').removeAttribute('disabled');
+  syncGenerateBtn(false);
 }
 
 // ---- Рисование фото на canvas ----
@@ -371,6 +378,11 @@ function getLineColor(nail1, nail2) {
 }
 
 // ---- Генерация ----
+function syncGenerateBtn(disabled) {
+  let btns = [document.getElementById('generate-btn'), document.getElementById('generate-btn-fixed')];
+  btns.forEach(b => { if(b) disabled ? b.setAttribute('disabled','') : b.removeAttribute('disabled'); });
+}
+
 function startGenerate() {
   if (isGenerating) return;
   isGenerating = true;
