@@ -1,5 +1,5 @@
 const CACHE = 'colorknitter-v12';
-const FILES = ['/colorknitter/', '/colorknitter/index2.html', '/colorknitter/icon.png', '/colorknitter/manifest.json'];
+const FILES = ['/colorknitter/', '/colorknitter/index.html', '/colorknitter/icon.png', '/colorknitter/manifest.json'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
