@@ -109,7 +109,7 @@
 
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
-const STORAGE_KEY = 'ck_state_v1';
+const STORAGE_KEY = 'ck_state_v2';
 const SPEEDS = [0.5, 0.75, 1, 1.25, 2];
 
 function saveToStorage(data) {
@@ -150,6 +150,30 @@ function ColorKnitter() {
   const audioRef        = useRef(null);
   sequenceRef.current   = sequence;
 
+  // Загрузка данных от генератора
+  useEffect(() => {
+    const fromGen = localStorage.getItem('ck_from_generator');
+    if (!fromGen) return;
+    try {
+      const { sequenceText, image: imgData } = JSON.parse(fromGen);
+      localStorage.removeItem('ck_from_generator');
+      const seq = parseFile(sequenceText);
+      if (seq.length > 0) {
+        setSequence(seq);
+        setCurrentIndex(0);
+        setRemainingSteps(0);
+        stepCountRef.current = 0;
+        goalReachedRef.current = false;
+        speak(seq[0]);
+      }
+      if (imgData) {
+        const img = new Image();
+        img.onload = () => { loadedImgRef.current = img; setCircleImage(imgData); };
+        img.src = imgData;
+      }
+    } catch(e) { console.error(e); }
+  }, []);
+
   useEffect(() => {
     audioRef.current = new Audio('https://pianosolo.streamguys1.com/live?listenerid=8b5691fb9de68c165068d33274d23ef1&awparams=companionAds%3Atrue&aw_0_req.gdpr=true&us_privacy=1YNN');
     audioRef.current.volume = 0.2;
@@ -162,32 +186,12 @@ function ColorKnitter() {
     else audioRef.current.pause();
   }, [radioPlaying]);
 
-  // Проверяем данные от генератора
   useEffect(() => {
-    const fromGen = localStorage.getItem('ck_from_generator');
-    if (!fromGen) return;
-    try {
-      const { sequenceText, image: imgData } = JSON.parse(fromGen);
-      localStorage.removeItem('ck_from_generator');
-
-      // Загружаем sequence
-      const seq = parseFile(sequenceText);
-      if (seq.length > 0) {
-        setSequence(seq);
-        setCurrentIndex(0);
-        setRemainingSteps(0);
-        stepCountRef.current = 0;
-        goalReachedRef.current = false;
-        speak(seq[0]);
-      }
-
-      // Загружаем картинку как подложку
-      if (imgData) {
-        const img = new Image();
-        img.onload = () => { loadedImgRef.current = img; setCircleImage(imgData); };
-        img.src = imgData;
-      }
-    } catch(e) { console.error(e); }
+    if (restored?.circleImage && !localStorage.getItem('ck_from_generator')) {
+      const img = new Image();
+      img.onload = () => { loadedImgRef.current = img; };
+      img.src = restored.circleImage;
+    }
   }, []);
 
   useEffect(() => {
@@ -358,46 +362,24 @@ function ColorKnitter() {
       ctx.globalAlpha=1; ctx.restore();
     }
 
-    // Окантовка разделена на секторы
-    const rimR = radius + 5.5;
-    const rimW = 8;
-    ctx.lineWidth = rimW;
-    // Сектор A (верх-лево) и D (низ-право) — серые: A от 180° до 270°, D от 0° до 90°
-    // Сектор B (верх-право) и C (низ-лево) — белые: B от 270° до 360°, C от 90° до 180°
-    const sectors = [
-      { start: Math.PI,       end: Math.PI * 1.5, color: '#b5b5b5' }, // A
-      { start: Math.PI * 1.5, end: Math.PI * 2,   color: 'white'   }, // B
-      { start: 0,             end: Math.PI * 0.5, color: 'white'   }, // C (D по углам — низ-право белый)
-      { start: Math.PI * 0.5, end: Math.PI,       color: '#b5b5b5' }, // C (низ-лево серый)
-    ];
-    // Пересчитаем правильно по реальному расположению секторов:
-    // D: 0–90° (правый верх), C: 90–180° (правый низ), A: 180–270° (левый низ), B: 270–360° (левый верх)
-    // Хотим: A(лево-верх) и D(право-низ) серые, B и C белые
-    // A = 180–270, D = 270–360+0–90 нет... D=0–90
-    // Серые: A(180°–270°) и... подождём — A левый верх = 180–270, D правый низ нет
-    // По getAngle: A=180°, B=270°, C=90°, D=0°
-    // Значит: A занимает 180–270, B — 270–360, C — 90–180 (нет, C=90°+65шагов*0.5PI/65)
-    // Упрощённо: каждый сектор ровно 90°
-    // Левый верх = A: 180–270° → серый
-    // Правый верх = B: 270–360° → белый  
-    // Левый низ = C: 90–180° → белый
-    // Правый низ = D: 0–90° → серый
+    // Окантовка
     const currentSector = sequence[currentIndex] ? getSector(sequence[currentIndex].value) : null;
+    const rimR = radius + 5.5, rimW = 8;
+    ctx.lineWidth = rimW;
     const rimSectors = [
-      { start: Math.PI,       end: Math.PI * 1.5, color: '#b5b5b5', sector: 'A' },
-      { start: Math.PI * 1.5, end: Math.PI * 2,   color: 'white',   sector: 'B' },
-      { start: 0,             end: Math.PI * 0.5, color: '#b5b5b5', sector: 'D' },
-      { start: Math.PI * 0.5, end: Math.PI,       color: 'white',   sector: 'C' },
+      { start: Math.PI,       end: Math.PI*1.5, color:'#b5b5b5', sector:'A' },
+      { start: Math.PI*1.5,   end: Math.PI*2,   color:'white',   sector:'B' },
+      { start: 0,             end: Math.PI*0.5, color:'#b5b5b5', sector:'D' },
+      { start: Math.PI*0.5,   end: Math.PI,     color:'white',   sector:'C' },
     ];
-    rimSectors.forEach(({start, end, color, sector}) => {
-      ctx.beginPath();
-      ctx.arc(cx, cy, rimR, start, end);
-      ctx.strokeStyle = sector === currentSector ? '#efca46' : color;
+    rimSectors.forEach(({start,end,color,sector})=>{
+      ctx.beginPath(); ctx.arc(cx,cy,rimR,start,end);
+      ctx.strokeStyle = sector===currentSector?'#efca46':color;
       ctx.stroke();
     });
 
-    // Синяя линия (над фото, под чёрной)
-    if(showNextLine&&currentIndex<sequence.length-1){
+    // Синяя линия
+    if(sequence.length>0&&showNextLine&&currentIndex<sequence.length-1){
       const a1=getAngle(getSector(sequence[currentIndex].value),getPos(sequence[currentIndex].value));
       const a2=getAngle(getSector(sequence[currentIndex+1].value),getPos(sequence[currentIndex+1].value));
       const nx1=cx+radius*Math.cos(a1),ny1=cy+radius*Math.sin(a1);
@@ -412,8 +394,8 @@ function ColorKnitter() {
       ctx.closePath(); ctx.fillStyle='#3b82f6'; ctx.fill();
     }
 
-    // Чёрная линия (самая верхняя)
-    if(currentIndex>0){
+    // Чёрная линия
+    if(sequence.length>0&&currentIndex>0){
       const a1=getAngle(getSector(sequence[currentIndex-1].value),getPos(sequence[currentIndex-1].value));
       const a2=getAngle(getSector(sequence[currentIndex].value),getPos(sequence[currentIndex].value));
       const x1=cx+radius*Math.cos(a1),y1=cy+radius*Math.sin(a1);
@@ -428,8 +410,8 @@ function ColorKnitter() {
       ctx.closePath(); ctx.fillStyle='black'; ctx.fill();
     }
 
-    // Красный указатель (поверх всего)
-    if(sequence[currentIndex]){
+    // Красный указатель
+    if(sequence.length>0&&sequence[currentIndex]){
       const a=getAngle(getSector(sequence[currentIndex].value),getPos(sequence[currentIndex].value));
       ctx.beginPath();
       ctx.moveTo(cx+radius*Math.cos(a),cy+radius*Math.sin(a));
