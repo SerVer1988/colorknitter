@@ -135,7 +135,10 @@
 
     <div id="save-wrap" style="display:none">
       <hr class="divider" style="margin-bottom:14px" />
-      <button class="big-btn btn-save" onclick="saveImage()">💾 Сохранить PNG</button>
+      <div class="btn-row" style="gap:8px">
+        <button class="big-btn btn-save" onclick="saveImage()" style="flex:1">💾 PNG</button>
+        <button class="big-btn" onclick="openInKnitter()" style="flex:2;background:#2563eb;color:white;border:none">🪡 В вязалку</button>
+      </div>
     </div>
   </div>
 
@@ -447,6 +450,25 @@ function resetAll(){
   document.getElementById('status-box').classList.remove('visible');
   document.getElementById('save-wrap').style.display='none';
   document.getElementById('generate-btn').removeAttribute('disabled');
+}
+
+function openInKnitter() {
+  try {
+    // Формируем текст файла в формате который понимает вязалка
+    // sequence содержит индексы 0-259, вязалка ожидает числа 1-260
+    let lines = sequence.map(n => n + 1).join('\n');
+
+    // Сохраняем sequence и картинку в localStorage
+    localStorage.setItem('ck_from_generator', JSON.stringify({
+      sequenceText: lines,
+      image: canvas.toDataURL('image/jpeg', 0.7) // картинка результата
+    }));
+
+    // Переходим на вязалку
+    window.location.href = 'index2.html';
+  } catch(e) {
+    alert('Ошибка: ' + e.message);
+  }
 }
 
 function saveImage(){
