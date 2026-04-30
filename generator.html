@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>ColorKnitter — Генератор</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <link rel="apple-touch-icon" href="icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; background: #0a0a0a; font-family: Arial, sans-serif; color: white; }
+    body { display: flex; justify-content: center; }
+    #root { width: 100%; max-width: 440px; min-height: 100vh; display: flex; flex-direction: column; padding: 0 0 90px 0; }
+
+    .logo-row { display: flex; justify-content: center; padding: 16px 0 8px; }
+    .logo-row img { width: 52px; height: 52px; border-radius: 12px; }
+
+    .title { text-align: center; font-size: 16px; font-weight: 700; color: #aaa; margin-bottom: 12px; }
+
+    .canvas-wrap { display: flex; justify-content: center; padding: 0 12px; }
+    #canvas { border-radius: 50%; display: block; width: 100%; max-width: 400px; aspect-ratio: 1; }
+
+    .controls { display: flex; flex-direction: column; gap: 14px; padding: 16px 12px; }
+
+    /* Выбор режима */
+    .mode-row { display: flex; gap: 8px; }
+    .mode-btn { flex: 1; padding: 12px 0; border-radius: 12px; border: 2px solid #333; background: transparent; color: #aaa; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+    .mode-btn.active { border-color: #EFCA46; color: #EFCA46; }
+
+    /* Слайдеры */
+    .s-label { font-size: 13px; color: #aaa; display: flex; justify-content: space-between; margin-bottom: 6px; }
+    input[type=range] { width: 100%; accent-color: #7c3aed; }
+
+    /* Количество линий */
+    .lines-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .s-input-label { font-size: 12px; color: #aaa; margin-bottom: 4px; display: block; }
+    input[type=number] { width: 100%; background: #111; border: 1.5px solid #333; border-radius: 8px; padding: 8px; text-align: center; font-size: 15px; color: white; outline: none; }
+    input[type=number]:focus { border-color: #7c3aed; }
+
+    /* Инвертировать */
+    .toggle-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #ccc; }
+    .toggle-switch { position: relative; width: 40px; height: 24px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; inset: 0; background: #444; border-radius: 999px; cursor: pointer; transition: background 0.2s; }
+    .toggle-slider:before { content:''; position:absolute; width:16px; height:16px; left:4px; top:4px; background:white; border-radius:50%; transition:transform 0.2s; }
+    input:checked + .toggle-slider { background: #7c3aed; }
+    input:checked + .toggle-slider:before { transform: translateX(16px); }
+
+    .divider { border: none; border-top: 1px solid #222; }
+
+    /* Кнопки */
+    .btn-row { display: flex; gap: 8px; }
+    .big-btn { flex: 1; padding: 14px; border-radius: 14px; border: none; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+    .big-btn:active { transform: scale(0.96); }
+    .big-btn:disabled { opacity: 0.35; }
+    .btn-primary { background: #7c3aed; color: white; }
+    .btn-secondary { background: #222; color: #ccc; border: 1.5px solid #333; }
+    .btn-save { background: #EFCA46; color: black; }
+
+    /* Статус */
+    .status-box { background: #111; border-radius: 12px; padding: 10px 14px; font-size: 13px; color: #aaa; line-height: 1.8; display: none; }
+    .status-box.visible { display: block; }
+
+    /* Нижняя панель */
+    .bottom-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; padding: 10px 20px 24px; background: #1a1a1a; border-top: 1px solid #2a2a2a; border-radius: 24px 24px 0 0; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+    .bar-btn { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; }
+    .bar-btn img { width: 52px; height: 52px; border-radius: 50%; }
+    .bar-btn:active { opacity: 0.7; }
+
+    /* Прогресс */
+    .progress-wrap { background: #1a1a1a; border-radius: 999px; height: 6px; overflow: hidden; }
+    .progress-bar { height: 100%; background: #7c3aed; border-radius: 999px; transition: width 0.1s; width: 0%; }
+
+    /* Загрузка фото */
+    .upload-area { border: 2px dashed #333; border-radius: 16px; padding: 32px; text-align: center; cursor: pointer; transition: border-color 0.2s; }
+    .upload-area:hover { border-color: #7c3aed; }
+    .upload-area .icon { font-size: 48px; margin-bottom: 8px; }
+    .upload-area .hint { font-size: 13px; color: #666; margin-top: 6px; }
+  </style>
+</head>
+<body>
+<div id="root">
+  <div class="logo-row">
+    <img src="icon.png" alt="CK" onError="this.style.display='none'" />
+  </div>
+  <div class="title">Генератор String Art</div>
+
+  <div class="canvas-wrap">
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div class="controls">
+
+    <!-- Загрузка фото -->
+    <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
+      <div class="icon">🖼️</div>
+      <div>Нажмите чтобы загрузить фото</div>
+      <div class="hint">JPG, PNG, WEBP</div>
+    </div>
+    <input type="file" id="file-input" accept="image/*" style="display:none" />
+
+    <hr class="divider" />
+
+    <!-- Режим: чёрно-белый / цветной -->
+    <div>
+      <div class="s-label"><span>Режим</span></div>
+      <div class="mode-row">
+        <button class="mode-btn active" id="btn-bw" onclick="setMode('bw')">⚫ Чёрный</button>
+        <button class="mode-btn" id="btn-color" onclick="setMode('color')">🌈 Цветной</button>
+      </div>
+    </div>
+
+    <!-- Инвертировать -->
+    <div class="toggle-row">
+      <span>Инвертировать яркость</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="invert-box" />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <!-- Контрастность и яркость -->
+    <div>
+      <div class="s-label"><span>Контрастность</span><span id="contrast-val">0</span></div>
+      <input type="range" id="contrast-box" value="0" min="-100" max="100" step="5" />
+    </div>
+    <div>
+      <div class="s-label"><span>Яркость</span><span id="brightness-val">0</span></div>
+      <input type="range" id="brightness-box" value="0" min="-100" max="100" step="5" />
+    </div>
+
+    <!-- Количество линий -->
+    <div>
+      <span class="s-input-label">Количество линий</span>
+      <input type="number" id="lines-count-box" value="3000" min="100" max="10000" />
+    </div>
+
+    <hr class="divider" />
+
+    <!-- Кнопки -->
+    <div class="btn-row">
+      <button class="big-btn btn-primary" id="generate-btn" onclick="startGenerate()" disabled>▶ Запустить</button>
+      <button class="big-btn btn-secondary" id="reset-btn" onclick="resetAll()" disabled>↺ Сброс</button>
+    </div>
+
+    <!-- Прогресс -->
+    <div class="progress-wrap" id="progress-wrap" style="display:none">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <!-- Статус -->
+    <div class="status-box" id="status-box"></div>
+
+    <!-- Сохранить -->
+    <div id="save-wrap" style="display:none">
+      <hr class="divider" style="margin-bottom:14px" />
+      <button class="big-btn btn-save" onclick="saveImage()">💾 Сохранить PNG</button>
+    </div>
+
+  </div>
+
+  <div class="bottom-bar">
+    <a href="index.html">
+      <button class="bar-btn"><img src="ic_back.png" alt="back" /></button>
+    </a>
+  </div>
+</div>
+
+<script>
+// ---- Константы ----
+const NAIL_RADIUS = 1;
+const NAIL_COLOR = '#000';
+const BACKGROUND_COLOR = '#ffffff';
+const PADDING = 5;
+const NAILS_COUNT = 260;
+const LINE_WEIGHT = 15; // 15% прозрачность
+
+// ---- Состояние ----
+let canvas = document.getElementById('canvas');
+let ctx = canvas.getContext('2d');
+let image = null;
+let nails = [];
+let pixels = [];
+let sequence = [];
+let isGenerating = false;
+let mode = 'bw'; // 'bw' или 'color'
+let animFrame = null;
+
+// Вспомогательные canvas
+let fakeCanvas = document.createElement('canvas');
+let fakeCtx = fakeCanvas.getContext('2d');
+let pixelCanvas = document.createElement('canvas');
+let pixelCtx = pixelCanvas.getContext('2d');
+
+let width, height, x0, y0, radius;
+let dpr = window.devicePixelRatio || 1;
+
+let contrastTable = [], brightnessTable = [];
+
+// ---- Инициализация canvas ----
+function initCanvas() {
+  const wrap = document.querySelector('.canvas-wrap');
+  const size = Math.min(wrap.clientWidth, 400);
+  width = size; height = size;
+  x0 = width / 2; y0 = height / 2;
+  radius = Math.min(width, height) / 2 - PADDING;
+
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+  canvas.style.width = width + 'px';
+  canvas.style.height = height + 'px';
+  ctx.scale(dpr, dpr);
+
+  fakeCanvas.width = width * dpr;
+  fakeCanvas.height = height * dpr;
+  fakeCtx.scale(dpr, dpr);
+
+  pixelCanvas.width = width;
+  pixelCanvas.height = height;
+}
+
+// ---- Таблицы яркости/контрастности ----
+function limitPixel(v) { return Math.max(0, Math.min(255, Math.round(v))); }
+
+function updateContrast() {
+  let val = +document.getElementById('contrast-box').value;
+  document.getElementById('contrast-val').textContent = val > 0 ? '+'+val : val;
+  let c = 1 + val / 100;
+  contrastTable = Array.from({length:256}, (_,i) => limitPixel((i-128)*c+128));
+}
+
+function updateBrightness() {
+  let val = +document.getElementById('brightness-box').value;
+  document.getElementById('brightness-val').textContent = val > 0 ? '+'+val : val;
+  let b = 1 + val / 100;
+  brightnessTable = Array.from({length:256}, (_,i) => limitPixel(i*b));
+}
+
+// ---- Загрузка фото ----
+document.getElementById('file-input').addEventListener('change', function() {
+  if (!this.files[0]) return;
+  let img = new Image();
+  img.onload = () => loadImage(img);
+  img.src = URL.createObjectURL(this.files[0]);
+});
+
+function loadImage(img) {
+  image = img;
+  document.getElementById('upload-area').innerHTML = `<div style="font-size:13px;color:#7c3aed;font-weight:700">✅ Фото загружено</div><div style="font-size:12px;color:#666;margin-top:4px">${img.width}×${img.height}</div>`;
+  drawLoadedImage();
+  initNails();
+  document.getElementById('generate-btn').removeAttribute('disabled');
+  document.getElementById('reset-btn').removeAttribute('disabled');
+}
+
+// ---- Рисование фото на canvas ----
+function getLightness(r,g,b) { return Math.floor(0.2126*r + 0.7152*g + 0.0722*b); }
+
+function drawLoadedImage() {
+  if (!image) return;
+  ctx.clearRect(0,0,width,height);
+
+  // Фон — белый круг
+  ctx.save();
+  ctx.beginPath(); ctx.arc(x0,y0,radius+PADDING/2,0,Math.PI*2);
+  ctx.fillStyle = BACKGROUND_COLOR; ctx.fill();
+  ctx.clip();
+
+  // Масштабируем фото в круг
+  let scale = Math.max(width/image.width, height/image.height);
+  let iw = image.width*scale, ih = image.height*scale;
+  let ix = (width-iw)/2, iy = (height-ih)/2;
+
+  if (mode === 'bw') {
+    // Чёрно-белый с яркостью/контрастом
+    fakeCtx.clearRect(0,0,width,height);
+    fakeCtx.drawImage(image, ix, iy, iw, ih);
+    let data = fakeCtx.getImageData(0, 0, width*dpr, height*dpr);
+    let px = data.data;
+    let invert = document.getElementById('invert-box').checked;
+    for (let i=0;i<px.length;i+=4) {
+      let l = getLightness(px[i],px[i+1],px[i+2]);
+      if (invert) l = 255-l;
+      l = brightnessTable[l]; l = contrastTable[l];
+      px[i]=px[i+1]=px[i+2]=l;
+    }
+    fakeCtx.putImageData(data,0,0);
+    ctx.drawImage(fakeCanvas,0,0,width,height);
+  } else {
+    // Цветной с яркостью/контрастом
+    fakeCtx.clearRect(0,0,width,height);
+    fakeCtx.drawImage(image, ix, iy, iw, ih);
+    let data = fakeCtx.getImageData(0, 0, width*dpr, height*dpr);
+    let px = data.data;
+    let invert = document.getElementById('invert-box').checked;
+    for (let i=0;i<px.length;i+=4) {
+      for (let c=0;c<3;c++) {
+        let v = px[i+c];
+        if (invert) v = 255-v;
+        v = brightnessTable[v]; v = contrastTable[v];
+        px[i+c] = v;
+      }
+    }
+    fakeCtx.putImageData(data,0,0);
+    ctx.drawImage(fakeCanvas,0,0,width,height);
+  }
+
+  ctx.restore();
+  ctx.strokeStyle = '#000'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.arc(x0,y0,radius+PADDING/2,0,Math.PI*2); ctx.stroke();
+}
+
+// ---- Гвозди ----
+function initNails() {
+  nails = [];
+  let angle = 2*Math.PI/NAILS_COUNT;
+  for (let i=0;i<NAILS_COUNT;i++) {
+    let t = i*angle;
+    nails.push({ x: Math.round(x0+radius*Math.cos(t)), y: Math.round(y0+radius*Math.sin(t)) });
+  }
+}
+
+// ---- Пикселизация линии (Bresenham) ----
+function lineRasterization(x1,y1,x2,y2) {
+  let line = new Set();
+  let dx=Math.abs(x2-x1), dy=Math.abs(y2-y1);
+  let sx=Math.sign(x2-x1), sy=Math.sign(y2-y1);
+  let err=dx-dy;
+  while(x1!=x2||y1!=y2) {
+    line.add(y1*width+x1);
+    let e2=err*2;
+    if(e2>-dy){err-=dy;x1+=sx;}
+    if(e2<dx){err+=dx;y1+=sy;}
+  }
+  line.add(y2*width+x2);
+  return line;
+}
+
+// ---- Получить пиксели ----
+function getPixels() {
+  pixelCtx.drawImage(canvas, 0, 0, width, height);
+  let data = pixelCtx.getImageData(0,0,width,height).data;
+  let px = [];
+  for (let i=0;i<data.length;i+=4)
+    px.push(getLightness(data[i],data[i+1],data[i+2]));
+  return px;
+}
+
+// ---- Цвет линии ----
+function getLineColor(nail1, nail2) {
+  if (mode === 'bw') {
+    let w = limitPixel(LINE_WEIGHT/100*255);
+    return `#000000${w.toString(16).padStart(2,'0')}`;
+  } else {
+    // Берём средний цвет между двумя гвоздями из оригинального фото
+    let mx = Math.round((nail1.x+nail2.x)/2);
+    let my = Math.round((nail1.y+nail2.y)/2);
+    pixelCtx.drawImage(image,
+      Math.max(0,mx-1), Math.max(0,my-1), 2, 2,
+      0, 0, 2, 2);
+    let d = pixelCtx.getImageData(0,0,1,1).data;
+    let w = limitPixel(LINE_WEIGHT/100*255).toString(16).padStart(2,'0');
+    let r = d[0].toString(16).padStart(2,'0');
+    let g = d[1].toString(16).padStart(2,'0');
+    let b = d[2].toString(16).padStart(2,'0');
+    return `#${r}${g}${b}${w}`;
+  }
+}
+
+// ---- Генерация ----
+function startGenerate() {
+  if (isGenerating) return;
+  isGenerating = true;
+
+  sequence = [];
+  drawLoadedImage();
+  pixels = getPixels();
+
+  // Очищаем canvas и рисуем белый круг + гвозди
+  ctx.clearRect(0,0,width,height);
+  ctx.beginPath(); ctx.arc(x0,y0,radius+PADDING/2,0,Math.PI*2);
+  ctx.fillStyle=BACKGROUND_COLOR; ctx.fill();
+  ctx.strokeStyle='#000'; ctx.lineWidth=1; ctx.stroke();
+
+  ctx.fillStyle=NAIL_COLOR;
+  for (let n of nails) {
+    ctx.beginPath(); ctx.arc(n.x,n.y,NAIL_RADIUS,0,Math.PI*2); ctx.fill();
+  }
+
+  document.getElementById('generate-btn').setAttribute('disabled','');
+  document.getElementById('progress-wrap').style.display='';
+  document.getElementById('status-box').classList.add('visible');
+  document.getElementById('save-wrap').style.display='none';
+
+  let totalLines = +document.getElementById('lines-count-box').value;
+  let lineWeight = limitPixel(LINE_WEIGHT/100*255);
+  let startTime = performance.now();
+  let nail = 0;
+
+  // Запускаем генерацию батчами чтобы не блокировать UI
+  function runBatch() {
+    const BATCH = 20;
+    for (let b=0;b<BATCH;b++) {
+      if (sequence.length >= totalLines) {
+        finishGenerate(startTime, totalLines);
+        return;
+      }
+
+      sequence.push(nail);
+      let nextNail = nail, nextLine = null, minL = Infinity;
+
+      for (let i=0;i<nails.length;i++) {
+        if (i===nail) continue;
+        let line = lineRasterization(nails[i].x,nails[i].y,nails[nail].x,nails[nail].y);
+        let l = 0;
+        for (let idx of line) l += pixels[idx];
+        l /= line.size;
+        if (l < minL) { minL=l; nextNail=i; nextLine=line; }
+      }
+
+      // Убираем линию из пикселей
+      for (let idx of nextLine)
+        pixels[idx] = Math.min(255, pixels[idx]+lineWeight*dpr);
+
+      // Рисуем линию
+      let lc = mode==='bw'
+        ? `rgba(0,0,0,${LINE_WEIGHT/100})`
+        : getLineColorFromNails(nails[nail], nails[nextNail]);
+      ctx.lineWidth=1; ctx.strokeStyle=lc;
+      ctx.beginPath(); ctx.moveTo(nails[nail].x,nails[nail].y);
+      ctx.lineTo(nails[nextNail].x,nails[nextNail].y); ctx.stroke();
+
+      nail = nextNail;
+    }
+
+    // Прогресс
+    let done = sequence.length;
+    let pct = Math.round(done/totalLines*100);
+    document.getElementById('progress-bar').style.width = pct+'%';
+    let elapsed = ((performance.now()-startTime)/1000).toFixed(1);
+    let remaining = ((performance.now()-startTime)/done*(totalLines-done)/1000).toFixed(1);
+    document.getElementById('status-box').innerHTML =
+      `<b>Линий:</b> ${done} / ${totalLines}<br><b>Прошло:</b> ${elapsed}с<br><b>Осталось:</b> ~${remaining}с`;
+
+    animFrame = requestAnimationFrame(runBatch);
+  }
+
+  animFrame = requestAnimationFrame(runBatch);
+}
+
+function getLineColorFromNails(n1, n2) {
+  let scale = Math.max(width/image.width, height/image.height);
+  let iw = image.width*scale, ih = image.height*scale;
+  let ix = (width-iw)/2, iy = (height-ih)/2;
+  let mx = Math.round((n1.x+n2.x)/2);
+  let my = Math.round((n1.y+n2.y)/2);
+  // Переводим в координаты изображения
+  let imgX = Math.round((mx-ix)/scale);
+  let imgY = Math.round((my-iy)/scale);
+  imgX = Math.max(0,Math.min(image.width-1,imgX));
+  imgY = Math.max(0,Math.min(image.height-1,imgY));
+  pixelCtx.drawImage(image,imgX,imgY,1,1,0,0,1,1);
+  let d = pixelCtx.getImageData(0,0,1,1).data;
+  let invert = document.getElementById('invert-box').checked;
+  let r=d[0],g=d[1],b=d[2];
+  if(invert){r=255-r;g=255-g;b=255-b;}
+  return `rgba(${r},${g},${b},${LINE_WEIGHT/100})`;
+}
+
+function finishGenerate(startTime, totalLines) {
+  isGenerating = false;
+  let elapsed = ((performance.now()-startTime)/1000).toFixed(1);
+  document.getElementById('progress-bar').style.width='100%';
+  document.getElementById('status-box').innerHTML =
+    `✅ <b>Готово!</b> ${totalLines} линий за ${elapsed}с`;
+  document.getElementById('generate-btn').removeAttribute('disabled');
+  document.getElementById('save-wrap').style.display='';
+}
+
+function resetAll() {
+  if (animFrame) cancelAnimationFrame(animFrame);
+  isGenerating = false;
+  sequence = [];
+  drawLoadedImage();
+  document.getElementById('progress-bar').style.width='0%';
+  document.getElementById('progress-wrap').style.display='none';
+  document.getElementById('status-box').classList.remove('visible');
+  document.getElementById('save-wrap').style.display='none';
+  document.getElementById('generate-btn').removeAttribute('disabled');
+}
+
+function saveImage() {
+  let link = document.createElement('a');
+  link.href = canvas.toDataURL('image/png');
+  link.download = 'stringart.png';
+  link.click();
+}
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('btn-bw').classList.toggle('active', m==='bw');
+  document.getElementById('btn-color').classList.toggle('active', m==='color');
+  if (image) drawLoadedImage();
+}
+
+// ---- Слайдеры ----
+document.getElementById('contrast-box').addEventListener('input', () => { updateContrast(); if(image) drawLoadedImage(); });
+document.getElementById('brightness-box').addEventListener('input', () => { updateBrightness(); if(image) drawLoadedImage(); });
+document.getElementById('invert-box').addEventListener('change', () => { if(image) drawLoadedImage(); });
+
+// ---- Инициализация ----
+initCanvas();
+updateContrast();
+updateBrightness();
+initNails();
+</script>
+</body>
+</html>
