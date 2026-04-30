@@ -20,8 +20,7 @@
     .title { text-align: center; font-size: 16px; font-weight: 700; color: #aaa; margin-bottom: 12px; }
 
     .canvas-wrap { display: flex; justify-content: center; padding: 0 12px; position: relative; touch-action: none; }
-    #canvas { border-radius: 50%; display: block; width: 100%; max-width: 400px; aspect-ratio: 1; cursor: pointer; }
-
+    #canvas { border-radius: 50%; display: block; width: 100%; max-width: 400px; aspect-ratio: 1; }
     .canvas-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; pointer-events: none; }
     .canvas-hint .icon { font-size: 48px; margin-bottom: 8px; }
     .canvas-hint .text { font-size: 15px; color: #888; font-weight: 600; }
@@ -33,20 +32,16 @@
     .mode-btn { flex: 1; padding: 12px 0; border-radius: 12px; border: 2px solid #333; background: transparent; color: #aaa; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
     .mode-btn.active { border-color: #EFCA46; color: #EFCA46; }
 
+    .filter-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .filter-btn { padding: 10px 0; border-radius: 10px; border: 2px solid #333; background: transparent; color: #aaa; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .filter-btn.active { border-color: #7c3aed; color: #c4b5fd; background: #1e1030; }
+
     .s-label { font-size: 13px; color: #aaa; display: flex; justify-content: space-between; margin-bottom: 6px; }
     input[type=range] { width: 100%; accent-color: #7c3aed; }
 
     .s-input-label { font-size: 12px; color: #aaa; margin-bottom: 4px; display: block; }
     input[type=number] { width: 100%; background: #111; border: 1.5px solid #333; border-radius: 8px; padding: 8px; text-align: center; font-size: 15px; color: white; outline: none; }
     input[type=number]:focus { border-color: #7c3aed; }
-
-    .toggle-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #ccc; }
-    .toggle-switch { position: relative; width: 40px; height: 24px; flex-shrink: 0; }
-    .toggle-switch input { opacity: 0; width: 0; height: 0; }
-    .toggle-slider { position: absolute; inset: 0; background: #444; border-radius: 999px; cursor: pointer; transition: background 0.2s; }
-    .toggle-slider:before { content:''; position:absolute; width:16px; height:16px; left:4px; top:4px; background:white; border-radius:50%; transition:transform 0.2s; }
-    input:checked + .toggle-slider { background: #7c3aed; }
-    input:checked + .toggle-slider:before { transform: translateX(16px); }
 
     .divider { border: none; border-top: 1px solid #222; }
 
@@ -60,30 +55,24 @@
 
     .status-box { background: #111; border-radius: 12px; padding: 10px 14px; font-size: 13px; color: #aaa; line-height: 1.8; display: none; }
     .status-box.visible { display: block; }
-
     .progress-wrap { background: #1a1a1a; border-radius: 999px; height: 6px; overflow: hidden; display: none; }
     .progress-bar { height: 100%; background: #7c3aed; border-radius: 999px; transition: width 0.1s; width: 0%; }
 
     .bottom-fixed { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; padding: 12px 16px 28px; background: #1a1a1a; border-top: 1px solid #2a2a2a; border-radius: 24px 24px 0 0; z-index: 100; }
-
-    .back-btn { position: fixed; top: 16px; left: 16px; z-index: 200; width: 44px; height: 44px; background: #1a1a1a; border-radius: 50%; border: 1px solid #333; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .back-btn { position: fixed; top: 16px; left: 16px; z-index: 200; width: 44px; height: 44px; background: #1a1a1a; border-radius: 50%; border: 1px solid #333; display: flex; align-items: center; justify-content: center; }
     .back-btn img { width: 36px; height: 36px; }
   </style>
 </head>
 <body>
 <div id="root">
 
-  <!-- Кнопка назад -->
-  <a href="index.html" class="back-btn">
-    <img src="ic_back.png" alt="back" />
-  </a>
+  <a href="index.html" class="back-btn"><img src="ic_back.png" alt="back" /></a>
 
   <div class="logo-row">
     <img src="icon.png" alt="CK" onError="this.style.display='none'" />
   </div>
   <div class="title">Генератор String Art</div>
 
-  <!-- Canvas -->
   <div class="canvas-wrap" id="canvas-wrap">
     <canvas id="canvas"></canvas>
     <div class="canvas-hint" id="canvas-hint">
@@ -91,10 +80,13 @@
       <div class="text">Нажмите чтобы<br>загрузить фото</div>
       <div class="sub">JPG, PNG, WEBP</div>
     </div>
-    <input type="file" id="file-input" accept="image/*" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10;" />
+    <input type="file" id="file-input" accept="image/*"
+      style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10;" />
   </div>
 
   <div class="controls">
+
+    <!-- Режим -->
     <div>
       <div class="s-label"><span>Режим</span></div>
       <div class="mode-row">
@@ -103,23 +95,30 @@
       </div>
     </div>
 
-    <div class="toggle-row">
-      <span>Инвертировать яркость</span>
-      <label class="toggle-switch">
-        <input type="checkbox" id="invert-box" />
-        <span class="toggle-slider"></span>
-      </label>
+    <!-- Фильтр -->
+    <div id="filter-section">
+      <div class="s-label"><span>Фильтр</span></div>
+      <div class="filter-row">
+        <button class="filter-btn active" onclick="setFilter('normal')">Обычный</button>
+        <button class="filter-btn" onclick="setFilter('hard')">Жёсткий</button>
+        <button class="filter-btn" onclick="setFilter('soft')">Мягкий</button>
+        <button class="filter-btn" onclick="setFilter('silhouette')">Силуэт</button>
+      </div>
     </div>
 
+    <!-- Контрастность -->
     <div>
       <div class="s-label"><span>Контрастность</span><span id="contrast-val">0</span></div>
       <input type="range" id="contrast-box" value="0" min="-100" max="100" step="5" />
     </div>
+
+    <!-- Яркость -->
     <div>
       <div class="s-label"><span>Яркость</span><span id="brightness-val">0</span></div>
       <input type="range" id="brightness-box" value="0" min="-100" max="100" step="5" />
     </div>
 
+    <!-- Кол-во линий -->
     <div>
       <span class="s-input-label">Количество линий</span>
       <input type="number" id="lines-count-box" value="3000" min="100" max="10000" />
@@ -131,10 +130,7 @@
       <button class="big-btn btn-secondary" id="reset-btn" onclick="resetAll()" disabled>↺ Сброс</button>
     </div>
 
-    <div class="progress-wrap" id="progress-wrap">
-      <div class="progress-bar" id="progress-bar"></div>
-    </div>
-
+    <div class="progress-wrap" id="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
     <div class="status-box" id="status-box"></div>
 
     <div id="save-wrap" style="display:none">
@@ -143,291 +139,227 @@
     </div>
   </div>
 
-  <!-- Фиксированная кнопка запустить -->
   <div class="bottom-fixed">
     <button class="big-btn btn-primary" id="generate-btn" onclick="startGenerate()" disabled style="width:100%">▶ Запустить</button>
   </div>
-
 </div>
 
 <script>
-const NAIL_RADIUS = 1;
-const NAIL_COLOR = '#000';
-const BACKGROUND_COLOR = '#ffffff';
-const PADDING = 5;
-const NAILS_COUNT = 260;
-const LINE_WEIGHT = 8;
+const NAIL_RADIUS = 1, NAIL_COLOR = '#000', PADDING = 5;
+const NAILS_COUNT = 260, LINE_WEIGHT = 8;
 
 let canvas = document.getElementById('canvas');
 let ctx = canvas.getContext('2d');
-let image = null;
-let nails = [];
-let pixels = [];
-let sequence = [];
-let isGenerating = false;
-let mode = 'bw';
-let animFrame = null;
-
-// Позиция и масштаб фото внутри круга
-let imgX = 0, imgY = 0, imgScale = 1;
-let imgNatW = 0, imgNatH = 0; // натуральный размер фото
-
-let fakeCanvas = document.createElement('canvas');
-let fakeCtx = fakeCanvas.getContext('2d');
-let pixelCanvas = document.createElement('canvas');
-let pixelCtx = pixelCanvas.getContext('2d');
-
+let image = null, nails = [], pixels = [], sequence = [];
+let isGenerating = false, mode = 'bw', currentFilter = 'normal', animFrame = null;
+let imgX=0, imgY=0, imgScale=1, imgNatW=0, imgNatH=0;
+let fakeCanvas=document.createElement('canvas'), fakeCtx=fakeCanvas.getContext('2d');
+let pixelCanvas=document.createElement('canvas'), pixelCtx=pixelCanvas.getContext('2d');
 let width, height, x0, y0, radius;
-let dpr = window.devicePixelRatio || 1;
-let contrastTable = [], brightnessTable = [];
+let dpr = window.devicePixelRatio||1;
+let contrastTable=[], brightnessTable=[];
+let touches=[], isDragging=false, lastX=0, lastY=0;
+
+// ---- Фильтры ----
+const FILTERS = {
+  normal:     l => l,
+  hard:       l => {
+    // Усиленный контраст — подавляем средние тона, усиливаем края
+    let c = (l - 128) * 2.5 + 128;
+    return Math.max(0, Math.min(255, Math.round(c)));
+  },
+  soft:       l => {
+    // Мягкий — сжимаем диапазон к середине
+    return Math.round(l * 0.6 + 50);
+  },
+  silhouette: l => {
+    // Порог — только чёрное и белое
+    return l < 128 ? 0 : 255;
+  }
+};
+
+function applyFilter(l) { return FILTERS[currentFilter](l); }
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['normal','hard','soft','silhouette'][i]===f);
+  });
+  if(image) drawPhoto();
+}
 
 // ---- Init canvas ----
 function initCanvas() {
   const wrap = document.getElementById('canvas-wrap');
-  const size = Math.min(wrap.clientWidth - 24, 400);
-  width = size; height = size;
-  x0 = width/2; y0 = height/2;
-  radius = Math.min(width,height)/2 - PADDING;
-
-  canvas.width = width*dpr; canvas.height = height*dpr;
-  canvas.style.width = width+'px'; canvas.style.height = height+'px';
+  const size = Math.min(wrap.clientWidth-24, 400);
+  width=size; height=size; x0=width/2; y0=height/2;
+  radius=Math.min(width,height)/2-PADDING;
+  canvas.width=width*dpr; canvas.height=height*dpr;
+  canvas.style.width=width+'px'; canvas.style.height=height+'px';
   ctx.scale(dpr,dpr);
-
-  fakeCanvas.width = width*dpr; fakeCanvas.height = height*dpr;
-  fakeCtx.scale(dpr,dpr);
-  pixelCanvas.width = width; pixelCanvas.height = height;
-
+  fakeCanvas.width=width*dpr; fakeCanvas.height=height*dpr; fakeCtx.scale(dpr,dpr);
+  pixelCanvas.width=width; pixelCanvas.height=height;
   drawEmpty();
 }
 
 function drawEmpty() {
   ctx.clearRect(0,0,width,height);
   ctx.beginPath(); ctx.arc(x0,y0,radius,0,Math.PI*2);
-  ctx.fillStyle='#ffffff'; ctx.fill();
+  ctx.fillStyle='#fff'; ctx.fill();
   ctx.strokeStyle='#ccc'; ctx.lineWidth=1; ctx.stroke();
 }
 
 // ---- Таблицы ----
 function limitPixel(v) { return Math.max(0,Math.min(255,Math.round(v))); }
-
 function updateContrast() {
-  let val = +document.getElementById('contrast-box').value;
-  document.getElementById('contrast-val').textContent = val>0?'+'+val:val;
-  let c = 1+val/100;
-  contrastTable = Array.from({length:256},(_,i)=>limitPixel((i-128)*c+128));
+  let val=+document.getElementById('contrast-box').value;
+  document.getElementById('contrast-val').textContent=val>0?'+'+val:val;
+  let c=1+val/100;
+  contrastTable=Array.from({length:256},(_,i)=>limitPixel((i-128)*c+128));
 }
 function updateBrightness() {
-  let val = +document.getElementById('brightness-box').value;
-  document.getElementById('brightness-val').textContent = val>0?'+'+val:val;
-  let b = 1+val/100;
-  brightnessTable = Array.from({length:256},(_,i)=>limitPixel(i*b));
+  let val=+document.getElementById('brightness-box').value;
+  document.getElementById('brightness-val').textContent=val>0?'+'+val:val;
+  let b=1+val/100;
+  brightnessTable=Array.from({length:256},(_,i)=>limitPixel(i*b));
 }
 
 // ---- Загрузка фото ----
 document.getElementById('file-input').addEventListener('change', function() {
   if(!this.files[0]) return;
-  // Скрываем input после выбора чтобы не мешал touch-событиям
-  this.style.pointerEvents = 'none';
-  this.style.zIndex = '-1';
-  let img = new Image();
-  img.onload = () => {
-    image = img;
-    imgNatW = img.width; imgNatH = img.height;
-    // Начальный масштаб — вписать фото в круг
-    let scale = (radius*2) / Math.max(img.width, img.height);
-    imgScale = scale;
-    imgX = x0 - img.width*scale/2;
-    imgY = y0 - img.height*scale/2;
-
-    document.getElementById('canvas-hint').style.display = 'none';
-    drawPhoto();
-    initNails();
+  this.style.pointerEvents='none'; this.style.zIndex='-1';
+  let img=new Image();
+  img.onload=()=>{
+    image=img; imgNatW=img.width; imgNatH=img.height;
+    let s=(radius*2)/Math.max(img.width,img.height);
+    imgScale=s; imgX=x0-img.width*s/2; imgY=y0-img.height*s/2;
+    document.getElementById('canvas-hint').style.display='none';
+    drawPhoto(); initNails();
     document.getElementById('generate-btn').removeAttribute('disabled');
     document.getElementById('reset-btn').removeAttribute('disabled');
   };
-  img.src = URL.createObjectURL(this.files[0]);
+  img.src=URL.createObjectURL(this.files[0]);
 });
 
-// ---- Рисование фото ----
-function getLightness(r,g,b) { return Math.floor(0.2126*r+0.7152*g+0.0722*b); }
+// ---- Рисование ----
+function getLightness(r,g,b){return Math.floor(0.2126*r+0.7152*g+0.0722*b);}
+
+function processPixel(r,g,b,isColor){
+  if(isColor){
+    // Цветной: применяем яркость/контраст к каждому каналу + фильтр
+    let res=[r,g,b].map(v=>{
+      v=brightnessTable[v]; v=contrastTable[v]; return v;
+    });
+    return res;
+  } else {
+    let l=getLightness(r,g,b);
+    l=brightnessTable[l]; l=contrastTable[l]; l=applyFilter(l);
+    return [l,l,l];
+  }
+}
 
 function drawPhoto() {
-  if(!image) return;
+  if(!image)return;
   ctx.clearRect(0,0,width,height);
   ctx.save();
   ctx.beginPath(); ctx.arc(x0,y0,radius,0,Math.PI*2);
-  ctx.fillStyle='#ffffff'; ctx.fill();
-  ctx.clip();
+  ctx.fillStyle='#fff'; ctx.fill(); ctx.clip();
 
-  let iw = imgNatW*imgScale, ih = imgNatH*imgScale;
-
-  if(mode==='bw') {
-    fakeCtx.clearRect(0,0,width,height);
-    fakeCtx.drawImage(image, imgX, imgY, iw, ih);
-    let data = fakeCtx.getImageData(0,0,width*dpr,height*dpr);
-    let px = data.data;
-    let invert = document.getElementById('invert-box').checked;
-    for(let i=0;i<px.length;i+=4){
-      let l=getLightness(px[i],px[i+1],px[i+2]);
-      if(invert)l=255-l;
-      l=brightnessTable[l]; l=contrastTable[l];
-      px[i]=px[i+1]=px[i+2]=l;
-    }
-    fakeCtx.putImageData(data,0,0);
-    ctx.drawImage(fakeCanvas,0,0,width,height);
-  } else {
-    fakeCtx.clearRect(0,0,width,height);
-    fakeCtx.drawImage(image, imgX, imgY, iw, ih);
-    let data = fakeCtx.getImageData(0,0,width*dpr,height*dpr);
-    let px = data.data;
-    let invert = document.getElementById('invert-box').checked;
-    for(let i=0;i<px.length;i+=4){
-      for(let c=0;c<3;c++){
-        let v=px[i+c]; if(invert)v=255-v;
-        v=brightnessTable[v]; v=contrastTable[v]; px[i+c]=v;
-      }
-    }
-    fakeCtx.putImageData(data,0,0);
-    ctx.drawImage(fakeCanvas,0,0,width,height);
+  let iw=imgNatW*imgScale, ih=imgNatH*imgScale;
+  fakeCtx.clearRect(0,0,width,height);
+  fakeCtx.drawImage(image,imgX,imgY,iw,ih);
+  let data=fakeCtx.getImageData(0,0,width*dpr,height*dpr);
+  let px=data.data;
+  let isColor=mode==='color';
+  for(let i=0;i<px.length;i+=4){
+    let [nr,ng,nb]=processPixel(px[i],px[i+1],px[i+2],isColor);
+    px[i]=nr; px[i+1]=ng; px[i+2]=nb;
   }
-
+  fakeCtx.putImageData(data,0,0);
+  ctx.drawImage(fakeCanvas,0,0,width,height);
   ctx.restore();
   ctx.strokeStyle='#ccc'; ctx.lineWidth=1;
   ctx.beginPath(); ctx.arc(x0,y0,radius,0,Math.PI*2); ctx.stroke();
 }
 
-// ---- Touch/Mouse для перемещения и зума ----
-let touches = [];
-let isDragging = false;
-let lastX=0, lastY=0;
-
-function getCanvasOffset(e) {
-  let rect = canvas.getBoundingClientRect();
-  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-}
-
-canvas.addEventListener('mousedown', e => {
-  if(!image||isGenerating) return;
-  isDragging=true;
-  let p=getCanvasOffset(e);
-  lastX=p.x; lastY=p.y;
-  e.preventDefault();
-});
-canvas.addEventListener('mousemove', e => {
-  if(!isDragging||!image||isGenerating) return;
-  let p=getCanvasOffset(e);
-  imgX += p.x-lastX; imgY += p.y-lastY;
-  lastX=p.x; lastY=p.y;
-  drawPhoto(); e.preventDefault();
-});
-canvas.addEventListener('mouseup', ()=>isDragging=false);
-canvas.addEventListener('mouseleave', ()=>isDragging=false);
-canvas.addEventListener('wheel', e => {
-  if(!image||isGenerating) return;
-  e.preventDefault();
-  let factor = e.deltaY < 0 ? 1.1 : 0.9;
-  let p=getCanvasOffset(e);
-  let dx=(p.x-imgX)/imgScale, dy=(p.y-imgY)/imgScale;
-  imgScale *= factor;
-  imgScale = Math.max(0.1, Math.min(10, imgScale));
-  imgX = p.x - dx*imgScale; imgY = p.y - dy*imgScale;
-  drawPhoto();
+// ---- Touch/Mouse ----
+function getOff(e){let r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};}
+canvas.addEventListener('mousedown',e=>{if(!image||isGenerating)return;isDragging=true;let p=getOff(e);lastX=p.x;lastY=p.y;e.preventDefault();});
+canvas.addEventListener('mousemove',e=>{if(!isDragging||!image||isGenerating)return;let p=getOff(e);imgX+=p.x-lastX;imgY+=p.y-lastY;lastX=p.x;lastY=p.y;drawPhoto();e.preventDefault();});
+canvas.addEventListener('mouseup',()=>isDragging=false);
+canvas.addEventListener('mouseleave',()=>isDragging=false);
+canvas.addEventListener('wheel',e=>{
+  if(!image||isGenerating)return; e.preventDefault();
+  let f=e.deltaY<0?1.1:0.9,p=getOff(e);
+  let dx=(p.x-imgX)/imgScale,dy=(p.y-imgY)/imgScale;
+  imgScale=Math.max(0.1,Math.min(10,imgScale*f));
+  imgX=p.x-dx*imgScale; imgY=p.y-dy*imgScale; drawPhoto();
 },{passive:false});
 
-// Touch
-canvas.addEventListener('touchstart', e => {
-  if(!image||isGenerating) return;
-  e.preventDefault();
-  touches = Array.from(e.targetTouches).map(t=>({x:t.clientX,y:t.clientY}));
-  if(e.targetTouches.length===1){
-    isDragging=true; lastX=touches[0].x; lastY=touches[0].y;
-  }
+canvas.addEventListener('touchstart',e=>{
+  if(!image||isGenerating)return; e.preventDefault();
+  touches=Array.from(e.targetTouches).map(t=>({x:t.clientX,y:t.clientY}));
+  if(e.targetTouches.length===1){isDragging=true;lastX=touches[0].x;lastY=touches[0].y;}
 },{passive:false});
 
-canvas.addEventListener('touchmove', e => {
-  if(!image||isGenerating) return;
-  e.preventDefault();
-  let cur = Array.from(e.targetTouches).map(t=>({x:t.clientX,y:t.clientY}));
-
-  if(cur.length===1 && isDragging){
-    let dx=cur[0].x-lastX, dy=cur[0].y-lastY;
-    imgX+=dx; imgY+=dy;
-    lastX=cur[0].x; lastY=cur[0].y;
-    drawPhoto();
-  } else if(cur.length===2 && touches.length===2){
-    // Зум двумя пальцами
-    let d1=Math.hypot(touches[1].x-touches[0].x, touches[1].y-touches[0].y);
-    let d2=Math.hypot(cur[1].x-cur[0].x, cur[1].y-cur[0].y);
-    let factor=d2/d1;
-    let cx=(cur[0].x+cur[1].x)/2, cy=(cur[1].y+cur[0].y)/2;
-    let rect=canvas.getBoundingClientRect();
-    let px=cx-rect.left, py=cy-rect.top;
-    let dx2=(px-imgX)/imgScale, dy2=(py-imgY)/imgScale;
-    imgScale*=factor;
-    imgScale=Math.max(0.1,Math.min(10,imgScale));
-    imgX=px-dx2*imgScale; imgY=py-dy2*imgScale;
-
-    // Перемещение центра
-    let mx1=(touches[0].x+touches[1].x)/2, my1=(touches[0].y+touches[1].y)/2;
+canvas.addEventListener('touchmove',e=>{
+  if(!image||isGenerating)return; e.preventDefault();
+  let cur=Array.from(e.targetTouches).map(t=>({x:t.clientX,y:t.clientY}));
+  if(cur.length===1&&isDragging){
+    imgX+=cur[0].x-lastX; imgY+=cur[0].y-lastY;
+    lastX=cur[0].x; lastY=cur[0].y; drawPhoto();
+  } else if(cur.length===2&&touches.length===2){
+    let d1=Math.hypot(touches[1].x-touches[0].x,touches[1].y-touches[0].y);
+    let d2=Math.hypot(cur[1].x-cur[0].x,cur[1].y-cur[0].y);
+    let f=d2/d1, r=canvas.getBoundingClientRect();
+    let cx=(cur[0].x+cur[1].x)/2-r.left, cy=(cur[0].y+cur[1].y)/2-r.top;
+    let dx=(cx-imgX)/imgScale, dy=(cy-imgY)/imgScale;
+    imgScale=Math.max(0.1,Math.min(10,imgScale*f));
+    imgX=cx-dx*imgScale; imgY=cy-dy*imgScale;
+    let mx=(touches[0].x+touches[1].x)/2, my=(touches[0].y+touches[1].y)/2;
     let mx2=(cur[0].x+cur[1].x)/2, my2=(cur[0].y+cur[1].y)/2;
-    imgX+=mx2-mx1; imgY+=my2-my1;
-
+    imgX+=mx2-mx; imgY+=my2-my;
     drawPhoto();
   }
   touches=cur;
 },{passive:false});
 
-canvas.addEventListener('touchend', e => {
-  e.preventDefault();
-  if(e.targetTouches.length===0) isDragging=false;
+canvas.addEventListener('touchend',e=>{
+  e.preventDefault(); isDragging=false;
   touches=Array.from(e.targetTouches).map(t=>({x:t.clientX,y:t.clientY}));
 },{passive:false});
 
 // ---- Гвозди ----
-function initNails() {
+function initNails(){
   nails=[];
-  let angle=2*Math.PI/NAILS_COUNT;
   for(let i=0;i<NAILS_COUNT;i++){
-    let t=i*angle;
+    let t=i*2*Math.PI/NAILS_COUNT;
     nails.push({x:Math.round(x0+radius*Math.cos(t)),y:Math.round(y0+radius*Math.sin(t))});
   }
 }
 
-// ---- Растеризация линии ----
 function lineRasterization(x1,y1,x2,y2){
-  let line=new Set();
-  let dx=Math.abs(x2-x1),dy=Math.abs(y2-y1);
-  let sx=Math.sign(x2-x1),sy=Math.sign(y2-y1);
-  let err=dx-dy;
+  let line=new Set(),dx=Math.abs(x2-x1),dy=Math.abs(y2-y1);
+  let sx=Math.sign(x2-x1),sy=Math.sign(y2-y1),err=dx-dy;
   while(x1!=x2||y1!=y2){
-    line.add(y1*width+x1);
-    let e2=err*2;
-    if(e2>-dy){err-=dy;x1+=sx;}
-    if(e2<dx){err+=dx;y1+=sy;}
+    line.add(y1*width+x1); let e2=err*2;
+    if(e2>-dy){err-=dy;x1+=sx;} if(e2<dx){err+=dx;y1+=sy;}
   }
-  line.add(y2*width+x2);
-  return line;
+  line.add(y2*width+x2); return line;
 }
 
-// ---- Получить пиксели из фото с учётом текущего положения ----
+// ---- Пиксели для анализа ----
 function getPixels(){
   pixelCtx.clearRect(0,0,width,height);
-  pixelCtx.fillStyle='#ffffff';
-  pixelCtx.fillRect(0,0,width,height);
+  pixelCtx.fillStyle='#fff'; pixelCtx.fillRect(0,0,width,height);
   pixelCtx.save();
-  pixelCtx.beginPath();
-  pixelCtx.arc(x0,y0,radius,0,Math.PI*2);
-  pixelCtx.clip();
-  pixelCtx.drawImage(image, imgX, imgY, imgNatW*imgScale, imgNatH*imgScale);
+  pixelCtx.beginPath(); pixelCtx.arc(x0,y0,radius,0,Math.PI*2); pixelCtx.clip();
+  pixelCtx.drawImage(image,imgX,imgY,imgNatW*imgScale,imgNatH*imgScale);
   pixelCtx.restore();
-
-  let data=pixelCtx.getImageData(0,0,width,height).data;
-  let px=[];
-  let invert=document.getElementById('invert-box').checked;
+  let data=pixelCtx.getImageData(0,0,width,height).data, px=[];
   for(let i=0;i<data.length;i+=4){
     let l=getLightness(data[i],data[i+1],data[i+2]);
-    if(invert)l=255-l;
-    l=brightnessTable[l]; l=contrastTable[l];
+    l=brightnessTable[l]; l=contrastTable[l]; l=applyFilter(l);
     let px_x=(i/4)%width, px_y=Math.floor((i/4)/width);
     let ddx=px_x-x0, ddy=px_y-y0;
     if(ddx*ddx+ddy*ddy>radius*radius) l=255;
@@ -436,95 +368,80 @@ function getPixels(){
   return px;
 }
 
-// ---- Цвет линии для цветного режима ----
 function getLineColorFromNails(n1,n2){
   let mx=Math.round((n1.x+n2.x)/2), my=Math.round((n1.y+n2.y)/2);
-  let srcX=Math.round((mx-imgX)/imgScale), srcY=Math.round((my-imgY)/imgScale);
-  srcX=Math.max(0,Math.min(image.width-1,srcX));
-  srcY=Math.max(0,Math.min(image.height-1,srcY));
-  pixelCtx.drawImage(image,srcX,srcY,1,1,0,0,1,1);
+  let sx=Math.round((mx-imgX)/imgScale), sy=Math.round((my-imgY)/imgScale);
+  sx=Math.max(0,Math.min(image.width-1,sx)); sy=Math.max(0,Math.min(image.height-1,sy));
+  pixelCtx.drawImage(image,sx,sy,1,1,0,0,1,1);
   let d=pixelCtx.getImageData(0,0,1,1).data;
-  let invert=document.getElementById('invert-box').checked;
-  let r=d[0],g=d[1],b=d[2];
-  if(invert){r=255-r;g=255-g;b=255-b;}
+  let [r,g,b]=processPixel(d[0],d[1],d[2],true);
   return `rgba(${r},${g},${b},${LINE_WEIGHT/100})`;
 }
 
 // ---- Генерация ----
 function startGenerate(){
-  if(isGenerating||!image) return;
-  isGenerating=true;
-  sequence=[];
-
-  // Снимок фото для анализа
+  if(isGenerating||!image)return;
+  isGenerating=true; sequence=[];
   pixels=getPixels();
-
-  // Чистый canvas — белый круг + гвозди
   ctx.clearRect(0,0,width,height);
   ctx.beginPath(); ctx.arc(x0,y0,radius,0,Math.PI*2);
-  ctx.fillStyle='#ffffff'; ctx.fill();
+  ctx.fillStyle='#fff'; ctx.fill();
   ctx.strokeStyle='#ccc'; ctx.lineWidth=1; ctx.stroke();
   ctx.fillStyle=NAIL_COLOR;
-  for(let n of nails){
-    ctx.beginPath(); ctx.arc(n.x,n.y,NAIL_RADIUS,0,Math.PI*2); ctx.fill();
-  }
+  for(let n of nails){ctx.beginPath();ctx.arc(n.x,n.y,NAIL_RADIUS,0,Math.PI*2);ctx.fill();}
 
   document.getElementById('generate-btn').setAttribute('disabled','');
   document.getElementById('progress-wrap').style.display='';
   document.getElementById('status-box').classList.add('visible');
   document.getElementById('save-wrap').style.display='none';
 
-  let totalLines=+document.getElementById('lines-count-box').value;
-  let lineWeight=limitPixel(LINE_WEIGHT/100*255);
-  let startTime=performance.now();
-  let nail=0;
+  let total=+document.getElementById('lines-count-box').value;
+  let lw=limitPixel(LINE_WEIGHT/100*255), t0=performance.now(), nail=0;
 
   function runBatch(){
-    const BATCH=20;
-    for(let b=0;b<BATCH;b++){
-      if(sequence.length>=totalLines){ finishGenerate(startTime,totalLines); return; }
+    for(let b=0;b<20;b++){
+      if(sequence.length>=total){finishGenerate(t0,total);return;}
       sequence.push(nail);
-      let nextNail=nail,nextLine=null,minL=Infinity;
+      let nn=nail,nl=null,ml=Infinity;
       for(let i=0;i<nails.length;i++){
-        if(i===nail) continue;
+        if(i===nail)continue;
         let line=lineRasterization(nails[i].x,nails[i].y,nails[nail].x,nails[nail].y);
-        let l=0; for(let idx of line) l+=pixels[idx]; l/=line.size;
-        if(l<minL){minL=l;nextNail=i;nextLine=line;}
+        let l=0; for(let idx of line)l+=pixels[idx]; l/=line.size;
+        if(l<ml){ml=l;nn=i;nl=line;}
       }
-      for(let idx of nextLine) pixels[idx]=Math.min(255,pixels[idx]+lineWeight*dpr);
-      let lc=mode==='bw'
+      for(let idx of nl)pixels[idx]=Math.min(255,pixels[idx]+lw*dpr);
+      ctx.lineWidth=1;
+      ctx.strokeStyle=mode==='bw'
         ?`rgba(0,0,0,${LINE_WEIGHT/100})`
-        :getLineColorFromNails(nails[nail],nails[nextNail]);
-      ctx.lineWidth=1; ctx.strokeStyle=lc;
-      ctx.beginPath(); ctx.moveTo(nails[nail].x,nails[nail].y);
-      ctx.lineTo(nails[nextNail].x,nails[nextNail].y); ctx.stroke();
-      nail=nextNail;
+        :getLineColorFromNails(nails[nail],nails[nn]);
+      ctx.beginPath();ctx.moveTo(nails[nail].x,nails[nail].y);
+      ctx.lineTo(nails[nn].x,nails[nn].y);ctx.stroke();
+      nail=nn;
     }
-    let done=sequence.length;
-    document.getElementById('progress-bar').style.width=Math.round(done/totalLines*100)+'%';
-    let elapsed=((performance.now()-startTime)/1000).toFixed(1);
-    let rem=done>0?((performance.now()-startTime)/done*(totalLines-done)/1000).toFixed(1):'...';
+    let done=sequence.length, pct=Math.round(done/total*100);
+    document.getElementById('progress-bar').style.width=pct+'%';
+    let el=((performance.now()-t0)/1000).toFixed(1);
+    let rem=done>0?((performance.now()-t0)/done*(total-done)/1000).toFixed(1):'...';
     document.getElementById('status-box').innerHTML=
-      `<b>Линий:</b> ${done} / ${totalLines}<br><b>Прошло:</b> ${elapsed}с<br><b>Осталось:</b> ~${rem}с`;
+      `<b>Линий:</b> ${done}/${total}<br><b>Прошло:</b> ${el}с<br><b>Осталось:</b> ~${rem}с`;
     animFrame=requestAnimationFrame(runBatch);
   }
   animFrame=requestAnimationFrame(runBatch);
 }
 
-function finishGenerate(startTime,totalLines){
+function finishGenerate(t0,total){
   isGenerating=false;
-  let elapsed=((performance.now()-startTime)/1000).toFixed(1);
+  let el=((performance.now()-t0)/1000).toFixed(1);
   document.getElementById('progress-bar').style.width='100%';
-  document.getElementById('status-box').innerHTML=`✅ <b>Готово!</b> ${totalLines} линий за ${elapsed}с`;
+  document.getElementById('status-box').innerHTML=`✅ <b>Готово!</b> ${total} линий за ${el}с`;
   document.getElementById('generate-btn').removeAttribute('disabled');
   document.getElementById('save-wrap').style.display='';
 }
 
 function resetAll(){
-  if(animFrame) cancelAnimationFrame(animFrame);
+  if(animFrame)cancelAnimationFrame(animFrame);
   isGenerating=false; sequence=[];
-  if(image) drawPhoto();
-  else drawEmpty();
+  if(image)drawPhoto(); else drawEmpty();
   document.getElementById('progress-bar').style.width='0%';
   document.getElementById('progress-wrap').style.display='none';
   document.getElementById('status-box').classList.remove('visible');
@@ -533,26 +450,24 @@ function resetAll(){
 }
 
 function saveImage(){
-  let link=document.createElement('a');
-  link.href=canvas.toDataURL('image/png');
-  link.download='stringart.png'; link.click();
+  let a=document.createElement('a');
+  a.href=canvas.toDataURL('image/png');
+  a.download='stringart.png'; a.click();
 }
 
 function setMode(m){
   mode=m;
   document.getElementById('btn-bw').classList.toggle('active',m==='bw');
   document.getElementById('btn-color').classList.toggle('active',m==='color');
-  if(image) drawPhoto();
+  // Фильтры только для ч/б режима
+  document.getElementById('filter-section').style.opacity=m==='bw'?'1':'0.4';
+  if(image)drawPhoto();
 }
 
 document.getElementById('contrast-box').addEventListener('input',()=>{updateContrast();if(image)drawPhoto();});
 document.getElementById('brightness-box').addEventListener('input',()=>{updateBrightness();if(image)drawPhoto();});
-document.getElementById('invert-box').addEventListener('change',()=>{if(image)drawPhoto();});
 
-initCanvas();
-updateContrast();
-updateBrightness();
-initNails();
+initCanvas(); updateContrast(); updateBrightness(); initNails();
 </script>
 </body>
 </html>
