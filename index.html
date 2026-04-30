@@ -345,10 +345,10 @@ function ColorKnitter() {
     // Сектор A (верх-лево) и D (низ-право) — серые: A от 180° до 270°, D от 0° до 90°
     // Сектор B (верх-право) и C (низ-лево) — белые: B от 270° до 360°, C от 90° до 180°
     const sectors = [
-      { start: Math.PI,       end: Math.PI * 1.5, color: '#b5b5b5' }, // A
+      { start: Math.PI,       end: Math.PI * 1.5, color: '#efca46' }, // A
       { start: Math.PI * 1.5, end: Math.PI * 2,   color: 'white'   }, // B
       { start: 0,             end: Math.PI * 0.5, color: 'white'   }, // C (D по углам — низ-право белый)
-      { start: Math.PI * 0.5, end: Math.PI,       color: '#b5b5b5' }, // C (низ-лево серый)
+      { start: Math.PI * 0.5, end: Math.PI,       color: '#efca46' }, // C (низ-лево серый)
     ];
     // Пересчитаем правильно по реальному расположению секторов:
     // D: 0–90° (правый верх), C: 90–180° (правый низ), A: 180–270° (левый низ), B: 270–360° (левый верх)
