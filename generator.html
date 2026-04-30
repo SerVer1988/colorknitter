@@ -182,7 +182,7 @@ const NAIL_COLOR = '#000';
 const BACKGROUND_COLOR = '#ffffff';
 const PADDING = 5;
 const NAILS_COUNT = 260;
-const LINE_WEIGHT = 15; // 15% прозрачность
+const LINE_WEIGHT = 8; // прозрачность линий
 
 // ---- Состояние ----
 let canvas = document.getElementById('canvas');
@@ -394,7 +394,7 @@ function startGenerate() {
   // Очищаем canvas и рисуем белый круг + гвозди
   ctx.clearRect(0,0,width,height);
   ctx.beginPath(); ctx.arc(x0,y0,radius+PADDING/2,0,Math.PI*2);
-  ctx.fillStyle=BACKGROUND_COLOR; ctx.fill();
+  ctx.fillStyle='#ffffff'; ctx.fill();
   ctx.strokeStyle='#000'; ctx.lineWidth=1; ctx.stroke();
 
   ctx.fillStyle=NAIL_COLOR;
