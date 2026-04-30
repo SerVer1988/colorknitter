@@ -346,13 +346,44 @@ function lineRasterization(x1,y1,x2,y2) {
   return line;
 }
 
-// ---- Получить пиксели ----
+// ---- Получить пиксели из оригинального фото ----
 function getPixels() {
-  pixelCtx.drawImage(canvas, 0, 0, width, height);
+  // Рисуем оригинальное фото на pixelCanvas в нужном масштабе
+  pixelCtx.clearRect(0,0,width,height);
+
+  // Белый фон
+  pixelCtx.fillStyle = '#ffffff';
+  pixelCtx.fillRect(0,0,width,height);
+
+  // Маска — круг
+  pixelCtx.save();
+  pixelCtx.beginPath();
+  pixelCtx.arc(x0,y0,radius,0,Math.PI*2);
+  pixelCtx.clip();
+
+  // Рисуем фото
+  let scale = Math.max(width/image.width, height/image.height);
+  let iw = image.width*scale, ih = image.height*scale;
+  let ix = (width-iw)/2, iy = (height-ih)/2;
+  pixelCtx.drawImage(image, ix, iy, iw, ih);
+  pixelCtx.restore();
+
   let data = pixelCtx.getImageData(0,0,width,height).data;
   let px = [];
-  for (let i=0;i<data.length;i+=4)
-    px.push(getLightness(data[i],data[i+1],data[i+2]));
+  let invert = document.getElementById('invert-box').checked;
+
+  for (let i=0;i<data.length;i+=4) {
+    let l = getLightness(data[i],data[i+1],data[i+2]);
+    if (invert) l = 255-l;
+    l = brightnessTable[l];
+    l = contrastTable[l];
+    // Пиксели вне круга делаем белыми (255) — алгоритм их игнорирует
+    let px_x = (i/4) % width;
+    let px_y = Math.floor((i/4) / width);
+    let dx = px_x - x0, dy = px_y - y0;
+    if (dx*dx + dy*dy > radius*radius) l = 255;
+    px.push(l);
+  }
   return px;
 }
 
