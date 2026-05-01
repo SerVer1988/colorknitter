@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -168,12 +167,17 @@ function ColorKnitter() {
     const fromGen = localStorage.getItem('ck_from_generator');
     if (!fromGen) return;
     try {
-      const { sequenceText, image: imgData } = JSON.parse(fromGen);
+      const { sequence: genSeq, image: imgData } = JSON.parse(fromGen);
       localStorage.removeItem('ck_from_generator');
 
-      // Загружаем sequence
-      const seq = parseFile(sequenceText);
-      if (seq.length > 0) {
+      // Конвертируем массив индексов [0..259] в формат sequence вязалки
+      // Каждый элемент: value = index+1 (1..260), color = чёрный
+      if (genSeq && genSeq.length > 0) {
+        const seq = genSeq.map((idx, i) => ({
+          value: idx + 1,
+          color: [0, 0, 0],
+          isColorChange: false
+        }));
         setSequence(seq);
         setCurrentIndex(0);
         setRemainingSteps(0);
@@ -188,7 +192,7 @@ function ColorKnitter() {
         img.onload = () => { loadedImgRef.current = img; setCircleImage(imgData); };
         img.src = imgData;
       }
-    } catch(e) { console.error(e); }
+    } catch(e) { console.error('Ошибка загрузки из генератора:', e); }
   }, []);
 
   useEffect(() => {
