@@ -1,4 +1,4 @@
-const CACHE = 'colorknitter-v12';
+const CACHE = 'colorknitter-v10';
 const FILES = ['/colorknitter/', '/colorknitter/index.html', '/colorknitter/icon.png', '/colorknitter/manifest.json'];
 
 self.addEventListener('install', e => {
