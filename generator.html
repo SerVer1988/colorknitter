@@ -11,22 +11,30 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    html, body { height: 100%; background: #0a0a0a; font-family: Arial, sans-serif; color: white; }
+    html, body { background: #0a0a0a; font-family: Arial, sans-serif; color: white; }
     body { display: flex; justify-content: center; }
-    #root { width: 100%; max-width: 440px; min-height: 100vh; display: flex; flex-direction: column; padding: 0 0 90px 0; }
+    #root { width: 100%; max-width: 440px; min-height: 100vh; display: flex; flex-direction: column; padding: 12px 12px 100px; }
 
-    .logo-row { display: flex; justify-content: center; padding: 16px 0 8px; }
+    /* LOGO */
+    .logo-row { display: flex; justify-content: center; padding: 48px 0 8px; }
     .logo-row img { width: 52px; height: 52px; border-radius: 12px; }
-    .title { text-align: center; font-size: 16px; font-weight: 700; color: #aaa; margin-bottom: 12px; }
+    .title { text-align: center; font-size: 16px; font-weight: 700; color: #aaa; margin-bottom: 16px; }
 
-    .canvas-wrap { display: flex; justify-content: center; padding: 0 12px; position: relative; touch-action: none; }
-    #canvas { border-radius: 50%; display: block; width: 100%; max-width: 400px; aspect-ratio: 1; }
+    /* BACK */
+    .back-btn { position: fixed; top: 16px; left: 16px; z-index: 200; width: 44px; height: 44px; background: #1a1a1a; border-radius: 50%; border: 1px solid #333; display: flex; align-items: center; justify-content: center; text-decoration: none; }
+    .back-btn img { width: 36px; height: 36px; }
+
+    /* CANVAS */
+    .canvas-wrap { position: relative; touch-action: none; margin-bottom: 16px; }
+    #canvas { border-radius: 50%; display: block; width: 100%; aspect-ratio: 1; }
     .canvas-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; pointer-events: none; }
     .canvas-hint .icon { font-size: 48px; margin-bottom: 8px; }
     .canvas-hint .text { font-size: 15px; color: #888; font-weight: 600; }
     .canvas-hint .sub { font-size: 12px; color: #555; margin-top: 4px; }
+    #file-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; border-radius: 50%; }
 
-    .controls { display: flex; flex-direction: column; gap: 14px; padding: 16px 12px; }
+    /* SETTINGS */
+    .settings { display: flex; flex-direction: column; gap: 14px; }
 
     .mode-row { display: flex; gap: 8px; }
     .mode-btn { flex: 1; padding: 12px 0; border-radius: 12px; border: 2px solid #333; background: transparent; color: #aaa; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
@@ -38,41 +46,43 @@
 
     .s-label { font-size: 13px; color: #aaa; display: flex; justify-content: space-between; margin-bottom: 6px; }
     input[type=range] { width: 100%; accent-color: #7c3aed; }
-
     .s-input-label { font-size: 12px; color: #aaa; margin-bottom: 4px; display: block; }
     input[type=number] { width: 100%; background: #111; border: 1.5px solid #333; border-radius: 8px; padding: 8px; text-align: center; font-size: 15px; color: white; outline: none; }
     input[type=number]:focus { border-color: #7c3aed; }
 
-    .divider { border: none; border-top: 1px solid #222; }
+    .divider { border: none; border-top: 1px solid #222; margin: 4px 0; }
 
-    .btn-row { display: flex; gap: 8px; }
-    .big-btn { flex: 1; padding: 14px; border-radius: 14px; border: none; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
-    .big-btn:active { transform: scale(0.96); }
+    /* КНОПКИ */
+    .big-btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-size: 17px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+    .big-btn:active { transform: scale(0.97); }
     .big-btn:disabled { opacity: 0.35; cursor: not-allowed; }
     .btn-primary { background: #7c3aed; color: white; }
     .btn-secondary { background: #222; color: #ccc; border: 1.5px solid #333; }
-    .btn-save { background: #EFCA46; color: black; width: 100%; }
+    .btn-blue { background: #2563eb; color: white; }
+    .btn-yellow { background: #EFCA46; color: black; }
 
-    .status-box { background: #111; border-radius: 12px; padding: 10px 14px; font-size: 13px; color: #aaa; line-height: 1.8; display: none; }
-    .status-box.visible { display: block; }
-    .progress-wrap { background: #1a1a1a; border-radius: 999px; height: 6px; overflow: hidden; display: none; }
-    .progress-bar { height: 100%; background: #7c3aed; border-radius: 999px; transition: width 0.1s; width: 0%; }
+    /* ПРОГРЕСС */
+    .progress-wrap { background: #1a1a1a; border-radius: 999px; height: 8px; overflow: hidden; }
+    .progress-bar { height: 100%; background: #7c3aed; border-radius: 999px; width: 0%; transition: width 0.2s; }
+    .status-text { font-size: 13px; color: #aaa; line-height: 1.8; text-align: center; }
 
-    .bottom-fixed { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; padding: 12px 16px 28px; background: #1a1a1a; border-top: 1px solid #2a2a2a; border-radius: 24px 24px 0 0; z-index: 100; }
-    .back-btn { position: fixed; top: 16px; left: 16px; z-index: 200; width: 44px; height: 44px; background: #1a1a1a; border-radius: 50%; border: 1px solid #333; display: flex; align-items: center; justify-content: center; }
-    .back-btn img { width: 36px; height: 36px; }
+    /* НИЖНЯЯ ПАНЕЛЬ — фиксированная */
+    .bottom-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; padding: 12px 16px 28px; background: #1a1a1a; border-top: 1px solid #2a2a2a; border-radius: 24px 24px 0 0; z-index: 100; display: flex; flex-direction: column; gap: 10px; }
   </style>
 </head>
 <body>
 <div id="root">
 
-  <a href="index.html" class="back-btn"><img src="ic_back.png" alt="back" /></a>
+  <a href="index.html" class="back-btn">
+    <img src="ic_back.png" alt="назад" />
+  </a>
 
   <div class="logo-row">
-    <img src="icon.png" alt="CK" onError="this.style.display='none'" />
+    <img src="icon.png" alt="CK" onerror="this.style.display='none'" />
   </div>
   <div class="title">Генератор String Art</div>
 
+  <!-- Canvas -->
   <div class="canvas-wrap" id="canvas-wrap">
     <canvas id="canvas"></canvas>
     <div class="canvas-hint" id="canvas-hint">
@@ -80,13 +90,12 @@
       <div class="text">Нажмите чтобы<br>загрузить фото</div>
       <div class="sub">JPG, PNG, WEBP</div>
     </div>
-    <input type="file" id="file-input" accept="image/*"
-      style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10;" />
+    <input type="file" id="file-input" accept="image/*" />
   </div>
 
-  <div class="controls">
+  <!-- Настройки (скрываются во время генерации) -->
+  <div class="settings" id="settings-block">
 
-    <!-- Режим -->
     <div>
       <div class="s-label"><span>Режим</span></div>
       <div class="mode-row">
@@ -95,8 +104,7 @@
       </div>
     </div>
 
-    <!-- Фильтр -->
-    <div id="filter-section">
+    <div id="filter-block">
       <div class="s-label"><span>Фильтр</span></div>
       <div class="filter-row">
         <button class="filter-btn active" onclick="setFilter('normal')">Обычный</button>
@@ -106,95 +114,72 @@
       </div>
     </div>
 
-    <!-- Контрастность -->
     <div>
       <div class="s-label"><span>Контрастность</span><span id="contrast-val">0</span></div>
       <input type="range" id="contrast-box" value="0" min="-100" max="100" step="5" />
     </div>
-
-    <!-- Яркость -->
     <div>
       <div class="s-label"><span>Яркость</span><span id="brightness-val">0</span></div>
       <input type="range" id="brightness-box" value="0" min="-100" max="100" step="5" />
     </div>
-
-    <!-- Кол-во линий -->
     <div>
       <span class="s-input-label">Количество линий</span>
       <input type="number" id="lines-count-box" value="3000" min="100" max="10000" />
     </div>
 
-    <hr class="divider" />
-
-    <div class="btn-row">
-      <button class="big-btn btn-secondary" id="reset-btn" onclick="resetAll()" disabled>↺ Сброс</button>
-    </div>
-
-    <div class="progress-wrap" id="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
-    <div class="status-box" id="status-box"></div>
-
-    <div id="save-wrap" style="display:none">
-      <hr class="divider" style="margin-bottom:14px" />
-      <div class="btn-row" style="gap:8px">
-        <button class="big-btn btn-save" onclick="saveImage()" style="flex:1">💾 PNG</button>
-        <button class="big-btn" onclick="openInKnitter()" style="flex:2;background:#2563eb;color:white;border:none">🪡 В вязалку</button>
-      </div>
-    </div>
   </div>
 
-  <div class="bottom-fixed">
-    <button class="big-btn btn-primary" id="generate-btn" onclick="startGenerate()" disabled style="width:100%">▶ Запустить</button>
+  <!-- Прогресс (виден только во время генерации) -->
+  <div id="progress-block" style="display:none; margin-top:16px; display:none; flex-direction:column; gap:10px;">
+    <div class="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+    <div class="status-text" id="status-text"></div>
+  </div>
+
+</div>
+
+<!-- НИЖНЯЯ ПАНЕЛЬ -->
+<div class="bottom-bar" id="bottom-bar">
+  <!-- Состояние 1: до запуска -->
+  <div id="state-ready">
+    <button class="big-btn btn-primary" id="generate-btn" onclick="startGenerate()" disabled>▶ Запустить</button>
+  </div>
+  <!-- Состояние 2: во время генерации — пусто, прогресс вверху -->
+  <div id="state-running" style="display:none">
+    <div class="status-text" id="status-text-bar">Генерация...</div>
+  </div>
+  <!-- Состояние 3: после завершения -->
+  <div id="state-done" style="display:none; display:none; flex-direction:column; gap:10px;">
+    <button class="big-btn btn-blue" onclick="openInKnitter()">🪡 Открыть в вязалке</button>
+    <div style="display:flex;gap:10px;">
+      <button class="big-btn btn-yellow" onclick="saveImage()" style="flex:1">💾 PNG</button>
+      <button class="big-btn btn-secondary" onclick="resetAll()" style="flex:1">↺ Сброс</button>
+    </div>
   </div>
 </div>
 
 <script>
-const NAIL_RADIUS = 1, NAIL_COLOR = '#000', PADDING = 5;
-const NAILS_COUNT = 260, LINE_WEIGHT = 25;
+const NAIL_RADIUS=1, NAIL_COLOR='#000', PADDING=5, NAILS_COUNT=260, LINE_WEIGHT=25;
 
-let canvas = document.getElementById('canvas');
-let ctx = canvas.getContext('2d');
-let image = null, nails = [], pixels = [], sequence = [];
-let isGenerating = false, mode = 'bw', currentFilter = 'normal', animFrame = null;
+let canvas=document.getElementById('canvas'), ctx=canvas.getContext('2d');
+let image=null, nails=[], pixels=[], sequence=[], isGenerating=false;
+let mode='bw', currentFilter='normal', animFrame=null;
 let imgX=0, imgY=0, imgScale=1, imgNatW=0, imgNatH=0;
 let fakeCanvas=document.createElement('canvas'), fakeCtx=fakeCanvas.getContext('2d');
 let pixelCanvas=document.createElement('canvas'), pixelCtx=pixelCanvas.getContext('2d');
-let width, height, x0, y0, radius;
-let dpr = window.devicePixelRatio||1;
+let width, height, x0, y0, radius, dpr=window.devicePixelRatio||1;
 let contrastTable=[], brightnessTable=[];
 let touches=[], isDragging=false, lastX=0, lastY=0;
 
-// ---- Фильтры ----
-const FILTERS = {
-  normal:     l => l,
-  hard:       l => {
-    // Усиленный контраст — подавляем средние тона, усиливаем края
-    let c = (l - 128) * 2.5 + 128;
-    return Math.max(0, Math.min(255, Math.round(c)));
-  },
-  soft:       l => {
-    // Мягкий — сжимаем диапазон к середине
-    return Math.round(l * 0.6 + 50);
-  },
-  silhouette: l => {
-    // Порог — только чёрное и белое
-    return l < 128 ? 0 : 255;
-  }
+const FILTERS={
+  normal: l=>l,
+  hard:   l=>Math.max(0,Math.min(255,Math.round((l-128)*2.5+128))),
+  soft:   l=>Math.round(l*0.6+50),
+  silhouette: l=>l<128?0:255
 };
 
-function applyFilter(l) { return FILTERS[currentFilter](l); }
-
-function setFilter(f) {
-  currentFilter = f;
-  document.querySelectorAll('.filter-btn').forEach((b,i) => {
-    b.classList.toggle('active', ['normal','hard','soft','silhouette'][i]===f);
-  });
-  if(image) drawPhoto();
-}
-
-// ---- Init canvas ----
-function initCanvas() {
-  const wrap = document.getElementById('canvas-wrap');
-  const size = Math.min(wrap.clientWidth-24, 400);
+function initCanvas(){
+  const wrap=document.getElementById('canvas-wrap');
+  const size=Math.min(wrap.clientWidth, 400);
   width=size; height=size; x0=width/2; y0=height/2;
   radius=Math.min(width,height)/2-PADDING;
   canvas.width=width*dpr; canvas.height=height*dpr;
@@ -205,31 +190,29 @@ function initCanvas() {
   drawEmpty();
 }
 
-function drawEmpty() {
+function drawEmpty(){
   ctx.clearRect(0,0,width,height);
   ctx.beginPath(); ctx.arc(x0,y0,radius,0,Math.PI*2);
   ctx.fillStyle='#fff'; ctx.fill();
   ctx.strokeStyle='#ccc'; ctx.lineWidth=1; ctx.stroke();
 }
 
-// ---- Таблицы ----
-function limitPixel(v) { return Math.max(0,Math.min(255,Math.round(v))); }
-function updateContrast() {
+function limitPixel(v){return Math.max(0,Math.min(255,Math.round(v)));}
+function updateContrast(){
   let val=+document.getElementById('contrast-box').value;
   document.getElementById('contrast-val').textContent=val>0?'+'+val:val;
   let c=1+val/100;
   contrastTable=Array.from({length:256},(_,i)=>limitPixel((i-128)*c+128));
 }
-function updateBrightness() {
+function updateBrightness(){
   let val=+document.getElementById('brightness-box').value;
   document.getElementById('brightness-val').textContent=val>0?'+'+val:val;
   let b=1+val/100;
   brightnessTable=Array.from({length:256},(_,i)=>limitPixel(i*b));
 }
 
-// ---- Загрузка фото ----
-document.getElementById('file-input').addEventListener('change', function() {
-  if(!this.files[0]) return;
+document.getElementById('file-input').addEventListener('change',function(){
+  if(!this.files[0])return;
   this.style.pointerEvents='none'; this.style.zIndex='-1';
   let img=new Image();
   img.onload=()=>{
@@ -239,44 +222,31 @@ document.getElementById('file-input').addEventListener('change', function() {
     document.getElementById('canvas-hint').style.display='none';
     drawPhoto(); initNails();
     document.getElementById('generate-btn').removeAttribute('disabled');
-    document.getElementById('reset-btn').removeAttribute('disabled');
   };
   img.src=URL.createObjectURL(this.files[0]);
 });
 
-// ---- Рисование ----
 function getLightness(r,g,b){return Math.floor(0.2126*r+0.7152*g+0.0722*b);}
 
-function processPixel(r,g,b,isColor){
-  if(isColor){
-    // Цветной: применяем яркость/контраст к каждому каналу + фильтр
-    let res=[r,g,b].map(v=>{
-      v=brightnessTable[v]; v=contrastTable[v]; return v;
-    });
-    return res;
-  } else {
-    let l=getLightness(r,g,b);
-    l=brightnessTable[l]; l=contrastTable[l]; l=applyFilter(l);
-    return [l,l,l];
-  }
-}
-
-function drawPhoto() {
+function drawPhoto(){
   if(!image)return;
   ctx.clearRect(0,0,width,height);
   ctx.save();
   ctx.beginPath(); ctx.arc(x0,y0,radius,0,Math.PI*2);
   ctx.fillStyle='#fff'; ctx.fill(); ctx.clip();
-
   let iw=imgNatW*imgScale, ih=imgNatH*imgScale;
   fakeCtx.clearRect(0,0,width,height);
   fakeCtx.drawImage(image,imgX,imgY,iw,ih);
-  let data=fakeCtx.getImageData(0,0,width*dpr,height*dpr);
-  let px=data.data;
+  let data=fakeCtx.getImageData(0,0,width*dpr,height*dpr), px=data.data;
   let isColor=mode==='color';
   for(let i=0;i<px.length;i+=4){
-    let [nr,ng,nb]=processPixel(px[i],px[i+1],px[i+2],isColor);
-    px[i]=nr; px[i+1]=ng; px[i+2]=nb;
+    if(isColor){
+      for(let c=0;c<3;c++){let v=px[i+c];v=brightnessTable[v];v=contrastTable[v];px[i+c]=v;}
+    } else {
+      let l=getLightness(px[i],px[i+1],px[i+2]);
+      l=brightnessTable[l]; l=contrastTable[l]; l=FILTERS[currentFilter](l);
+      px[i]=px[i+1]=px[i+2]=l;
+    }
   }
   fakeCtx.putImageData(data,0,0);
   ctx.drawImage(fakeCanvas,0,0,width,height);
@@ -285,54 +255,45 @@ function drawPhoto() {
   ctx.beginPath(); ctx.arc(x0,y0,radius,0,Math.PI*2); ctx.stroke();
 }
 
-// ---- Touch/Mouse ----
 function getOff(e){let r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};}
 canvas.addEventListener('mousedown',e=>{if(!image||isGenerating)return;isDragging=true;let p=getOff(e);lastX=p.x;lastY=p.y;e.preventDefault();});
 canvas.addEventListener('mousemove',e=>{if(!isDragging||!image||isGenerating)return;let p=getOff(e);imgX+=p.x-lastX;imgY+=p.y-lastY;lastX=p.x;lastY=p.y;drawPhoto();e.preventDefault();});
 canvas.addEventListener('mouseup',()=>isDragging=false);
 canvas.addEventListener('mouseleave',()=>isDragging=false);
 canvas.addEventListener('wheel',e=>{
-  if(!image||isGenerating)return; e.preventDefault();
+  if(!image||isGenerating)return;e.preventDefault();
   let f=e.deltaY<0?1.1:0.9,p=getOff(e);
   let dx=(p.x-imgX)/imgScale,dy=(p.y-imgY)/imgScale;
   imgScale=Math.max(0.1,Math.min(10,imgScale*f));
-  imgX=p.x-dx*imgScale; imgY=p.y-dy*imgScale; drawPhoto();
+  imgX=p.x-dx*imgScale;imgY=p.y-dy*imgScale;drawPhoto();
 },{passive:false});
 
 canvas.addEventListener('touchstart',e=>{
-  if(!image||isGenerating)return; e.preventDefault();
+  if(!image||isGenerating)return;e.preventDefault();
   touches=Array.from(e.targetTouches).map(t=>({x:t.clientX,y:t.clientY}));
   if(e.targetTouches.length===1){isDragging=true;lastX=touches[0].x;lastY=touches[0].y;}
 },{passive:false});
-
 canvas.addEventListener('touchmove',e=>{
-  if(!image||isGenerating)return; e.preventDefault();
+  if(!image||isGenerating)return;e.preventDefault();
   let cur=Array.from(e.targetTouches).map(t=>({x:t.clientX,y:t.clientY}));
   if(cur.length===1&&isDragging){
-    imgX+=cur[0].x-lastX; imgY+=cur[0].y-lastY;
-    lastX=cur[0].x; lastY=cur[0].y; drawPhoto();
+    imgX+=cur[0].x-lastX;imgY+=cur[0].y-lastY;lastX=cur[0].x;lastY=cur[0].y;drawPhoto();
   } else if(cur.length===2&&touches.length===2){
     let d1=Math.hypot(touches[1].x-touches[0].x,touches[1].y-touches[0].y);
     let d2=Math.hypot(cur[1].x-cur[0].x,cur[1].y-cur[0].y);
-    let f=d2/d1, r=canvas.getBoundingClientRect();
-    let cx=(cur[0].x+cur[1].x)/2-r.left, cy=(cur[0].y+cur[1].y)/2-r.top;
-    let dx=(cx-imgX)/imgScale, dy=(cy-imgY)/imgScale;
+    let f=d2/d1,r=canvas.getBoundingClientRect();
+    let cx=(cur[0].x+cur[1].x)/2-r.left,cy=(cur[0].y+cur[1].y)/2-r.top;
+    let dx=(cx-imgX)/imgScale,dy=(cy-imgY)/imgScale;
     imgScale=Math.max(0.1,Math.min(10,imgScale*f));
-    imgX=cx-dx*imgScale; imgY=cy-dy*imgScale;
-    let mx=(touches[0].x+touches[1].x)/2, my=(touches[0].y+touches[1].y)/2;
-    let mx2=(cur[0].x+cur[1].x)/2, my2=(cur[0].y+cur[1].y)/2;
-    imgX+=mx2-mx; imgY+=my2-my;
+    imgX=cx-dx*imgScale;imgY=cy-dy*imgScale;
+    imgX+=(cur[0].x+cur[1].x)/2-(touches[0].x+touches[1].x)/2;
+    imgY+=(cur[0].y+cur[1].y)/2-(touches[0].y+touches[1].y)/2;
     drawPhoto();
   }
   touches=cur;
 },{passive:false});
+canvas.addEventListener('touchend',e=>{e.preventDefault();isDragging=false;touches=[];},{passive:false});
 
-canvas.addEventListener('touchend',e=>{
-  e.preventDefault(); isDragging=false;
-  touches=Array.from(e.targetTouches).map(t=>({x:t.clientX,y:t.clientY}));
-},{passive:false});
-
-// ---- Гвозди ----
 function initNails(){
   nails=[];
   for(let i=0;i<NAILS_COUNT;i++){
@@ -345,61 +306,62 @@ function lineRasterization(x1,y1,x2,y2){
   let line=new Set(),dx=Math.abs(x2-x1),dy=Math.abs(y2-y1);
   let sx=Math.sign(x2-x1),sy=Math.sign(y2-y1),err=dx-dy;
   while(x1!=x2||y1!=y2){
-    line.add(y1*width+x1); let e2=err*2;
-    if(e2>-dy){err-=dy;x1+=sx;} if(e2<dx){err+=dx;y1+=sy;}
+    line.add(y1*width+x1);let e2=err*2;
+    if(e2>-dy){err-=dy;x1+=sx;}if(e2<dx){err+=dx;y1+=sy;}
   }
-  line.add(y2*width+x2); return line;
+  line.add(y2*width+x2);return line;
 }
 
-// ---- Пиксели для анализа ----
 function getPixels(){
   pixelCtx.clearRect(0,0,width,height);
-  pixelCtx.fillStyle='#fff'; pixelCtx.fillRect(0,0,width,height);
+  pixelCtx.fillStyle='#fff';pixelCtx.fillRect(0,0,width,height);
   pixelCtx.save();
-  pixelCtx.beginPath(); pixelCtx.arc(x0,y0,radius,0,Math.PI*2); pixelCtx.clip();
+  pixelCtx.beginPath();pixelCtx.arc(x0,y0,radius,0,Math.PI*2);pixelCtx.clip();
   pixelCtx.drawImage(image,imgX,imgY,imgNatW*imgScale,imgNatH*imgScale);
   pixelCtx.restore();
-  let data=pixelCtx.getImageData(0,0,width,height).data, px=[];
+  let data=pixelCtx.getImageData(0,0,width,height).data,px=[];
   for(let i=0;i<data.length;i+=4){
     let l=getLightness(data[i],data[i+1],data[i+2]);
-    l=brightnessTable[l]; l=contrastTable[l]; l=applyFilter(l);
-    let px_x=(i/4)%width, px_y=Math.floor((i/4)/width);
-    let ddx=px_x-x0, ddy=px_y-y0;
-    if(ddx*ddx+ddy*ddy>radius*radius) l=255;
+    l=brightnessTable[l];l=contrastTable[l];l=FILTERS[currentFilter](l);
+    let px_x=(i/4)%width,px_y=Math.floor((i/4)/width);
+    if((px_x-x0)**2+(px_y-y0)**2>radius**2)l=255;
     px.push(l);
   }
   return px;
 }
 
-function getLineColorFromNails(n1,n2){
-  let mx=Math.round((n1.x+n2.x)/2), my=Math.round((n1.y+n2.y)/2);
-  let sx=Math.round((mx-imgX)/imgScale), sy=Math.round((my-imgY)/imgScale);
-  sx=Math.max(0,Math.min(image.width-1,sx)); sy=Math.max(0,Math.min(image.height-1,sy));
+function getLineColor(n1,n2){
+  let mx=Math.round((n1.x+n2.x)/2),my=Math.round((n1.y+n2.y)/2);
+  let sx=Math.max(0,Math.min(image.width-1,Math.round((mx-imgX)/imgScale)));
+  let sy=Math.max(0,Math.min(image.height-1,Math.round((my-imgY)/imgScale)));
   pixelCtx.drawImage(image,sx,sy,1,1,0,0,1,1);
   let d=pixelCtx.getImageData(0,0,1,1).data;
-  let [r,g,b]=processPixel(d[0],d[1],d[2],true);
-  return `rgba(${r},${g},${b},${LINE_WEIGHT/100})`;
+  return `rgba(${d[0]},${d[1]},${d[2]},${LINE_WEIGHT/100})`;
 }
 
-// ---- Генерация ----
+function setState(state){
+  document.getElementById('state-ready').style.display  = state==='ready'  ?'block':'none';
+  document.getElementById('state-running').style.display= state==='running'?'block':'none';
+  document.getElementById('state-done').style.display   = state==='done'   ?'flex':'none';
+  document.getElementById('settings-block').style.display= state==='ready' ?'flex':'none';
+  document.getElementById('progress-block').style.display= state==='running'?'flex':'none';
+}
+
 function startGenerate(){
   if(isGenerating||!image)return;
   isGenerating=true; sequence=[];
   pixels=getPixels();
   ctx.clearRect(0,0,width,height);
-  ctx.beginPath(); ctx.arc(x0,y0,radius,0,Math.PI*2);
-  ctx.fillStyle='#fff'; ctx.fill();
-  ctx.strokeStyle='#ccc'; ctx.lineWidth=1; ctx.stroke();
+  ctx.beginPath();ctx.arc(x0,y0,radius,0,Math.PI*2);
+  ctx.fillStyle='#fff';ctx.fill();
+  ctx.strokeStyle='#ccc';ctx.lineWidth=1;ctx.stroke();
   ctx.fillStyle=NAIL_COLOR;
   for(let n of nails){ctx.beginPath();ctx.arc(n.x,n.y,NAIL_RADIUS,0,Math.PI*2);ctx.fill();}
 
-  document.getElementById('generate-btn').setAttribute('disabled','');
-  document.getElementById('progress-wrap').style.display='';
-  document.getElementById('status-box').classList.add('visible');
-  document.getElementById('save-wrap').style.display='none';
+  setState('running');
 
   let total=+document.getElementById('lines-count-box').value;
-  let lw=limitPixel(LINE_WEIGHT/100*255/dpr), t0=performance.now(), nail=0;
+  let lw=limitPixel(LINE_WEIGHT/100*255/dpr),t0=performance.now(),nail=0;
 
   function runBatch(){
     for(let b=0;b<20;b++){
@@ -409,24 +371,23 @@ function startGenerate(){
       for(let i=0;i<nails.length;i++){
         if(i===nail)continue;
         let line=lineRasterization(nails[i].x,nails[i].y,nails[nail].x,nails[nail].y);
-        let l=0; for(let idx of line)l+=pixels[idx]; l/=line.size;
+        let l=0;for(let idx of line)l+=pixels[idx];l/=line.size;
         if(l<ml){ml=l;nn=i;nl=line;}
       }
       for(let idx of nl)pixels[idx]=Math.min(255,pixels[idx]+lw);
       ctx.lineWidth=1;
-      ctx.strokeStyle=mode==='bw'
-        ?`rgba(0,0,0,${LINE_WEIGHT/100})`
-        :getLineColorFromNails(nails[nail],nails[nn]);
+      ctx.strokeStyle=mode==='bw'?`rgba(0,0,0,${LINE_WEIGHT/100})`:getLineColor(nails[nail],nails[nn]);
       ctx.beginPath();ctx.moveTo(nails[nail].x,nails[nail].y);
       ctx.lineTo(nails[nn].x,nails[nn].y);ctx.stroke();
       nail=nn;
     }
-    let done=sequence.length, pct=Math.round(done/total*100);
+    let done=sequence.length,pct=Math.round(done/total*100);
     document.getElementById('progress-bar').style.width=pct+'%';
     let el=((performance.now()-t0)/1000).toFixed(1);
     let rem=done>0?((performance.now()-t0)/done*(total-done)/1000).toFixed(1):'...';
-    document.getElementById('status-box').innerHTML=
-      `<b>Линий:</b> ${done}/${total}<br><b>Прошло:</b> ${el}с<br><b>Осталось:</b> ~${rem}с`;
+    let txt=`${done} / ${total} линий · ${el}с · осталось ~${rem}с`;
+    document.getElementById('status-text').textContent=txt;
+    document.getElementById('status-text-bar').textContent=txt;
     animFrame=requestAnimationFrame(runBatch);
   }
   animFrame=requestAnimationFrame(runBatch);
@@ -435,67 +396,62 @@ function startGenerate(){
 function finishGenerate(t0,total){
   isGenerating=false;
   let el=((performance.now()-t0)/1000).toFixed(1);
-  document.getElementById('progress-bar').style.width='100%';
-  document.getElementById('status-box').innerHTML=`✅ <b>Готово!</b> ${total} линий за ${el}с`;
-  document.getElementById('generate-btn').removeAttribute('disabled');
-  document.getElementById('save-wrap').style.display='';
+  document.getElementById('status-text').textContent=`✅ Готово! ${total} линий за ${el}с`;
+  setState('done');
 }
 
 function resetAll(){
   if(animFrame)cancelAnimationFrame(animFrame);
-  isGenerating=false; sequence=[];
-  if(image)drawPhoto(); else drawEmpty();
+  isGenerating=false;sequence=[];
+  if(image)drawPhoto();else drawEmpty();
   document.getElementById('progress-bar').style.width='0%';
-  document.getElementById('progress-wrap').style.display='none';
-  document.getElementById('status-box').classList.remove('visible');
-  document.getElementById('save-wrap').style.display='none';
-  document.getElementById('generate-btn').removeAttribute('disabled');
-}
-
-function openInKnitter() {
-  try {
-    // Берём оригинальное фото (не результат генерации) как подложку
-    let photoCanvas = document.createElement('canvas');
-    photoCanvas.width = width; photoCanvas.height = height;
-    let pCtx = photoCanvas.getContext('2d');
-    pCtx.save();
-    pCtx.beginPath(); pCtx.arc(x0, y0, radius, 0, Math.PI*2); pCtx.clip();
-    pCtx.drawImage(image, imgX, imgY, imgNatW*imgScale, imgNatH*imgScale);
-    pCtx.restore();
-    let photoData = photoCanvas.toDataURL('image/jpeg', 0.7);
-
-    // sequence содержит индексы 0-259 → передаём как есть
-    // вязалка сама переведёт в секторы
-    localStorage.setItem('ck_from_generator', JSON.stringify({
-      sequence: sequence, // массив индексов [0..259]
-      image: photoData
-    }));
-
-    window.location.href = 'index.html';
-  } catch(e) {
-    alert('Ошибка сохранения: ' + e.message);
-  }
+  setState('ready');
 }
 
 function saveImage(){
   let a=document.createElement('a');
   a.href=canvas.toDataURL('image/png');
-  a.download='stringart.png'; a.click();
+  a.download='stringart.png';a.click();
+}
+
+function openInKnitter(){
+  try{
+    let pc=document.createElement('canvas');
+    pc.width=width;pc.height=height;
+    let pCtx=pc.getContext('2d');
+    pCtx.save();
+    pCtx.beginPath();pCtx.arc(x0,y0,radius,0,Math.PI*2);pCtx.clip();
+    pCtx.drawImage(image,imgX,imgY,imgNatW*imgScale,imgNatH*imgScale);
+    pCtx.restore();
+    localStorage.setItem('ck_from_generator',JSON.stringify({
+      sequence:sequence,
+      image:pc.toDataURL('image/jpeg',0.7)
+    }));
+    window.location.href='index.html';
+  }catch(e){alert('Ошибка: '+e.message);}
 }
 
 function setMode(m){
   mode=m;
   document.getElementById('btn-bw').classList.toggle('active',m==='bw');
   document.getElementById('btn-color').classList.toggle('active',m==='color');
-  // Фильтры только для ч/б режима
-  document.getElementById('filter-section').style.opacity=m==='bw'?'1':'0.4';
+  document.getElementById('filter-block').style.opacity=m==='bw'?'1':'0.4';
+  if(image)drawPhoto();
+}
+
+function setFilter(f){
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach((b,i)=>{
+    b.classList.toggle('active',['normal','hard','soft','silhouette'][i]===f);
+  });
   if(image)drawPhoto();
 }
 
 document.getElementById('contrast-box').addEventListener('input',()=>{updateContrast();if(image)drawPhoto();});
 document.getElementById('brightness-box').addEventListener('input',()=>{updateBrightness();if(image)drawPhoto();});
 
-initCanvas(); updateContrast(); updateBrightness(); initNails();
+initCanvas();updateContrast();updateBrightness();initNails();
+setState('ready');
 </script>
 </body>
 </html>
