@@ -11,6 +11,12 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <meta name="apple-mobile-web-app-title" content="ColorKnitter" />
   <script>
+  // Если нет данных от генератора и первый запуск — переходим на генератор
+  if (!localStorage.getItem('ck_from_generator') && !localStorage.getItem('ck_visited')) {
+    localStorage.setItem('ck_visited', '1');
+    window.location.replace('generator.html');
+  }
+</script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
     }
