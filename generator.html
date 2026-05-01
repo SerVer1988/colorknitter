@@ -73,10 +73,6 @@
 <body>
 <div id="root">
 
-  <a href="index.html" class="back-btn">
-    <img src="ic_back.png" alt="назад" />
-  </a>
-
   <div class="logo-row">
     <img src="icon.png" alt="CK" onerror="this.style.display='none'" />
   </div>
@@ -143,9 +139,9 @@
   <div id="state-ready">
     <button class="big-btn btn-primary" id="generate-btn" onclick="startGenerate()" disabled>▶ Запустить</button>
   </div>
-  <!-- Состояние 2: во время генерации — пусто, прогресс вверху -->
+  <!-- Состояние 2: во время генерации — только статус в нижней панели -->
   <div id="state-running" style="display:none">
-    <div class="status-text" id="status-text-bar">Генерация...</div>
+    <div class="status-text" id="status-text-bar"></div>
   </div>
   <!-- Состояние 3: после завершения -->
   <div id="state-done" style="display:none; display:none; flex-direction:column; gap:10px;">
@@ -387,7 +383,6 @@ function startGenerate(){
     let rem=done>0?((performance.now()-t0)/done*(total-done)/1000).toFixed(1):'...';
     let txt=`${done} / ${total} линий · ${el}с · осталось ~${rem}с`;
     document.getElementById('status-text').textContent=txt;
-    document.getElementById('status-text-bar').textContent=txt;
     animFrame=requestAnimationFrame(runBatch);
   }
   animFrame=requestAnimationFrame(runBatch);
