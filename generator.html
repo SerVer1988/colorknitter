@@ -298,29 +298,53 @@ function initNails(){
   }
 }
 
+// Вычислительный canvas меньшего размера для скорости
+const CALC_SIZE = 200;
+let calcCanvas = document.createElement('canvas');
+calcCanvas.width = CALC_SIZE; calcCanvas.height = CALC_SIZE;
+let calcCtx = calcCanvas.getContext('2d');
+let calcNails = []; // гвозди в масштабе CALC_SIZE
+let calcRadius, calcX0, calcY0;
+
+function initCalcNails() {
+  calcX0 = CALC_SIZE/2; calcY0 = CALC_SIZE/2;
+  calcRadius = CALC_SIZE/2 - 2;
+  calcNails = [];
+  for(let i=0;i<NAILS_COUNT;i++){
+    let t=i*2*Math.PI/NAILS_COUNT;
+    calcNails.push({
+      x: Math.round(calcX0 + calcRadius*Math.cos(t)),
+      y: Math.round(calcY0 + calcRadius*Math.sin(t))
+    });
+  }
+}
+
 function lineRasterization(x1,y1,x2,y2){
   let line=new Set(),dx=Math.abs(x2-x1),dy=Math.abs(y2-y1);
   let sx=Math.sign(x2-x1),sy=Math.sign(y2-y1),err=dx-dy;
   while(x1!=x2||y1!=y2){
-    line.add(y1*width+x1);let e2=err*2;
+    line.add(y1*CALC_SIZE+x1);let e2=err*2;
     if(e2>-dy){err-=dy;x1+=sx;}if(e2<dx){err+=dx;y1+=sy;}
   }
-  line.add(y2*width+x2);return line;
+  line.add(y2*CALC_SIZE+x2);return line;
 }
 
 function getPixels(){
-  pixelCtx.clearRect(0,0,width,height);
-  pixelCtx.fillStyle='#fff';pixelCtx.fillRect(0,0,width,height);
-  pixelCtx.save();
-  pixelCtx.beginPath();pixelCtx.arc(x0,y0,radius,0,Math.PI*2);pixelCtx.clip();
-  pixelCtx.drawImage(image,imgX,imgY,imgNatW*imgScale,imgNatH*imgScale);
-  pixelCtx.restore();
-  let data=pixelCtx.getImageData(0,0,width,height).data,px=[];
+  // Рисуем в маленький canvas для быстрых вычислений
+  calcCtx.clearRect(0,0,CALC_SIZE,CALC_SIZE);
+  calcCtx.fillStyle='#fff'; calcCtx.fillRect(0,0,CALC_SIZE,CALC_SIZE);
+  calcCtx.save();
+  calcCtx.beginPath(); calcCtx.arc(calcX0,calcY0,calcRadius,0,Math.PI*2); calcCtx.clip();
+  // Масштабируем фото в CALC_SIZE
+  let scale=CALC_SIZE/width;
+  calcCtx.drawImage(canvas, 0, 0, CALC_SIZE, CALC_SIZE);
+  calcCtx.restore();
+  let data=calcCtx.getImageData(0,0,CALC_SIZE,CALC_SIZE).data, px=[];
   for(let i=0;i<data.length;i+=4){
     let l=getLightness(data[i],data[i+1],data[i+2]);
-    l=brightnessTable[l];l=contrastTable[l];l=FILTERS[currentFilter](l);
-    let px_x=(i/4)%width,px_y=Math.floor((i/4)/width);
-    if((px_x-x0)**2+(px_y-y0)**2>radius**2)l=255;
+    l=brightnessTable[l]; l=contrastTable[l]; l=FILTERS[currentFilter](l);
+    let px_x=(i/4)%CALC_SIZE, px_y=Math.floor((i/4)/CALC_SIZE);
+    if((px_x-calcX0)**2+(px_y-calcY0)**2>calcRadius**2) l=255;
     px.push(l);
   }
   return px;
@@ -357,20 +381,22 @@ function startGenerate(){
   setState('running');
 
   let total=+document.getElementById('lines-count-box').value;
-  let lw=limitPixel(LINE_WEIGHT/100*255/dpr),t0=performance.now(),nail=0;
+  let lw=limitPixel(LINE_WEIGHT/100*255),t0=performance.now(),nail=0;
 
   function runBatch(){
-    for(let b=0;b<20;b++){
+    const BATCH=50; // больше батч = быстрее, но UI чуть медленнее обновляется
+    for(let b=0;b<BATCH;b++){
       if(sequence.length>=total){finishGenerate(t0,total);return;}
       sequence.push(nail);
       let nn=nail,nl=null,ml=Infinity;
-      for(let i=0;i<nails.length;i++){
+      for(let i=0;i<calcNails.length;i++){
         if(i===nail)continue;
-        let line=lineRasterization(nails[i].x,nails[i].y,nails[nail].x,nails[nail].y);
+        let line=lineRasterization(calcNails[i].x,calcNails[i].y,calcNails[nail].x,calcNails[nail].y);
         let l=0;for(let idx of line)l+=pixels[idx];l/=line.size;
         if(l<ml){ml=l;nn=i;nl=line;}
       }
       for(let idx of nl)pixels[idx]=Math.min(255,pixels[idx]+lw);
+      // Рисуем линию на большом canvas (по реальным гвоздям)
       ctx.lineWidth=1;
       ctx.strokeStyle=mode==='bw'?`rgba(0,0,0,${LINE_WEIGHT/100})`:getLineColor(nails[nail],nails[nn]);
       ctx.beginPath();ctx.moveTo(nails[nail].x,nails[nail].y);
@@ -446,7 +472,7 @@ function setFilter(f){
 document.getElementById('contrast-box').addEventListener('input',()=>{updateContrast();if(image)drawPhoto();});
 document.getElementById('brightness-box').addEventListener('input',()=>{updateBrightness();if(image)drawPhoto();});
 
-initCanvas();updateContrast();updateBrightness();initNails();
+initCanvas();updateContrast();updateBrightness();initNails();initCalcNails();
 setState('ready');
 </script>
 </body>
