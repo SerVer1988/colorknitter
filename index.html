@@ -14,6 +14,11 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
     }
+    // Редирект на генератор если нет данных от него
+    if (!localStorage.getItem('ck_from_generator') && !sessionStorage.getItem('ck_knitter_active')) {
+      window.location.replace('generator.html');
+    }
+    sessionStorage.setItem('ck_knitter_active', '1');
     function unlockSpeech() {
       const u = new SpeechSynthesisUtterance('');
       u.volume = 0;
@@ -31,8 +36,9 @@
     body { display: flex; justify-content: center; align-items: flex-start; }
     #root { width: 100%; max-width: 440px; min-height: 100vh; display: flex; flex-direction: column; padding: 0 0 110px 0; }
 
-    .logo-row { display: flex; justify-content: center; padding: 8px 0 4px; }
-    .logo-row img { width: 36px; height: 36px; border-radius: 8px; }
+    .logo-row { display: flex; justify-content: center; align-items: center; padding: 8px 0 4px; position: relative; }
+    .logo-row img { height: 36px; width: auto; border-radius: 8px; }
+    .logo-back { position: absolute; left: 12px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
 
     .status-box { margin: 16px 12px; border: 2.5px solid #fff; border-radius: 999px; padding: 10px 20px; text-align: center; font-size: 18px; font-weight: 700; color: #fff; }
 
@@ -476,6 +482,9 @@ function ColorKnitter() {
       {goalMessage && <div className="goal-msg">🎯 Цель достигнута!</div>}
 
       <div className="logo-row">
+        <a href="generator.html" className="logo-back">
+          <img src="ic_back.png" alt="назад" style={{width:36,height:36}} />
+        </a>
         <img src="icon.png" alt="CK" onError={e=>e.target.style.display='none'} />
       </div>
 
