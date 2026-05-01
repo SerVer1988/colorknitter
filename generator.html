@@ -73,6 +73,10 @@
 <body>
 <div id="root">
 
+  <a href="index.html" class="back-btn">
+    <img src="ic_back.png" alt="назад" />
+  </a>
+
   <div class="logo-row">
     <img src="icon.png" alt="CK" onerror="this.style.display='none'" />
   </div>
@@ -139,9 +143,9 @@
   <div id="state-ready">
     <button class="big-btn btn-primary" id="generate-btn" onclick="startGenerate()" disabled>▶ Запустить</button>
   </div>
-  <!-- Состояние 2: во время генерации -->
+  <!-- Состояние 2: во время генерации — пусто, прогресс вверху -->
   <div id="state-running" style="display:none">
-    <div style="height:4px"></div>
+    <div class="status-text" id="status-text-bar">Генерация...</div>
   </div>
   <!-- Состояние 3: после завершения -->
   <div id="state-done" style="display:none; display:none; flex-direction:column; gap:10px;">
@@ -326,31 +330,7 @@ function getPixels(){
   return px;
 }
 
-  // Предвычисляем все линии между гвоздями один раз
-  let precomputedLines = null;
-
-  function precomputeLines(onDone) {
-    precomputedLines = [];
-    for (let i = 0; i < NAILS_COUNT; i++) precomputedLines[i] = [];
-    let i = 0;
-    function batch() {
-      const END = Math.min(i + 10, NAILS_COUNT);
-      for (; i < END; i++) {
-        for (let j = 0; j < NAILS_COUNT; j++) {
-          if (i === j) { precomputedLines[i][j] = null; continue; }
-          precomputedLines[i][j] = lineRasterization(
-            nails[i].x, nails[i].y, nails[j].x, nails[j].y
-          );
-        }
-      }
-      let pct = Math.round(i / NAILS_COUNT * 100);
-      document.getElementById('status-text').textContent = `Подготовка... ${pct}%`;
-      document.getElementById('progress-bar').style.width = (pct/2) + '%';
-      if (i < NAILS_COUNT) setTimeout(batch, 0);
-      else onDone();
-    }
-    batch();
-  }
+function getLineColor(n1,n2){
   let mx=Math.round((n1.x+n2.x)/2),my=Math.round((n1.y+n2.y)/2);
   let sx=Math.max(0,Math.min(image.width-1,Math.round((mx-imgX)/imgScale)));
   let sy=Math.max(0,Math.min(image.height-1,Math.round((my-imgY)/imgScale)));
@@ -371,7 +351,6 @@ function startGenerate(){
   if(isGenerating||!image)return;
   isGenerating=true; sequence=[];
   pixels=getPixels();
-
   ctx.clearRect(0,0,width,height);
   ctx.beginPath();ctx.arc(x0,y0,radius,0,Math.PI*2);
   ctx.fillStyle='#fff';ctx.fill();
@@ -380,28 +359,18 @@ function startGenerate(){
   for(let n of nails){ctx.beginPath();ctx.arc(n.x,n.y,NAIL_RADIUS,0,Math.PI*2);ctx.fill();}
 
   setState('running');
-  document.getElementById('status-text').textContent='Подготовка...';
-  document.getElementById('progress-bar').style.width='0%';
 
-  // Предвычисляем линии асинхронно
-  setTimeout(()=>{
-    precomputeLines(runGeneration);
-  }, 50);
-}
-
-function runGeneration(){
   let total=+document.getElementById('lines-count-box').value;
   let lw=limitPixel(LINE_WEIGHT/100*255/dpr),t0=performance.now(),nail=0;
 
   function runBatch(){
-    const BATCH=50;
-    for(let b=0;b<BATCH;b++){
+    for(let b=0;b<20;b++){
       if(sequence.length>=total){finishGenerate(t0,total);return;}
       sequence.push(nail);
       let nn=nail,nl=null,ml=Infinity;
-      for(let i=0;i<NAILS_COUNT;i++){
+      for(let i=0;i<nails.length;i++){
         if(i===nail)continue;
-        let line=precomputedLines[nail][i];
+        let line=lineRasterization(nails[i].x,nails[i].y,nails[nail].x,nails[nail].y);
         let l=0;for(let idx of line)l+=pixels[idx];l/=line.size;
         if(l<ml){ml=l;nn=i;nl=line;}
       }
@@ -416,8 +385,9 @@ function runGeneration(){
     document.getElementById('progress-bar').style.width=pct+'%';
     let el=((performance.now()-t0)/1000).toFixed(1);
     let rem=done>0?((performance.now()-t0)/done*(total-done)/1000).toFixed(1):'...';
-    let txt=`${done} / ${total} · ${el}с · ~${rem}с`;
+    let txt=`${done} / ${total} линий · ${el}с · осталось ~${rem}с`;
     document.getElementById('status-text').textContent=txt;
+    document.getElementById('status-text-bar').textContent=txt;
     animFrame=requestAnimationFrame(runBatch);
   }
   animFrame=requestAnimationFrame(runBatch);
@@ -432,7 +402,7 @@ function finishGenerate(t0,total){
 
 function resetAll(){
   if(animFrame)cancelAnimationFrame(animFrame);
-  isGenerating=false;sequence=[];precomputedLines=null;
+  isGenerating=false;sequence=[];
   if(image)drawPhoto();else drawEmpty();
   document.getElementById('progress-bar').style.width='0%';
   setState('ready');
