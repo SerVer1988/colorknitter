@@ -1,5 +1,17 @@
-const CACHE = 'colorknitter-v10';
-const FILES = ['/colorknitter/', '/colorknitter/index.html', '/colorknitter/icon.png', '/colorknitter/manifest.json'];
+const CACHE = 'colorknitter-v11';
+const FILES = [
+  '/colorknitter/',
+  '/colorknitter/index.html',
+  '/colorknitter/generator.html',
+  '/colorknitter/icon.png',
+  '/colorknitter/manifest.json',
+  '/colorknitter/ic_music.png',
+  '/colorknitter/ic_back.png',
+  '/colorknitter/ic_play.png',
+  '/colorknitter/ic_pause.png',
+  '/colorknitter/ic_next.png',
+  '/colorknitter/ic_settings.png'
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
@@ -16,7 +28,6 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Для HTML — всегда сеть, кеш только если нет сети
   if (e.request.headers.get('accept')?.includes('text/html')) {
     e.respondWith(
       fetch(e.request).then(r => {
@@ -27,6 +38,5 @@ self.addEventListener('fetch', e => {
     );
     return;
   }
-  // Для остального — кеш, потом сеть
   e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
 });
