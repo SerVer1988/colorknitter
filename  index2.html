@@ -162,12 +162,32 @@ function ColorKnitter() {
     else audioRef.current.pause();
   }, [radioPlaying]);
 
+  // Проверяем данные от генератора
   useEffect(() => {
-    if (restored?.circleImage) {
-      const img = new Image();
-      img.onload = () => { loadedImgRef.current = img; };
-      img.src = restored.circleImage;
-    }
+    const fromGen = localStorage.getItem('ck_from_generator');
+    if (!fromGen) return;
+    try {
+      const { sequenceText, image: imgData } = JSON.parse(fromGen);
+      localStorage.removeItem('ck_from_generator');
+
+      // Загружаем sequence
+      const seq = parseFile(sequenceText);
+      if (seq.length > 0) {
+        setSequence(seq);
+        setCurrentIndex(0);
+        setRemainingSteps(0);
+        stepCountRef.current = 0;
+        goalReachedRef.current = false;
+        speak(seq[0]);
+      }
+
+      // Загружаем картинку как подложку
+      if (imgData) {
+        const img = new Image();
+        img.onload = () => { loadedImgRef.current = img; setCircleImage(imgData); };
+        img.src = imgData;
+      }
+    } catch(e) { console.error(e); }
   }, []);
 
   useEffect(() => {
