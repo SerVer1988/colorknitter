@@ -73,10 +73,6 @@
 <body>
 <div id="root">
 
-  <a href="index.html" class="back-btn">
-    <img src="ic_back.png" alt="назад" />
-  </a>
-
   <div class="logo-row">
     <img src="icon.png" alt="CK" onerror="this.style.display='none'" />
   </div>
@@ -143,9 +139,9 @@
   <div id="state-ready">
     <button class="big-btn btn-primary" id="generate-btn" onclick="startGenerate()" disabled>▶ Запустить</button>
   </div>
-  <!-- Состояние 2: во время генерации — пусто, прогресс вверху -->
+  <!-- Состояние 2: во время генерации -->
   <div id="state-running" style="display:none">
-    <div class="status-text" id="status-text-bar">Генерация...</div>
+    <div style="height:4px"></div>
   </div>
   <!-- Состояние 3: после завершения -->
   <div id="state-done" style="display:none; display:none; flex-direction:column; gap:10px;">
