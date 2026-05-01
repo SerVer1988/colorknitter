@@ -329,17 +329,27 @@ function getPixels(){
   // Предвычисляем все линии между гвоздями один раз
   let precomputedLines = null;
 
-  function precomputeLines() {
+  function precomputeLines(onDone) {
     precomputedLines = [];
-    for (let i = 0; i < NAILS_COUNT; i++) {
-      precomputedLines[i] = [];
-      for (let j = 0; j < NAILS_COUNT; j++) {
-        if (i === j) { precomputedLines[i][j] = null; continue; }
-        precomputedLines[i][j] = lineRasterization(
-          nails[i].x, nails[i].y, nails[j].x, nails[j].y
-        );
+    for (let i = 0; i < NAILS_COUNT; i++) precomputedLines[i] = [];
+    let i = 0;
+    function batch() {
+      const END = Math.min(i + 10, NAILS_COUNT);
+      for (; i < END; i++) {
+        for (let j = 0; j < NAILS_COUNT; j++) {
+          if (i === j) { precomputedLines[i][j] = null; continue; }
+          precomputedLines[i][j] = lineRasterization(
+            nails[i].x, nails[i].y, nails[j].x, nails[j].y
+          );
+        }
       }
+      let pct = Math.round(i / NAILS_COUNT * 100);
+      document.getElementById('status-text').textContent = `Подготовка... ${pct}%`;
+      document.getElementById('progress-bar').style.width = (pct/2) + '%';
+      if (i < NAILS_COUNT) setTimeout(batch, 0);
+      else onDone();
     }
+    batch();
   }
   let mx=Math.round((n1.x+n2.x)/2),my=Math.round((n1.y+n2.y)/2);
   let sx=Math.max(0,Math.min(image.width-1,Math.round((mx-imgX)/imgScale)));
@@ -370,20 +380,28 @@ function startGenerate(){
   for(let n of nails){ctx.beginPath();ctx.arc(n.x,n.y,NAIL_RADIUS,0,Math.PI*2);ctx.fill();}
 
   setState('running');
-  document.getElementById('status-text').textContent='Генерация...';
+  document.getElementById('status-text').textContent='Подготовка...';
   document.getElementById('progress-bar').style.width='0%';
 
+  // Предвычисляем линии асинхронно
+  setTimeout(()=>{
+    precomputeLines(runGeneration);
+  }, 50);
+}
+
+function runGeneration(){
   let total=+document.getElementById('lines-count-box').value;
   let lw=limitPixel(LINE_WEIGHT/100*255/dpr),t0=performance.now(),nail=0;
 
   function runBatch(){
-    for(let b=0;b<5;b++){
+    const BATCH=50;
+    for(let b=0;b<BATCH;b++){
       if(sequence.length>=total){finishGenerate(t0,total);return;}
       sequence.push(nail);
       let nn=nail,nl=null,ml=Infinity;
       for(let i=0;i<NAILS_COUNT;i++){
         if(i===nail)continue;
-        let line=lineRasterization(nails[i].x,nails[i].y,nails[nail].x,nails[nail].y);
+        let line=precomputedLines[nail][i];
         let l=0;for(let idx of line)l+=pixels[idx];l/=line.size;
         if(l<ml){ml=l;nn=i;nl=line;}
       }
@@ -398,7 +416,8 @@ function startGenerate(){
     document.getElementById('progress-bar').style.width=pct+'%';
     let el=((performance.now()-t0)/1000).toFixed(1);
     let rem=done>0?((performance.now()-t0)/done*(total-done)/1000).toFixed(1):'...';
-    document.getElementById('status-text').textContent=`${done} / ${total} · ${el}с · ~${rem}с`;
+    let txt=`${done} / ${total} · ${el}с · ~${rem}с`;
+    document.getElementById('status-text').textContent=txt;
     animFrame=requestAnimationFrame(runBatch);
   }
   animFrame=requestAnimationFrame(runBatch);
@@ -413,7 +432,7 @@ function finishGenerate(t0,total){
 
 function resetAll(){
   if(animFrame)cancelAnimationFrame(animFrame);
-  isGenerating=false;sequence=[];
+  isGenerating=false;sequence=[];precomputedLines=null;
   if(image)drawPhoto();else drawEmpty();
   document.getElementById('progress-bar').style.width='0%';
   setState('ready');
