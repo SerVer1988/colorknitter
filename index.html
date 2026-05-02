@@ -14,11 +14,10 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
     }
-    // Редирект на генератор если нет данных от него
-    if (!localStorage.getItem('ck_from_generator') && !sessionStorage.getItem('ck_knitter_active')) {
+    // Если нет флага активной вязалки и нет данных от генератора — на генератор
+    if (!localStorage.getItem('ck_has_sequence') && !localStorage.getItem('ck_from_generator')) {
       window.location.replace('generator.html');
     }
-    sessionStorage.setItem('ck_knitter_active', '1');
     function unlockSpeech() {
       const u = new SpeechSynthesisUtterance('');
       u.volume = 0;
@@ -175,6 +174,7 @@ function ColorKnitter() {
     try {
       const { sequence: genSeq, image: imgData } = JSON.parse(fromGen);
       localStorage.removeItem('ck_from_generator');
+      localStorage.setItem('ck_has_sequence', '1');
 
       // Конвертируем массив индексов [0..259] в формат sequence вязалки
       // Каждый элемент: value = index+1 (1..260), color = чёрный
@@ -482,7 +482,7 @@ function ColorKnitter() {
       {goalMessage && <div className="goal-msg">🎯 Цель достигнута!</div>}
 
       <div className="logo-row">
-        <a href="generator.html" className="logo-back">
+        <a href="generator.html" className="logo-back" onClick={()=>localStorage.removeItem('ck_has_sequence')}>
           <img src="ic_back.png" alt="назад" style={{width:36,height:36}} />
         </a>
         <img src="icon.png" alt="CK" onError={e=>e.target.style.display='none'} />
