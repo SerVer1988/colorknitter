@@ -514,6 +514,17 @@ function ColorKnitter() {
 
       {renderSteps()}
 
+      {/* Ползунок прозрачности под шагами если загружено фото */}
+      {circleImage && (
+        <div style={{display:'flex',alignItems:'center',gap:8,margin:'0 12px 8px'}}>
+          <span style={{fontSize:12,color:'#aaa',whiteSpace:'nowrap'}}>Фото:</span>
+          <input type="range" min="0" max="1" step="0.05" value={imageOpacity}
+            onChange={e=>setImageOpacity(Number(e.target.value))}
+            style={{flex:1,accentColor:'#EFCA46'}} />
+          <span style={{fontSize:12,color:'#aaa',width:32,textAlign:'right'}}>{Math.round(imageOpacity*100)}%</span>
+        </div>
+      )}
+
       <div className={`settings-panel${showSettings?' open':''}`}>
         <div className="toggle-row">
           <span>Линия следующего хода</span>
