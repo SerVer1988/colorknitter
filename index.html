@@ -189,7 +189,20 @@ function saveToStorage(data) {
 }
 
 function loadFromStorage() {
-  try { const s = localStorage.getItem(STORAGE_KEY); return s ? JSON.parse(s) : null; } catch(_) { return null; }
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    if (!s) return null;
+    const data = JSON.parse(s);
+    // Проверяем валидность sequence: если первый элемент не имеет value — сбрасываем
+    if (data.sequence && data.sequence.length > 0) {
+      const first = data.sequence[0];
+      if (!first.value || isNaN(first.value)) {
+        localStorage.removeItem(STORAGE_KEY);
+        return null;
+      }
+    }
+    return data;
+  } catch(_) { return null; }
 }
 
 function ColorKnitter() {
@@ -210,6 +223,7 @@ function ColorKnitter() {
   const [showSaved, setShowSaved]           = useState(false);
   const [radioPlaying, setRadioPlaying]     = useState(false);
   const [goalMessage, setGoalMessage]       = useState(false);
+  const [isColorMode, setIsColorMode]       = useState(restored?.isColorMode || false);
   // Баннер смены нити
   const [colorChangeBanner, setColorChangeBanner] = useState(null); // {colorIndex, name, hex}
 
@@ -233,8 +247,10 @@ function ColorKnitter() {
   }, [sequence, currentIndex]);
 
   const currentThread = getCurrentThread();
-  const threadHex = currentThread?.hex || '#ffffff';
   const isBlackThread = currentThread?.id === 'K';
+  // В ЧБ режиме (одна чёрная нить) — UI жёлтый как оригинал.
+  // В цветном режиме — UI меняет цвет по нити, включая чёрную.
+  const threadHex = (!isColorMode && isBlackThread) ? '#EFCA46' : (currentThread?.hex || '#EFCA46');
 
   // Обновляем CSS переменную для цвета нити
   useEffect(() => {
@@ -264,29 +280,39 @@ function ColorKnitter() {
 
       if (genSeq && genSeq.length > 0) {
         let seq;
-        if (mode === 'color' && genSeq[0] && typeof genSeq[0] === 'object' && 'nail' in genSeq[0]) {
-          // Новый цветной формат: [{nail, colorIndex}, ...]
+        const first = genSeq[0];
+        if (first && typeof first === 'object' && 'nail' in first) {
+          // Новый формат: [{nail, colorIndex}, ...] — и ЧБ и цветной
           seq = genSeq.map((item, i) => {
             const prev = i > 0 ? genSeq[i - 1] : null;
-            const isColorChange = prev !== null && prev.colorIndex !== item.colorIndex;
+            const ci = item.colorIndex ?? 3;
+            const prevCi = prev ? (prev.colorIndex ?? 3) : ci;
+            const isColorChange = prev !== null && prevCi !== ci;
             return {
               value: item.nail + 1,
-              colorIndex: item.colorIndex ?? 3,
+              colorIndex: ci,
               isColorChange,
             };
           });
-        } else {
-          // Старый ЧБ формат (массив индексов)
-          const arr = Array.isArray(genSeq) && typeof genSeq[0] === 'number' ? genSeq : genSeq.map(g => g.nail);
-          seq = arr.map((idx, i) => ({
+        } else if (typeof first === 'number') {
+          // Старый ЧБ формат: массив чисел
+          seq = genSeq.map(idx => ({
             value: idx + 1,
             colorIndex: 3,
             isColorChange: false,
+          }));
+        } else {
+          // Старый формат с value/color
+          seq = genSeq.map(item => ({
+            value: item.value || 1,
+            colorIndex: item.colorIndex ?? 3,
+            isColorChange: item.isColorChange || false,
           }));
         }
         setSequence(seq);
         setCurrentIndex(0);
         setRemainingSteps(0);
+        setIsColorMode(mode === 'color');
         stepCountRef.current = 0;
         goalReachedRef.current = false;
         speak(seq[0]);
@@ -302,7 +328,7 @@ function ColorKnitter() {
 
   useEffect(() => {
     saveToStorage({ sequence, currentIndex, speedMultiplier, targetSteps, findStep,
-      savedStates, remainingSteps, showNextLine, circleImage, imageOpacity });
+      savedStates, remainingSteps, showNextLine, circleImage, imageOpacity, isColorMode });
   }, [sequence, currentIndex, speedMultiplier, targetSteps, findStep,
       savedStates, remainingSteps, showNextLine, circleImage, imageOpacity]);
 
@@ -313,8 +339,8 @@ function ColorKnitter() {
 
   const calcElapsed = () => Math.round(currentIndex * (6 - speedMultiplier) / 1.1);
 
-  const getSector = (n) => { if (!n) return ''; if (n <= 65) return 'D'; if (n <= 130) return 'C'; if (n <= 195) return 'A'; return 'B'; };
-  const getPos    = (n) => { if (!n) return 0; const b = {D:1,C:66,A:131,B:196}; return n - b[getSector(n)] + 1; };
+  const getSector = (n) => { if (!n || isNaN(n) || n < 1) return '?'; if (n <= 65) return 'D'; if (n <= 130) return 'C'; if (n <= 195) return 'A'; return 'B'; };
+  const getPos    = (n) => { if (!n || isNaN(n) || n < 1) return 0; const b = {D:1,C:66,A:131,B:196}; const s = getSector(n); return s === '?' ? 0 : n - b[s] + 1; };
   const getAngle  = (sec, pos) => { const b = {A: Math.PI, B: Math.PI*1.5, C: Math.PI*0.5, D: 0}; return b[sec] + (pos-1) * (Math.PI*0.5/65); };
 
   const colorName = (item) => {
@@ -455,7 +481,12 @@ function ColorKnitter() {
 
   const rgbHex = (c) => '#' + c.map(v => v.toString(16).padStart(2,'0')).join('');
 
-  const stepLabel = (item) => item ? `${getSector(item.value)}${getPos(item.value)}` : '';
+  const stepLabel = (item) => {
+    if (!item || !item.value || isNaN(item.value)) return '---';
+    const s = getSector(item.value);
+    if (s === '?') return '---';
+    return `${s}${getPos(item.value)}`;
+  };
 
   // ── Отрисовка канваса ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -567,14 +598,16 @@ function ColorKnitter() {
       }
     }
 
-    // Красный указатель → цветом нити (или контрастный)
+    // Указатель: чёрная нить → красный (оригинал), белая → серый, остальные → цвет нити
     if (sequence[currentIndex]) {
       const a = getAngle(getSector(sequence[currentIndex].value), getPos(sequence[currentIndex].value));
       const thread = THREAD_COLORS[sequence[currentIndex]?.colorIndex ?? 3];
       ctx.beginPath();
       ctx.moveTo(cx + radius * Math.cos(a), cy + radius * Math.sin(a));
       ctx.lineTo(cx + (radius+8) * Math.cos(a), cy + (radius+8) * Math.sin(a));
-      ctx.strokeStyle = thread?.id === 'W' ? '#aaa' : (thread?.hex || '#ff0000');
+      ctx.strokeStyle = thread?.id === 'W' ? '#aaa'
+        : (thread?.id === 'K' ? (isColorMode ? '#444' : '#ff0000')
+        : (thread?.hex || '#ff0000'));
       ctx.lineWidth = 2; ctx.stroke();
     }
   }, [currentIndex, sequence, showNextLine, circleImage, imageOpacity, threadHex]);
@@ -595,12 +628,11 @@ function ColorKnitter() {
           return (
             <div
               key={i}
-              className={`step-item${cur ? ' cur' + (isBlack ? ' thread-black' : '') : ''}`}
+              className={`step-item${cur ? ' cur' : ''}`}
               style={{
                 color: cur ? threadHex : 'white',
                 fontSize: cur ? '3rem' : '1.6rem',
                 minWidth: cur ? 80 : 50,
-                textShadow: cur && isBlack ? '0 0 6px #fff, 0 0 3px #ccc' : 'none',
               }}
             >
               {stepLabel(item)}
