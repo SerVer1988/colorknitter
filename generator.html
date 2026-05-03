@@ -111,6 +111,10 @@
     <div id="color-select-block" style="display:none">
       <div class="s-label"><span>Цвета нитей</span><span style="color:#555;font-size:11px">все активны</span></div>
       <div class="color-chips" id="color-chips"></div>
+      <div style="margin-top:12px">
+        <span class="s-input-label">Интервал смены нити (шагов)</span>
+        <input type="number" id="color-interval-box" value="100" min="10" max="2000" />
+      </div>
     </div>
 
     <div>
@@ -465,27 +469,30 @@ function startGenerate() {
   } else {
     // ── ЦВЕТНОЙ режим ──────────────────────────────────────────────────────
     const rgb = getImagePixelsRGB();
+    const interval = Math.max(10, +document.getElementById('color-interval-box').value || 100);
 
     // Строим карты «нужды» для каждого цвета
     const needMaps = COLORS.map(c => buildNeedMap(rgb, c));
-
-    // Текущая позиция гвоздя для каждого цвета
-    const nailPos = new Array(5).fill(0);
-
-    // «Остаточная» карта нужды (уменьшается по мере добавления линий)
-    // Копируем needMaps в Float32Array
     const residuals = needMaps.map(m => new Float32Array(m));
 
-    // Счётчики линий по цветам
-    const colorCounts = new Array(5).fill(0);
-
-    // Определяем пропорции: суммируем нужду по каждому цвету
+    // Определяем пропорции для квот (для отображения прогресса)
     const colorTotals = needMaps.map(m => { let s = 0; for (let v of m) s += v; return s; });
     const grandTotal = colorTotals.reduce((a, b) => a + b, 0);
     const colorQuotas = colorTotals.map(t => Math.round(t / grandTotal * total));
-    // Корректируем чтобы сумма = total
     let diff = total - colorQuotas.reduce((a, b) => a + b, 0);
     colorQuotas[0] += diff;
+
+    // Текущая позиция гвоздя для каждого цвета
+    const nailPos = new Array(5).fill(0);
+    const colorCounts = new Array(5).fill(0);
+
+    // Порядок цветов по убыванию нужды (самый нужный первым)
+    const colorOrder = [0,1,2,3,4].sort((a, b) => colorTotals[b] - colorTotals[a]);
+
+    // Текущий цвет и счётчик шагов в текущем интервале
+    let currentColorOrderIdx = 0;
+    let stepsInCurrentColor = 0;
+    let currentCi = colorOrder[0];
 
     // Отображение прогресса по цветам
     const colorProgressRow = document.getElementById('color-progress-row');
@@ -504,25 +511,18 @@ function startGenerate() {
 
     const lw = limitPixel(LINE_WEIGHT / 100 * 255 / dpr);
 
-    // Кэш растеризаций для ускорения (nail → Map<nail2, Set>)
-    // Не кэшируем — слишком много памяти. Считаем на лету.
-
     function runBatchColor() {
       for (let b = 0; b < 10; b++) {
         if (sequence.length >= total) { finishGenerate(t0, total); return; }
 
-        // Выбираем цвет: тот, у кого максимальная «недовыполненная квота»
-        // deficit = quota - count (нормализованный)
-        let bestColorIdx = -1;
-        let bestDeficit = -Infinity;
-        for (let ci = 0; ci < 5; ci++) {
-          if (colorCounts[ci] >= colorQuotas[ci]) continue;
-          const deficit = (colorQuotas[ci] - colorCounts[ci]) / colorQuotas[ci];
-          if (deficit > bestDeficit) { bestDeficit = deficit; bestColorIdx = ci; }
+        // Переключаем цвет по интервалу
+        if (stepsInCurrentColor >= interval) {
+          stepsInCurrentColor = 0;
+          currentColorOrderIdx = (currentColorOrderIdx + 1) % colorOrder.length;
+          currentCi = colorOrder[currentColorOrderIdx];
         }
-        if (bestColorIdx === -1) { finishGenerate(t0, total); return; }
 
-        const ci = bestColorIdx;
+        const ci = currentCi;
         const nail = nailPos[ci];
         const residual = residuals[ci];
         const color = COLORS[ci];
@@ -553,11 +553,14 @@ function startGenerate() {
 
         nailPos[ci] = bestNail;
         colorCounts[ci]++;
+        stepsInCurrentColor++;
         countEls[ci].textContent = `${colorCounts[ci]}/${colorQuotas[ci]}`;
       }
 
       updateProgress(sequence.length, total, t0);
       animFrame = requestAnimationFrame(runBatchColor);
+    }
+    animFrame = requestAnimationFrame(runBatchColor);
     }
     animFrame = requestAnimationFrame(runBatchColor);
   }
