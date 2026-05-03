@@ -36,22 +36,20 @@
     .logo-row img { height: 36px; width: auto; border-radius: 8px; }
     .logo-back { position: absolute; left: 12px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
 
-    /* Статус бокс — цвет меняется динамически через CSS переменную */
     .status-box {
       margin: 16px 12px;
-      border: 2.5px solid var(--ui-color, #fff);
+      border: 2.5px solid #fff;
       border-radius: 999px;
       padding: 10px 20px;
       text-align: center;
       font-size: 18px;
       font-weight: 700;
-      color: var(--ui-color, #fff);
-      transition: border-color 0.3s, color 0.3s;
+      color: #fff;
     }
 
     .speed-row { display: flex; justify-content: center; gap: 8px; margin: 16px 12px; align-items: center; }
     .speed-btn { flex: 1; max-width: 64px; padding: 7px 0; border-radius: 999px; border: 2.5px solid transparent; background: transparent; color: #aaa; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-    .speed-btn.active { border-color: var(--ui-color, #fff); color: var(--ui-color, #fff); }
+    .speed-btn.active { border-color: #fff; color: #fff; }
 
     .canvas-wrap { display: flex; justify-content: center; padding: 16px 12px; position: relative; }
     canvas { border-radius: 50%; display: block; }
@@ -254,21 +252,14 @@ function ColorKnitter() {
 
   // Обновляем CSS переменные для цвета нити
   useEffect(() => {
-    // ui-color: статус-бокс, кнопки скорости, сектор окантовки
-    // step-color: цвет текста текущего шага
-    // step-border: цвет рамки текущего шага
-    let uiColor, stepColor, stepBorder;
+    let stepColor, stepBorder;
     if (!isColorMode && isBlackThread) {
-      // ЧБ режим — всё жёлтое
-      uiColor = '#EFCA46'; stepColor = '#EFCA46'; stepBorder = '#EFCA46';
+      stepColor = '#EFCA46'; stepBorder = '#EFCA46';
     } else if (isColorMode && isBlackThread) {
-      // Цветной режим, чёрная нить: статус белый, шаг чёрный с белым контуром
-      uiColor = '#ffffff'; stepColor = '#000000'; stepBorder = '#ffffff';
+      stepColor = '#000000'; stepBorder = '#ffffff';
     } else {
-      // Цветная нить — всё цветом нити
-      uiColor = threadHex; stepColor = threadHex; stepBorder = threadHex;
+      stepColor = threadHex; stepBorder = threadHex;
     }
-    document.documentElement.style.setProperty('--ui-color', uiColor);
     document.documentElement.style.setProperty('--step-color', stepColor);
     document.documentElement.style.setProperty('--step-border', stepBorder);
     document.documentElement.style.setProperty('--thread-color', threadHex);
