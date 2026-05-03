@@ -86,7 +86,7 @@
       gap: 12px;
       animation: bannerPop 0.3s ease;
       border: 2px solid var(--thread-color, #fff);
-      background: color-mix(in srgb, var(--thread-color, #fff) 12%, transparent);
+      background: rgba(255,255,255,0.06);
     }
     @keyframes bannerPop {
       from { transform: scale(0.95); opacity: 0; }
@@ -690,21 +690,27 @@ function ColorKnitter() {
 
       {/* Баннер смены нити */}
       {colorChangeBanner && (
-        <div className="color-change-banner" style={{'--thread-color': colorChangeBanner.hex}}>
+        <div className="color-change-banner" style={{'--thread-color': colorChangeBanner.id === 'K' ? '#fff' : colorChangeBanner.hex}}>
           <div
             className="color-change-dot"
             style={{
               background: colorChangeBanner.hex,
-              border: colorChangeBanner.id === 'W' ? '2px solid #555' : `2px solid ${colorChangeBanner.hex}88`,
+              border: colorChangeBanner.id === 'K' ? '2px solid #fff' : (colorChangeBanner.id === 'W' ? '2px solid #555' : `2px solid ${colorChangeBanner.hex}88`),
+              boxShadow: colorChangeBanner.id === 'K' ? '0 0 8px #fff6' : `0 0 10px ${colorChangeBanner.hex}`,
             }}
           />
           <div className="color-change-text">
             <div style={{fontSize:12,color:'#aaa',marginBottom:2}}>Смените нить на</div>
-            <div className="color-name">{colorChangeBanner.name}</div>
+            <div className="color-name" style={{color: colorChangeBanner.id === 'K' ? '#fff' : colorChangeBanner.hex}}>{colorChangeBanner.name}</div>
           </div>
           <button
             onClick={() => { setColorChangeBanner(null); setIsPlaying(true); }}
-            style={{marginLeft:'auto',padding:'6px 14px',borderRadius:8,border:'none',background:colorChangeBanner.hex,color:colorChangeBanner.id==='W'||colorChangeBanner.id==='Y'?'#000':'#fff',fontWeight:700,fontSize:13,cursor:'pointer'}}
+            style={{
+              marginLeft:'auto', padding:'6px 14px', borderRadius:8, fontWeight:700, fontSize:13, cursor:'pointer',
+              background: colorChangeBanner.id === 'K' ? 'transparent' : colorChangeBanner.hex,
+              color: colorChangeBanner.id === 'K' ? '#fff' : (colorChangeBanner.id === 'W' || colorChangeBanner.id === 'Y' ? '#000' : '#fff'),
+              border: colorChangeBanner.id === 'K' ? '2px solid #fff' : 'none',
+            }}
           >
             Готово ▶
           </button>
