@@ -63,7 +63,8 @@
     .status-text { font-size: 13px; color: #aaa; line-height: 1.8; text-align: center; }
 
     /* Превью цветов при генерации */
-    .color-progress-row { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+    .color-progress-row { display: flex; gap: 6px; justify-content: flex-start; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; }
+    .color-progress-row::-webkit-scrollbar { display: none; }
     .color-progress-chip { display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
 
     .bottom-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; padding: 12px 16px 28px; background: #1a1a1a; border-top: 1px solid #2a2a2a; border-radius: 24px 24px 0 0; z-index: 100; display: flex; flex-direction: column; gap: 10px; }
@@ -493,9 +494,10 @@ function startGenerate() {
       const chip = document.createElement('div');
       chip.className = 'color-progress-chip';
       chip.style.background = c.hex + '22';
-      chip.style.color = c.id === 'W' ? '#999' : c.hex;
-      chip.style.border = `1px solid ${c.hex}44`;
-      chip.innerHTML = `<div style="width:8px;height:8px;border-radius:50%;background:${c.hex};border:1px solid #333"></div><span id="cnt-${c.id}">0/${colorQuotas[i]}</span>`;
+      chip.style.color = c.id === 'W' ? '#999' : (c.id === 'K' ? '#aaa' : c.hex);
+      chip.style.border = c.id === 'K' ? '1px solid #fff4' : (c.id === 'W' ? '1px solid #fff3' : `1px solid ${c.hex}44`);
+      const dotBorder = c.id === 'K' ? 'border:1.5px solid #888' : (c.id === 'W' ? 'border:1.5px solid #666' : 'border:none');
+      chip.innerHTML = `<div style="width:8px;height:8px;border-radius:50%;background:${c.hex};${dotBorder}"></div><span id="cnt-${c.id}">0/${colorQuotas[i]}</span>`;
       colorProgressRow.appendChild(chip);
       return document.getElementById('cnt-' + c.id);
     });
