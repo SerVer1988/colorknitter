@@ -224,6 +224,7 @@ function ColorKnitter() {
   const [radioPlaying, setRadioPlaying]     = useState(false);
   const [goalMessage, setGoalMessage]       = useState(false);
   const [isColorMode, setIsColorMode]       = useState(restored?.isColorMode || false);
+  const [colorInterval, setColorInterval]   = useState(restored?.colorInterval || 100);
   // Баннер смены нити
   const [colorChangeBanner, setColorChangeBanner] = useState(null); // {colorIndex, name, hex}
 
@@ -344,7 +345,7 @@ function ColorKnitter() {
 
   useEffect(() => {
     saveToStorage({ sequence, currentIndex, speedMultiplier, targetSteps, findStep,
-      savedStates, remainingSteps, showNextLine, circleImage, imageOpacity, isColorMode });
+      savedStates, remainingSteps, showNextLine, circleImage, imageOpacity, isColorMode, colorInterval });
   }, [sequence, currentIndex, speedMultiplier, targetSteps, findStep,
       savedStates, remainingSteps, showNextLine, circleImage, imageOpacity]);
 
@@ -365,6 +366,20 @@ function ColorKnitter() {
     return thread ? thread.name : 'чёрный';
   };
 
+  const colorIntervalRef = useRef(colorInterval);
+  colorIntervalRef.current = colorInterval;
+
+  // Проверяем нужна ли смена нити на шаге next (в цветном режиме)
+  const checkColorChange = (prevIdx, nextIdx) => {
+    if (!isColorMode) return false;
+    const seq = sequenceRef.current;
+    const prevItem = seq[prevIdx];
+    const nextItem = seq[nextIdx];
+    if (!prevItem || !nextItem) return false;
+    // Смена если colorIndex изменился
+    return prevItem.colorIndex !== nextItem.colorIndex;
+  };
+
   const speak = (item) => {
     if (!item) return;
     const t = item.isColorChange
@@ -379,8 +394,7 @@ function ColorKnitter() {
     setCurrentIndex(prev => {
       const next = Math.max(0, Math.min(sequenceRef.current.length - 1, prev + steps));
       const item = sequenceRef.current[next];
-      // Проверяем смену цвета
-      if (steps > 0 && item?.isColorChange) {
+      if (steps > 0 && checkColorChange(prev, next)) {
         setIsPlaying(false);
         const thread = THREAD_COLORS[item.colorIndex ?? 3];
         setColorChangeBanner({ ...thread });
@@ -427,7 +441,7 @@ function ColorKnitter() {
         if (next >= sequenceRef.current.length) { setIsPlaying(false); stopAutoPlay(); return prev; }
         const item = sequenceRef.current[next];
         // Смена цвета — пауза
-        if (item?.isColorChange) {
+        if (checkColorChange(prev, next)) {
           setIsPlaying(false);
           stopAutoPlay();
           const thread = THREAD_COLORS[item.colorIndex ?? 3];
@@ -777,6 +791,13 @@ function ColorKnitter() {
               onChange={e => {const v = Number(e.target.value); if (v >= 1 && v <= sequence.length) {setFindStep(v); setCurrentIndex(v-1); speak(sequence[v-1]);}}} />
           </div>
         </div>
+        {isColorMode && (
+          <div>
+            <span className="s-input-label">Интервал смены нити (шагов на цвет):</span>
+            <input type="number" value={colorInterval} min={10} max={2000}
+              onChange={e => { const v = Number(e.target.value); if (v >= 10) setColorInterval(v); }} />
+          </div>
+        )}
         <hr className="divider" />
         <div className="s-btn-row">
           <input ref={fileInputRef} type="file" accept=".txt" style={{display:'none'}} onChange={handleFileUpload} />
