@@ -13,12 +13,12 @@
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html, body { background: #0a0a0a; font-family: Arial, sans-serif; color: white; }
     body { display: flex; justify-content: center; }
-    #root { width: 100%; max-width: 440px; min-height: 100vh; display: flex; flex-direction: column; padding: 12px 12px 100px; }
+    #root { width: 100%; max-width: 440px; min-height: 100vh; display: flex; flex-direction: column; padding: 8px 12px 100px; }
 
-    .logo-row { display: flex; justify-content: center; padding: 16px 0 8px; }
-    .logo-row img { height: 52px; width: auto; border-radius: 12px; }
+    .logo-row { display: flex; justify-content: center; padding: 8px 0 4px; }
+    .logo-row img { height: 36px; width: auto; border-radius: 8px; }
 
-    .canvas-wrap { position: relative; touch-action: none; margin-bottom: 16px; }
+    .canvas-wrap { position: relative; touch-action: none; margin-bottom: 10px; }
     #canvas { border-radius: 50%; display: block; width: 100%; aspect-ratio: 1; }
     .canvas-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; pointer-events: none; }
     .canvas-hint .icon { font-size: 48px; margin-bottom: 8px; }
@@ -26,7 +26,7 @@
     .canvas-hint .sub { font-size: 12px; color: #555; margin-top: 4px; }
     #file-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; border-radius: 50%; }
 
-    .settings { display: flex; flex-direction: column; gap: 14px; }
+    .settings { display: flex; flex-direction: column; gap: 10px; }
 
     .mode-row { display: flex; gap: 8px; }
     .mode-btn { flex: 1; padding: 12px 0; border-radius: 12px; border: 2px solid #333; background: transparent; color: #aaa; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
@@ -44,11 +44,10 @@
 
     .divider { border: none; border-top: 1px solid #222; margin: 4px 0; }
 
-    /* Цветовые чипы */
-    .color-chips { display: flex; gap: 8px; flex-wrap: wrap; }
-    .color-chip { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 20px; border: 2px solid #333; background: #111; font-size: 12px; font-weight: 600; color: #aaa; cursor: pointer; transition: all 0.15s; }
+    .color-chips { display: flex; gap: 6px; flex-wrap: nowrap; }
+    .color-chip { display: flex; align-items: center; gap: 5px; padding: 5px 8px; border-radius: 20px; border: 2px solid #333; background: #111; font-size: 11px; font-weight: 600; color: #aaa; cursor: pointer; transition: all 0.15s; flex: 1; justify-content: center; }
     .color-chip.active { border-color: currentColor; }
-    .color-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+    .color-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 
     .big-btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-size: 17px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
     .big-btn:active { transform: scale(0.97); }
@@ -111,10 +110,6 @@
     <div id="color-select-block" style="display:none">
       <div class="s-label"><span>Цвета нитей</span><span style="color:#555;font-size:11px">все активны</span></div>
       <div class="color-chips" id="color-chips"></div>
-      <div style="margin-top:12px">
-        <span class="s-input-label">Интервал смены нити (шагов)</span>
-        <input type="number" id="color-interval-box" value="100" min="10" max="2000" />
-      </div>
     </div>
 
     <div>
@@ -125,9 +120,15 @@
       <div class="s-label"><span>Яркость</span><span id="brightness-val">0</span></div>
       <input type="range" id="brightness-box" value="0" min="-100" max="100" step="5" />
     </div>
-    <div>
-      <span class="s-input-label">Количество линий</span>
-      <input type="number" id="lines-count-box" value="3000" min="100" max="10000" />
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+      <div>
+        <span class="s-input-label">Кол-во линий</span>
+        <input type="number" id="lines-count-box" value="3000" min="100" max="10000" />
+      </div>
+      <div id="interval-col" style="display:none">
+        <span class="s-input-label">Интервал (шагов)</span>
+        <input type="number" id="color-interval-box" value="100" min="10" max="2000" />
+      </div>
     </div>
 
   </div>
@@ -162,11 +163,11 @@ const NAIL_RADIUS = 1, NAIL_COLOR = '#000', PADDING = 5, NAILS_COUNT = 260, LINE
 
 // 5 цветов: Yellow, Cyan, Magenta, blacK, White
 const COLORS = [
-  { id: 'Y', name: 'Жёлтый',  rgb: [255, 220,   0], hex: '#ffdc00', textHex: '#b8870a' },
-  { id: 'C', name: 'Голубой', rgb: [  0, 183, 235], hex: '#00b7eb', textHex: '#0077aa' },
-  { id: 'M', name: 'Розовый', rgb: [255,   0, 144], hex: '#ff0090', textHex: '#cc0070' },
-  { id: 'K', name: 'Чёрный',  rgb: [  0,   0,   0], hex: '#000000', textHex: '#888888' },
-  { id: 'W', name: 'Белый',   rgb: [255, 255, 255], hex: '#ffffff', textHex: '#999999' },
+  { id: 'Y', name: 'Жёлтый',  short: 'Жёл.', rgb: [255, 220,   0], hex: '#ffdc00', textHex: '#b8870a' },
+  { id: 'C', name: 'Голубой', short: 'Гол.', rgb: [  0, 183, 235], hex: '#00b7eb', textHex: '#0077aa' },
+  { id: 'M', name: 'Розовый', short: 'Роз.', rgb: [255,   0, 144], hex: '#ff0090', textHex: '#cc0070' },
+  { id: 'K', name: 'Чёрный',  short: 'Чёр.', rgb: [  0,   0,   0], hex: '#000000', textHex: '#888888' },
+  { id: 'W', name: 'Белый',   short: 'Бел.', rgb: [255, 255, 255], hex: '#ffffff', textHex: '#999999' },
 ];
 
 // ─── Состояние ────────────────────────────────────────────────────────────────
@@ -234,7 +235,7 @@ function initColorChips() {
     chip.style.color = c.textHex;
     chip.style.borderColor = c.hex;
     chip.dataset.id = c.id;
-    chip.innerHTML = `<div class="color-dot" style="background:${c.hex};border:1px solid #333"></div>${c.name}`;
+    chip.innerHTML = `<div class="color-dot" style="background:${c.hex};border:1px solid #333"></div>${c.short}`;
     // Чипы — только отображение, все всегда активны
     container.appendChild(chip);
   });
@@ -637,6 +638,7 @@ function setMode(m) {
   document.getElementById('btn-color').classList.toggle('active', m === 'color');
   document.getElementById('filter-block').style.display = m === 'bw' ? 'block' : 'none';
   document.getElementById('color-select-block').style.display = m === 'color' ? 'block' : 'none';
+  document.getElementById('interval-col').style.display = m === 'color' ? 'block' : 'none';
   if (image) drawPhoto();
 }
 
