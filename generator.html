@@ -634,7 +634,7 @@ function setMode(m) {
   mode = m;
   document.getElementById('btn-bw').classList.toggle('active', m === 'bw');
   document.getElementById('btn-color').classList.toggle('active', m === 'color');
-  document.getElementById('filter-block').style.opacity = m === 'bw' ? '1' : '0.4';
+  document.getElementById('filter-block').style.display = m === 'bw' ? 'block' : 'none';
   document.getElementById('color-select-block').style.display = m === 'color' ? 'block' : 'none';
   if (image) drawPhoto();
 }
