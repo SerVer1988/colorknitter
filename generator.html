@@ -561,8 +561,6 @@ function startGenerate() {
       animFrame = requestAnimationFrame(runBatchColor);
     }
     animFrame = requestAnimationFrame(runBatchColor);
-    }
-    animFrame = requestAnimationFrame(runBatchColor);
   }
 }
 
@@ -653,8 +651,10 @@ function setFilter(f) {
 document.getElementById('contrast-box').addEventListener('input', () => { updateContrast(); if (image) drawPhoto(); });
 document.getElementById('brightness-box').addEventListener('input', () => { updateBrightness(); if (image) drawPhoto(); });
 
-initCanvas(); updateContrast(); updateBrightness(); initNails(); initColorChips();
-setState('ready');
+requestAnimationFrame(() => {
+  initCanvas(); updateContrast(); updateBrightness(); initNails(); initColorChips();
+  setState('ready');
+});
 </script>
 </body>
 </html>
