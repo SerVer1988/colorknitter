@@ -43,11 +43,6 @@
 
     .divider { border: none; border-top: 1px solid #222; margin: 4px 0; }
 
-    .color-chips { display: flex; gap: 6px; flex-wrap: nowrap; }
-    .color-chip { display: flex; align-items: center; gap: 5px; padding: 5px 8px; border-radius: 20px; border: 2px solid #333; background: #111; font-size: 11px; font-weight: 600; color: #aaa; flex: 1; justify-content: center; }
-    .color-chip.active { border-color: currentColor; }
-    .color-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-
     .big-btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-size: 17px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
     .big-btn:active { transform: scale(0.97); }
     .big-btn:disabled { opacity: 0.35; cursor: not-allowed; }
@@ -60,14 +55,10 @@
     .progress-bar { height: 100%; background: #EFCA46; border-radius: 999px; width: 0%; transition: width 0.2s; }
     .status-text { font-size: 13px; color: #aaa; line-height: 1.8; text-align: center; }
 
-    .cache-overlay { position: absolute; inset: 0; border-radius: 50%; background: rgba(0,0,0,0.7); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; z-index: 20; }
+    .cache-overlay { position: absolute; inset: 0; border-radius: 50%; background: rgba(0,0,0,0.75); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; z-index: 20; }
     .cache-spinner { width: 40px; height: 40px; border: 3px solid #333; border-top-color: #EFCA46; border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .cache-text { font-size: 13px; color: #EFCA46; font-weight: 700; }
-
-    .color-progress-row { display: flex; gap: 6px; justify-content: flex-start; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; }
-    .color-progress-row::-webkit-scrollbar { display: none; }
-    .color-progress-chip { display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
 
     .bottom-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; padding: 12px 16px 28px; background: #1a1a1a; border-top: 1px solid #2a2a2a; border-radius: 24px 24px 0 0; z-index: 100; display: flex; flex-direction: column; gap: 10px; }
   </style>
@@ -107,11 +98,6 @@
       </div>
     </div>
 
-    <div id="color-select-block" style="display:none">
-      <div class="s-label"><span>Цвета нитей</span></div>
-      <div class="color-chips" id="color-chips"></div>
-    </div>
-
     <div>
       <div class="s-label"><span>Контрастность</span><span id="contrast-val">0</span></div>
       <input type="range" id="contrast-box" value="0" min="-100" max="100" step="5" />
@@ -120,20 +106,13 @@
       <div class="s-label"><span>Яркость</span><span id="brightness-val">0</span></div>
       <input type="range" id="brightness-box" value="0" min="-100" max="100" step="5" />
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-      <div>
-        <span class="s-input-label">Кол-во линий</span>
-        <input type="number" id="lines-count-box" value="3000" min="100" max="10000" />
-      </div>
-      <div id="interval-col" style="display:none">
-        <span class="s-input-label">Интервал (шагов)</span>
-        <input type="number" id="color-interval-box" value="100" min="10" max="2000" />
-      </div>
+    <div>
+      <span class="s-input-label">Количество линий</span>
+      <input type="number" id="lines-count-box" value="3000" min="100" max="10000" />
     </div>
   </div>
 
   <div id="progress-block" style="display:none;flex-direction:column;gap:10px;margin-top:16px;">
-    <div class="color-progress-row" id="color-progress-row"></div>
     <div class="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
     <div class="status-text" id="status-text"></div>
   </div>
@@ -156,14 +135,12 @@
 </div>
 
 <script>
-const NAIL_RADIUS=1, NAIL_COLOR='#000', PADDING=5, NAILS_COUNT=260, LINE_WEIGHT=25;
+const NAIL_RADIUS=1, NAIL_COLOR='#000', PADDING=5, NAILS_COUNT=260;
+// Прозрачность одной линии — как в оригинале: 1/(downscale*1.8)
+const DOWNSCALE=4, FADE=1/(DOWNSCALE*1.8);
 
 const COLORS=[
-  {id:'Y',name:'Жёлтый', short:'Жёл.',rgb:[255,220,  0],hex:'#ffdc00',textHex:'#b8870a'},
-  {id:'C',name:'Голубой',short:'Гол.',rgb:[  0,183,235],hex:'#00b7eb',textHex:'#0077aa'},
-  {id:'M',name:'Розовый',short:'Роз.',rgb:[255,  0,144],hex:'#ff0090',textHex:'#cc0070'},
-  {id:'K',name:'Чёрный', short:'Чёр.',rgb:[  0,  0,  0],hex:'#000000',textHex:'#888888'},
-  {id:'W',name:'Белый',  short:'Бел.',rgb:[255,255,255],hex:'#ffffff',textHex:'#999999'},
+  {id:'K',name:'Чёрный',rgb:[0,0,0]},
 ];
 
 let canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d');
@@ -176,10 +153,11 @@ let width,height,x0,y0,radius,dpr=window.devicePixelRatio||1;
 let contrastTable=[],brightnessTable=[];
 let touches=[],isDragging=false,lastX=0,lastY=0;
 
-// ── Кэш линий ─────────────────────────────────────────────────────────────────
-// lineCache[i][j] = Int32Array индексов пикселей линии между гвоздями i и j
-let lineCache=null;
-let cacheBuilt=false;
+// Кэш линий — Int32Array индексов пикселей
+let lineCache=null,cacheBuilt=false;
+
+// Рабочие буферы для алгоритма diff
+let origData=null,currData=null,currCanvas=null,currCtx=null;
 
 const FILTERS={
   normal:l=>l,
@@ -188,6 +166,7 @@ const FILTERS={
   silhouette:l=>l<128?0:255
 };
 
+// ── Canvas init ───────────────────────────────────────────────────────────────
 function initCanvas(){
   const wrap=document.getElementById('canvas-wrap');
   const size=Math.min(wrap.clientWidth,400);
@@ -223,39 +202,7 @@ function updateBrightness(){
   brightnessTable=Array.from({length:256},(_,i)=>limitPixel(i*b));
 }
 
-// ── Построение кэша всех линий ────────────────────────────────────────────────
-function buildLineCache(){
-  return new Promise(resolve => {
-    // Показываем оверлей
-    const overlay=document.createElement('div');
-    overlay.className='cache-overlay';
-    overlay.id='cache-overlay';
-    overlay.innerHTML=`<div class="cache-spinner"></div><div class="cache-text">Подготовка гвоздей…</div>`;
-    document.getElementById('canvas-wrap').appendChild(overlay);
-
-    // Запускаем в следующем кадре чтобы UI успел обновиться
-    requestAnimationFrame(()=>{
-      setTimeout(()=>{
-        const N=NAILS_COUNT;
-        lineCache=[];
-        for(let i=0;i<N;i++) lineCache.push(new Array(N).fill(null));
-
-        for(let i=0;i<N;i++){
-          for(let j=i+1;j<N;j++){
-            const pixels=rasterizeLine(nails[i].x,nails[i].y,nails[j].x,nails[j].y);
-            lineCache[i][j]=pixels;
-            lineCache[j][i]=pixels; // симметрично
-          }
-        }
-        cacheBuilt=true;
-        overlay.remove();
-        resolve();
-      },50);
-    });
-  });
-}
-
-// ── Растеризация линии → Int32Array ──────────────────────────────────────────
+// ── Построение кэша ───────────────────────────────────────────────────────────
 function rasterizeLine(x1,y1,x2,y2){
   const pts=[];
   let dx=Math.abs(x2-x1),dy=Math.abs(y2-y1);
@@ -271,11 +218,28 @@ function rasterizeLine(x1,y1,x2,y2){
   return new Int32Array(pts);
 }
 
-// ── Среднее значение пикселей по линии (из кэша) ─────────────────────────────
-function lineMean(pixels,arr){
-  let s=0;
-  for(let k=0;k<arr.length;k++) s+=pixels[arr[k]];
-  return s/arr.length;
+function buildLineCache(){
+  return new Promise(resolve=>{
+    const overlay=document.createElement('div');
+    overlay.className='cache-overlay';
+    overlay.innerHTML='<div class="cache-spinner"></div><div class="cache-text">Подготовка…</div>';
+    document.getElementById('canvas-wrap').appendChild(overlay);
+    requestAnimationFrame(()=>setTimeout(()=>{
+      lineCache=[];
+      for(let i=0;i<NAILS_COUNT;i++){
+        lineCache.push(new Array(NAILS_COUNT).fill(null));
+      }
+      for(let i=0;i<NAILS_COUNT;i++){
+        for(let j=i+1;j<NAILS_COUNT;j++){
+          const px=rasterizeLine(nails[i].x,nails[i].y,nails[j].x,nails[j].y);
+          lineCache[i][j]=px;lineCache[j][i]=px;
+        }
+      }
+      cacheBuilt=true;
+      overlay.remove();
+      resolve();
+    },50));
+  });
 }
 
 function initNails(){
@@ -284,10 +248,10 @@ function initNails(){
     let t=i*2*Math.PI/NAILS_COUNT;
     nails.push({x:Math.round(x0+radius*Math.cos(t)),y:Math.round(y0+radius*Math.sin(t))});
   }
-  cacheBuilt=false;
-  lineCache=null;
+  cacheBuilt=false;lineCache=null;
 }
 
+// ── Рисование фото ────────────────────────────────────────────────────────────
 function getLightness(r,g,b){return Math.floor(0.2126*r+0.7152*g+0.0722*b);}
 
 function drawPhoto(){
@@ -300,15 +264,10 @@ function drawPhoto(){
   fakeCtx.clearRect(0,0,width,height);
   fakeCtx.drawImage(image,imgX,imgY,iw,ih);
   let data=fakeCtx.getImageData(0,0,width*dpr,height*dpr),px=data.data;
-  let isColor=mode==='color';
   for(let i=0;i<px.length;i+=4){
-    if(isColor){
-      for(let c=0;c<3;c++){let v=px[i+c];v=brightnessTable[v];v=contrastTable[v];px[i+c]=v;}
-    }else{
-      let l=getLightness(px[i],px[i+1],px[i+2]);
-      l=brightnessTable[l];l=contrastTable[l];l=FILTERS[currentFilter](l);
-      px[i]=px[i+1]=px[i+2]=l;
-    }
+    let l=getLightness(px[i],px[i+1],px[i+2]);
+    l=brightnessTable[l];l=contrastTable[l];l=FILTERS[currentFilter](l);
+    px[i]=px[i+1]=px[i+2]=l;
   }
   fakeCtx.putImageData(data,0,0);
   ctx.drawImage(fakeCanvas,0,0,width,height);
@@ -317,7 +276,7 @@ function drawPhoto(){
   ctx.beginPath();ctx.arc(x0,y0,radius,0,Math.PI*2);ctx.stroke();
 }
 
-// ── Touch/Mouse ──────────────────────────────────────────────────────────────
+// ── Touch/Mouse ───────────────────────────────────────────────────────────────
 function getOff(e){let r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};}
 canvas.addEventListener('mousedown',e=>{if(!image||isGenerating)return;isDragging=true;let p=getOff(e);lastX=p.x;lastY=p.y;e.preventDefault();});
 canvas.addEventListener('mousemove',e=>{if(!isDragging||!image||isGenerating)return;let p=getOff(e);imgX+=p.x-lastX;imgY+=p.y-lastY;lastX=p.x;lastY=p.y;drawPhoto();e.preventDefault();});
@@ -356,7 +315,7 @@ canvas.addEventListener('touchmove',e=>{
 },{passive:false});
 canvas.addEventListener('touchend',e=>{e.preventDefault();isDragging=false;touches=[];},{passive:false});
 
-// ── Загрузка фото ────────────────────────────────────────────────────────────
+// ── Загрузка фото ─────────────────────────────────────────────────────────────
 document.getElementById('file-input').addEventListener('change',function(){
   if(!this.files[0])return;
   this.style.pointerEvents='none';this.style.zIndex='-1';
@@ -367,79 +326,98 @@ document.getElementById('file-input').addEventListener('change',function(){
     imgScale=s;imgX=x0-img.width*s/2;imgY=y0-img.height*s/2;
     document.getElementById('canvas-hint').style.display='none';
     drawPhoto();
-    // Сбрасываем кэш при новом фото
     cacheBuilt=false;lineCache=null;
     document.getElementById('generate-btn').removeAttribute('disabled');
   };
   img.src=URL.createObjectURL(this.files[0]);
 });
 
-// ── Пиксели ──────────────────────────────────────────────────────────────────
-function getBWPixels(){
+// ── Подготовка оригинальных пикселей ─────────────────────────────────────────
+function prepareOrigPixels(){
+  // Рисуем обработанное фото в pixelCanvas (без dpr)
   pixelCtx.clearRect(0,0,width,height);
   pixelCtx.fillStyle='#fff';pixelCtx.fillRect(0,0,width,height);
   pixelCtx.save();
   pixelCtx.beginPath();pixelCtx.arc(x0,y0,radius,0,Math.PI*2);pixelCtx.clip();
   pixelCtx.drawImage(image,imgX,imgY,imgNatW*imgScale,imgNatH*imgScale);
   pixelCtx.restore();
-  let data=pixelCtx.getImageData(0,0,width,height).data,px=new Float32Array(width*height);
-  for(let i=0;i<data.length;i+=4){
-    let l=getLightness(data[i],data[i+1],data[i+2]);
-    l=brightnessTable[l];l=contrastTable[l];l=FILTERS[currentFilter](l);
-    const pi=i/4,px_x=pi%width,px_y=Math.floor(pi/width);
-    if((px_x-x0)**2+(px_y-y0)**2>radius**2)l=255;
-    px[pi]=l;
-  }
-  return px;
-}
 
-function getImagePixelsRGB(){
-  pixelCtx.clearRect(0,0,width,height);
-  pixelCtx.fillStyle='#fff';pixelCtx.fillRect(0,0,width,height);
-  pixelCtx.save();
-  pixelCtx.beginPath();pixelCtx.arc(x0,y0,radius,0,Math.PI*2);pixelCtx.clip();
-  pixelCtx.drawImage(image,imgX,imgY,imgNatW*imgScale,imgNatH*imgScale);
-  pixelCtx.restore();
-  const data=pixelCtx.getImageData(0,0,width,height).data;
-  const rgb=new Uint8Array(width*height*3);
+  let raw=pixelCtx.getImageData(0,0,width,height).data;
+  // Применяем фильтры и сохраняем как Float32 RGBA
+  origData=new Float32Array(width*height*4);
   for(let i=0;i<width*height;i++){
-    let r=data[i*4],g=data[i*4+1],b=data[i*4+2];
-    r=brightnessTable[r];r=contrastTable[r];
-    g=brightnessTable[g];g=contrastTable[g];
-    b=brightnessTable[b];b=contrastTable[b];
+    let r=raw[i*4],g=raw[i*4+1],b=raw[i*4+2];
+    let l=getLightness(r,g,b);
+    l=brightnessTable[l];l=contrastTable[l];l=FILTERS[currentFilter](l);
     const px_x=i%width,px_y=Math.floor(i/width);
-    if((px_x-x0)**2+(px_y-y0)**2>radius**2){r=g=b=255;}
-    rgb[i*3]=r;rgb[i*3+1]=g;rgb[i*3+2]=b;
+    if((px_x-x0)**2+(px_y-y0)**2>radius**2)l=255;
+    origData[i*4]=l;origData[i*4+1]=l;origData[i*4+2]=l;origData[i*4+3]=255;
   }
-  return rgb;
+
+  // currData начинает как белый холст
+  currData=new Float32Array(width*height*4);
+  for(let i=0;i<width*height;i++){
+    currData[i*4]=255;currData[i*4+1]=255;currData[i*4+2]=255;currData[i*4+3]=255;
+  }
 }
 
-function buildNeedMap(rgb,colorDef){
-  const n=width*height;
-  const need=new Float32Array(n);
-  const [cr,cg,cb]=colorDef.rgb;
-  const isBlack=cr===0&&cg===0&&cb===0;
-  const isWhite=cr===255&&cg===255&&cb===255;
-  for(let i=0;i<n;i++){
-    const r=rgb[i*3],g=rgb[i*3+1],b=rgb[i*3+2];
-    let score;
-    if(isBlack){
-      score=1-getLightness(r,g,b)/255;
-    }else if(isWhite){
-      score=getLightness(r,g,b)/255;
-    }else{
-      const dist=Math.sqrt((r-cr)**2+(g-cg)**2+(b-cb)**2);
-      const maxDist=Math.sqrt(255**2*3);
-      score=1-dist/maxDist;
-      const sat=Math.max(r,g,b)-Math.min(r,g,b);
-      score*=(sat/255);
+// ── Оценка линии — алгоритм из usedhondacivic ────────────────────────────────
+// Возвращает score: чем меньше — тем лучше линия (больше улучшает картинку)
+function getLineDiff(pixels, colorR, colorG, colorB){
+  let totalDiff=0;
+  for(let k=0;k<pixels.length;k++){
+    const idx=pixels[k]*4;
+    let pixelDiff=0;
+    // Для каждого канала считаем как изменится пиксель после добавления линии
+    for(let ch=0;ch<3;ch++){
+      const orig=origData[idx+ch];
+      const curr=currData[idx+ch];
+      const lineC=ch===0?colorR:(ch===1?colorG:colorB);
+      // Новое значение после наложения линии с прозрачностью FADE
+      const newC=lineC*FADE+curr*(1-FADE);
+      // Разница: улучшилось или ухудшилось?
+      const diff=Math.abs(orig-newC)-Math.abs(curr-orig);
+      if(diff<0) totalDiff+=diff;        // улучшение — полный вес
+      else        totalDiff+=diff/5;     // ухудшение — 1/5 веса
     }
-    need[i]=Math.max(0,score);
+    pixelDiff=pixelDiff; // подавляем lint
   }
-  return need;
+  // Кубическая нормализация как в оригинале
+  const mean=totalDiff/pixels.length;
+  return Math.pow(mean,3); // отрицательное = хорошая линия
 }
 
-// ── UI состояния ─────────────────────────────────────────────────────────────
+// Применяем линию к currData
+function applyLine(pixels, colorR, colorG, colorB){
+  for(let k=0;k<pixels.length;k++){
+    const idx=pixels[k]*4;
+    currData[idx]  =colorR*FADE+currData[idx]  *(1-FADE);
+    currData[idx+1]=colorG*FADE+currData[idx+1]*(1-FADE);
+    currData[idx+2]=colorB*FADE+currData[idx+2]*(1-FADE);
+  }
+}
+
+// Синхронизируем currData → canvas (раз в N шагов для скорости)
+function syncCanvas(){
+  const imgData=pixelCtx.createImageData(width,height);
+  for(let i=0;i<width*height;i++){
+    imgData.data[i*4]  =Math.round(currData[i*4]);
+    imgData.data[i*4+1]=Math.round(currData[i*4+1]);
+    imgData.data[i*4+2]=Math.round(currData[i*4+2]);
+    imgData.data[i*4+3]=255;
+  }
+  // Рисуем в pixelCanvas и масштабируем на основной canvas
+  pixelCtx.putImageData(imgData,0,0);
+  ctx.clearRect(0,0,width,height);
+  ctx.save();
+  ctx.beginPath();ctx.arc(x0,y0,radius,0,Math.PI*2);ctx.clip();
+  ctx.drawImage(pixelCanvas,0,0,width,height);
+  ctx.restore();
+  ctx.strokeStyle='#ccc';ctx.lineWidth=1;
+  ctx.beginPath();ctx.arc(x0,y0,radius,0,Math.PI*2);ctx.stroke();
+}
+
+// ── UI ────────────────────────────────────────────────────────────────────────
 function setState(state){
   document.getElementById('state-ready').style.display  =state==='ready'  ?'block':'none';
   document.getElementById('state-running').style.display=state==='running'?'block':'none';
@@ -458,140 +436,65 @@ function updateProgress(done,total,t0){
 
 function finishGenerate(t0,total){
   isGenerating=false;
+  syncCanvas();
   const el=((performance.now()-t0)/1000).toFixed(1);
   document.getElementById('status-text').textContent=`✅ Готово! ${sequence.length} линий за ${el}с`;
   setState('done');
 }
 
-// ── Запуск генерации ─────────────────────────────────────────────────────────
+// ── Запуск генерации ──────────────────────────────────────────────────────────
 async function startGenerate(){
   if(isGenerating||!image)return;
-  isGenerating=true;
-  sequence=[];
-
+  isGenerating=true;sequence=[];
   setState('running');
+  document.getElementById('status-text').textContent='Подготовка…';
 
-  // Строим кэш если ещё не построен
-  if(!cacheBuilt){
-    document.getElementById('status-text').textContent='Подготовка…';
-    await buildLineCache();
-  }
+  if(!cacheBuilt) await buildLineCache();
 
-  // Очищаем canvas
-  ctx.clearRect(0,0,width,height);
-  ctx.beginPath();ctx.arc(x0,y0,radius,0,Math.PI*2);
-  ctx.fillStyle='#fff';ctx.fill();
-  ctx.strokeStyle='#ccc';ctx.lineWidth=1;ctx.stroke();
-  ctx.fillStyle=NAIL_COLOR;
-  for(let n of nails){ctx.beginPath();ctx.arc(n.x,n.y,NAIL_RADIUS,0,Math.PI*2);ctx.fill();}
+  prepareOrigPixels();
 
   const total=+document.getElementById('lines-count-box').value;
   const t0=performance.now();
-  const lw=LINE_WEIGHT/100*255/dpr;
+  let nail=0;
+  // Память о последних соединениях — не повторять одно и то же
+  const prevConn=[];
 
-  if(mode==='bw'){
-    const pixels=getBWPixels();
-    let nail=0;
-    document.getElementById('color-progress-row').innerHTML='';
+  const SYNC_EVERY=50; // обновляем canvas каждые 50 линий
 
-    function runBW(){
-      for(let b=0;b<30;b++){
-        if(sequence.length>=total){finishGenerate(t0,total);return;}
-        sequence.push({nail,colorIndex:3});
+  function runBatch(){
+    for(let b=0;b<15;b++){
+      if(sequence.length>=total){finishGenerate(t0,total);return;}
 
-        // Используем кэш — мгновенный поиск!
-        let nn=nail,ml=Infinity;
-        for(let i=0;i<NAILS_COUNT;i++){
-          if(i===nail)continue;
-          const arr=lineCache[nail][i];
-          const mean=lineMean(pixels,arr);
-          if(mean<ml){ml=mean;nn=i;}
-        }
+      // Ищем лучший следующий гвоздь
+      let bestNail=nail,bestScore=Infinity;
+      for(let i=0;i<NAILS_COUNT;i++){
+        if(i===nail)continue;
+        // Пропускаем если эта пара уже была недавно
+        if(prevConn[nail]&&prevConn[nail][i])continue;
 
-        const arr=lineCache[nail][nn];
-        const addVal=lw;
-        for(let k=0;k<arr.length;k++) pixels[arr[k]]=Math.min(255,pixels[arr[k]]+addVal);
+        const arr=lineCache[nail][i];
+        let score=getLineDiff(arr,0,0,0); // чёрная нить
 
-        ctx.lineWidth=0.2;
-        ctx.strokeStyle=`rgba(0,0,0,${LINE_WEIGHT/100})`;
-        ctx.beginPath();ctx.moveTo(nails[nail].x,nails[nail].y);
-        ctx.lineTo(nails[nn].x,nails[nn].y);ctx.stroke();
-        nail=nn;
+        if(score<bestScore){bestScore=score;bestNail=i;}
       }
-      updateProgress(sequence.length,total,t0);
-      animFrame=requestAnimationFrame(runBW);
+
+      const arr=lineCache[nail][bestNail];
+      applyLine(arr,0,0,0);
+
+      // Запоминаем соединение
+      if(!prevConn[nail])prevConn[nail]=[];
+      prevConn[nail][bestNail]=true;
+
+      sequence.push({nail,colorIndex:0});
+      nail=bestNail;
+
+      // Синхронизируем canvas периодически
+      if(sequence.length%SYNC_EVERY===0) syncCanvas();
     }
-    animFrame=requestAnimationFrame(runBW);
-
-  }else{
-    const rgb=getImagePixelsRGB();
-    const interval=Math.max(10,+document.getElementById('color-interval-box').value||100);
-    const needMaps=COLORS.map(c=>buildNeedMap(rgb,c));
-    const residuals=needMaps.map(m=>new Float32Array(m));
-    const colorTotals=needMaps.map(m=>{let s=0;for(let v of m)s+=v;return s;});
-    const grandTotal=colorTotals.reduce((a,b)=>a+b,0);
-    const colorQuotas=colorTotals.map(t=>Math.round(t/grandTotal*total));
-    let diff=total-colorQuotas.reduce((a,b)=>a+b,0);colorQuotas[0]+=diff;
-    const nailPos=new Array(5).fill(0);
-    const colorCounts=new Array(5).fill(0);
-    const colorOrder=[0,1,2,3,4].sort((a,b)=>colorTotals[b]-colorTotals[a]);
-    let currentColorOrderIdx=0,stepsInCurrentColor=0,currentCi=colorOrder[0];
-
-    const colorProgressRow=document.getElementById('color-progress-row');
-    colorProgressRow.innerHTML='';
-    const countEls=COLORS.map((c,i)=>{
-      const chip=document.createElement('div');
-      chip.className='color-progress-chip';
-      chip.style.background=c.hex+'22';
-      chip.style.color=c.id==='W'?'#999':(c.id==='K'?'#aaa':c.hex);
-      chip.style.border=c.id==='K'?'1px solid #fff4':(c.id==='W'?'1px solid #fff3':`1px solid ${c.hex}44`);
-      const dotBorder=c.id==='K'?'border:1.5px solid #888':(c.id==='W'?'border:1.5px solid #666':'border:none');
-      chip.innerHTML=`<div style="width:8px;height:8px;border-radius:50%;background:${c.hex};${dotBorder}"></div><span id="cnt-${c.id}">0/${colorQuotas[i]}</span>`;
-      colorProgressRow.appendChild(chip);
-      return document.getElementById('cnt-'+c.id);
-    });
-
-    function runColor(){
-      for(let b=0;b<15;b++){
-        if(sequence.length>=total){finishGenerate(t0,total);return;}
-        if(stepsInCurrentColor>=interval){
-          stepsInCurrentColor=0;
-          currentColorOrderIdx=(currentColorOrderIdx+1)%colorOrder.length;
-          currentCi=colorOrder[currentColorOrderIdx];
-        }
-        const ci=currentCi;
-        const nail=nailPos[ci];
-        const residual=residuals[ci];
-        const color=COLORS[ci];
-
-        // Кэш — быстрый поиск лучшего гвоздя
-        let bestNail=nail,bestScore=-Infinity;
-        for(let i=0;i<NAILS_COUNT;i++){
-          if(i===nail)continue;
-          const arr=lineCache[nail][i];
-          let score=0;for(let k=0;k<arr.length;k++)score+=residual[arr[k]];
-          score/=arr.length;
-          if(score>bestScore){bestScore=score;bestNail=i;}
-        }
-
-        const arr=lineCache[nail][bestNail];
-        for(let k=0;k<arr.length;k++) residual[arr[k]]=Math.max(0,residual[arr[k]]-lw/255);
-
-        const[cr,cg,cb]=color.rgb;
-        ctx.lineWidth=0.2;
-        ctx.strokeStyle=`rgba(${cr},${cg},${cb},${LINE_WEIGHT/100})`;
-        ctx.beginPath();ctx.moveTo(nails[nail].x,nails[nail].y);
-        ctx.lineTo(nails[bestNail].x,nails[bestNail].y);ctx.stroke();
-
-        sequence.push({nail,colorIndex:ci});
-        nailPos[ci]=bestNail;colorCounts[ci]++;stepsInCurrentColor++;
-        countEls[ci].textContent=`${colorCounts[ci]}/${colorQuotas[ci]}`;
-      }
-      updateProgress(sequence.length,total,t0);
-      animFrame=requestAnimationFrame(runColor);
-    }
-    animFrame=requestAnimationFrame(runColor);
+    updateProgress(sequence.length,total,t0);
+    animFrame=requestAnimationFrame(runBatch);
   }
+  animFrame=requestAnimationFrame(runBatch);
 }
 
 function resetAll(){
@@ -603,9 +506,13 @@ function resetAll(){
 }
 
 function saveImage(){
-  let a=document.createElement('a');
-  a.href=canvas.toDataURL('image/png');
-  a.download='stringart.png';a.click();
+  // Сначала синхронизируем финальное состояние
+  syncCanvas();
+  setTimeout(()=>{
+    let a=document.createElement('a');
+    a.href=canvas.toDataURL('image/png');
+    a.download='stringart.png';a.click();
+  },100);
 }
 
 function openInKnitter(){
@@ -618,7 +525,7 @@ function openInKnitter(){
     pCtx.drawImage(image,imgX,imgY,imgNatW*imgScale,imgNatH*imgScale);
     pCtx.restore();
     localStorage.setItem('ck_from_generator',JSON.stringify({
-      sequence,colors:COLORS,mode,
+      sequence,mode,
       image:pc.toDataURL('image/jpeg',0.7)
     }));
     window.location.href='index.html';
@@ -629,9 +536,6 @@ function setMode(m){
   mode=m;
   document.getElementById('btn-bw').classList.toggle('active',m==='bw');
   document.getElementById('btn-color').classList.toggle('active',m==='color');
-  document.getElementById('filter-block').style.display=m==='bw'?'block':'none';
-  document.getElementById('color-select-block').style.display=m==='color'?'block':'none';
-  document.getElementById('interval-col').style.display=m==='color'?'block':'none';
   if(image)drawPhoto();
 }
 
@@ -643,25 +547,11 @@ function setFilter(f){
   if(image)drawPhoto();
 }
 
-function initColorChips(){
-  const container=document.getElementById('color-chips');
-  container.innerHTML='';
-  COLORS.forEach(c=>{
-    const chip=document.createElement('div');
-    chip.className='color-chip active';
-    chip.style.color=c.textHex;
-    chip.style.borderColor=c.hex;
-    chip.dataset.id=c.id;
-    chip.innerHTML=`<div class="color-dot" style="background:${c.hex};border:1px solid #333"></div>${c.short}`;
-    container.appendChild(chip);
-  });
-}
-
 document.getElementById('contrast-box').addEventListener('input',()=>{updateContrast();if(image)drawPhoto();});
 document.getElementById('brightness-box').addEventListener('input',()=>{updateBrightness();if(image)drawPhoto();});
 
 requestAnimationFrame(()=>{
-  initCanvas();updateContrast();updateBrightness();initNails();initColorChips();
+  initCanvas();updateContrast();updateBrightness();initNails();
   setState('ready');
 });
 </script>
