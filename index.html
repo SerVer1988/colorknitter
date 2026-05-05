@@ -187,25 +187,18 @@ function ColorKnitter() {
     const fromGen = localStorage.getItem('ck_from_generator');
     if (!fromGen) return;
     try {
-      const { sequence: genSeq, image: imgData, colors: genColors } = JSON.parse(fromGen);
+      const { sequence: genSeq, image: imgData } = JSON.parse(fromGen);
       localStorage.removeItem('ck_from_generator');
       localStorage.setItem('ck_has_sequence', '1');
 
+      // Конвертируем массив индексов [0..259] в формат sequence вязалки
+      // Каждый элемент: value = index+1 (1..260), color = чёрный
       if (genSeq && genSeq.length > 0) {
-        // genSeq может быть [{nail, colorIndex}, ...] из генератора
-        // или просто числами из txt файла
-        const isFromGen = typeof genSeq[0] === 'object';
-        const seq = genSeq.map((item, i) => {
-          const nailIdx = isFromGen ? item.nail : item;
-          const ci = isFromGen ? (item.colorIndex ?? 3) : 3;
-          const color = isFromGen && genColors ? genColors[ci].rgb : [0,0,0];
-          const prevCi = i > 0 ? (isFromGen ? genSeq[i-1].colorIndex : 3) : ci;
-          return {
-            value: nailIdx + 1,
-            color,
-            isColorChange: i > 0 && ci !== prevCi
-          };
-        });
+        const seq = genSeq.map((idx, i) => ({
+          value: idx + 1,
+          color: [0, 0, 0],
+          isColorChange: false
+        }));
         setSequence(seq);
         setCurrentIndex(0);
         setRemainingSteps(0);
