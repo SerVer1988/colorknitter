@@ -14,8 +14,10 @@
     html, body { background: #0a0a0a; font-family: Arial, sans-serif; color: white; }
     body { display: flex; justify-content: center; }
     #root { width: 100%; max-width: 440px; min-height: 100vh; display: flex; flex-direction: column; padding: 8px 12px 100px; }
+
     .logo-row { display: flex; justify-content: center; padding: 8px 0 4px; }
-    .logo-row img { height: 52px; width: auto; border-radius: 12px; }
+    .logo-row img { height: 36px; width: auto; border-radius: 8px; }
+
     .canvas-wrap { position: relative; touch-action: none; margin-bottom: 10px; }
     #canvas { border-radius: 50%; display: block; width: 100%; aspect-ratio: 1; }
     .canvas-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; pointer-events: none; }
@@ -23,47 +25,57 @@
     .canvas-hint .text { font-size: 15px; color: #888; font-weight: 600; }
     .canvas-hint .sub { font-size: 12px; color: #555; margin-top: 4px; }
     #file-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; border-radius: 50%; }
+
     .settings { display: flex; flex-direction: column; gap: 10px; }
+
     .mode-row { display: flex; gap: 8px; }
     .mode-btn { flex: 1; padding: 12px 0; border-radius: 12px; border: 2px solid #333; background: transparent; color: #aaa; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
     .mode-btn.active { border-color: #EFCA46; color: #EFCA46; }
+
     .filter-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .filter-btn { padding: 10px 0; border-radius: 10px; border: 2px solid #333; background: transparent; color: #aaa; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-    .filter-btn.active { border-color: #EFCA46; color: #EFCA46; background: #1a1500; }
+    .filter-btn.active { border-color: #7c3aed; color: #c4b5fd; background: #1e1030; }
+
     .s-label { font-size: 13px; color: #aaa; display: flex; justify-content: space-between; margin-bottom: 6px; }
-    input[type=range] { width: 100%; accent-color: #EFCA46; }
+    input[type=range] { width: 100%; accent-color: #7c3aed; }
     .s-input-label { font-size: 12px; color: #aaa; margin-bottom: 4px; display: block; }
     input[type=number] { width: 100%; background: #111; border: 1.5px solid #333; border-radius: 8px; padding: 8px; text-align: center; font-size: 15px; color: white; outline: none; }
-    input[type=number]:focus { border-color: #EFCA46; }
+    input[type=number]:focus { border-color: #7c3aed; }
+
+    .divider { border: none; border-top: 1px solid #222; margin: 4px 0; }
+
     .color-chips { display: flex; gap: 6px; flex-wrap: nowrap; }
-    .color-chip { display: flex; align-items: center; gap: 5px; padding: 5px 8px; border-radius: 20px; border: 2px solid #333; background: #111; font-size: 11px; font-weight: 600; color: #aaa; flex: 1; justify-content: center; }
+    .color-chip { display: flex; align-items: center; gap: 5px; padding: 5px 8px; border-radius: 20px; border: 2px solid #333; background: #111; font-size: 11px; font-weight: 600; color: #aaa; cursor: pointer; transition: all 0.15s; flex: 1; justify-content: center; }
     .color-chip.active { border-color: currentColor; }
     .color-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
     .big-btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-size: 17px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
     .big-btn:active { transform: scale(0.97); }
     .big-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-    .btn-primary { background: #EFCA46; color: black; }
+    .btn-primary { background: #7c3aed; color: white; }
     .btn-secondary { background: #222; color: #ccc; border: 1.5px solid #333; }
     .btn-blue { background: #2563eb; color: white; }
     .btn-yellow { background: #EFCA46; color: black; }
+
     .progress-wrap { background: #1a1a1a; border-radius: 999px; height: 8px; overflow: hidden; }
-    .progress-bar { height: 100%; background: #EFCA46; border-radius: 999px; width: 0%; transition: width 0.2s; }
+    .progress-bar { height: 100%; background: #7c3aed; border-radius: 999px; width: 0%; transition: width 0.2s; }
     .status-text { font-size: 13px; color: #aaa; line-height: 1.8; text-align: center; }
-    .cache-overlay { position: absolute; inset: 0; border-radius: 50%; background: rgba(0,0,0,0.75); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; z-index: 20; }
-    .cache-spinner { width: 44px; height: 44px; border: 3px solid #333; border-top-color: #EFCA46; border-radius: 50%; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .cache-text { font-size: 13px; color: #EFCA46; font-weight: 700; }
-    .color-progress-row { display: flex; gap: 6px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; }
+
+    /* Превью цветов при генерации */
+    .color-progress-row { display: flex; gap: 6px; justify-content: flex-start; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; }
     .color-progress-row::-webkit-scrollbar { display: none; }
     .color-progress-chip { display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+
     .bottom-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; padding: 12px 16px 28px; background: #1a1a1a; border-top: 1px solid #2a2a2a; border-radius: 24px 24px 0 0; z-index: 100; display: flex; flex-direction: column; gap: 10px; }
   </style>
 </head>
 <body>
 <div id="root">
+
   <div class="logo-row">
     <img src="icon.png" alt="CK" onerror="this.style.display='none'" />
   </div>
+
   <div class="canvas-wrap" id="canvas-wrap">
     <canvas id="canvas"></canvas>
     <div class="canvas-hint" id="canvas-hint">
@@ -75,6 +87,7 @@
   </div>
 
   <div class="settings" id="settings-block">
+
     <div>
       <div class="s-label"><span>Режим</span></div>
       <div class="mode-row">
@@ -82,6 +95,7 @@
         <button class="mode-btn" id="btn-color" onclick="setMode('color')">🌈 Цветной</button>
       </div>
     </div>
+
     <div id="filter-block">
       <div class="s-label"><span>Фильтр</span></div>
       <div class="filter-row">
@@ -91,10 +105,13 @@
         <button class="filter-btn" onclick="setFilter('silhouette')">Силуэт</button>
       </div>
     </div>
+
+    <!-- Блок выбора цветов (только в цветном режиме) -->
     <div id="color-select-block" style="display:none">
-      <div class="s-label"><span>Цвета нитей</span></div>
+      <div class="s-label"><span>Цвета нитей</span><span style="color:#555;font-size:11px">все активны</span></div>
       <div class="color-chips" id="color-chips"></div>
     </div>
+
     <div>
       <div class="s-label"><span>Контрастность</span><span id="contrast-val">0</span></div>
       <input type="range" id="contrast-box" value="0" min="-100" max="100" step="5" />
@@ -103,7 +120,7 @@
       <div class="s-label"><span>Яркость</span><span id="brightness-val">0</span></div>
       <input type="range" id="brightness-box" value="0" min="-100" max="100" step="5" />
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
       <div>
         <span class="s-input-label">Кол-во линий</span>
         <input type="number" id="lines-count-box" value="3000" min="100" max="10000" />
@@ -113,21 +130,25 @@
         <input type="number" id="color-interval-box" value="100" min="10" max="2000" />
       </div>
     </div>
+
   </div>
 
-  <div id="progress-block" style="display:none;flex-direction:column;gap:10px;margin-top:16px;">
+  <div id="progress-block" style="display:none; flex-direction:column; gap:10px; margin-top:16px;">
     <div class="color-progress-row" id="color-progress-row"></div>
     <div class="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
     <div class="status-text" id="status-text"></div>
   </div>
+
 </div>
 
-<div class="bottom-bar">
+<div class="bottom-bar" id="bottom-bar">
   <div id="state-ready">
     <button class="big-btn btn-primary" id="generate-btn" onclick="startGenerate()" disabled>▶ Запустить</button>
   </div>
-  <div id="state-running" style="display:none"></div>
-  <div id="state-done" style="display:none;flex-direction:column;gap:10px;">
+  <div id="state-running" style="display:none">
+    <div class="status-text" id="status-text-bar"></div>
+  </div>
+  <div id="state-done" style="display:none; flex-direction:column; gap:10px;">
     <button class="big-btn btn-blue" onclick="openInKnitter()">🪡 Открыть в вязалке</button>
     <div style="display:flex;gap:10px;">
       <button class="big-btn btn-yellow" onclick="saveImage()" style="flex:1">💾 PNG</button>
@@ -137,494 +158,504 @@
 </div>
 
 <script>
-const NAIL_RADIUS=1, NAIL_COLOR='#000', PADDING=5, NAILS_COUNT=260;
+// ─── Константы ────────────────────────────────────────────────────────────────
+const NAIL_RADIUS = 1, NAIL_COLOR = '#000', PADDING = 5, NAILS_COUNT = 260, LINE_WEIGHT = 25;
 
-// Вес одной линии — сколько яркости она "забирает" из пикселя
-// При 3000 линиях и 260 гвоздях нужно ~40-60 чтобы хорошо покрыть тёмные области
-const LINE_DARKNESS = 50;
-
-const COLORS=[
-  {id:'Y',name:'Жёлтый', short:'Жёл.',rgb:[255,220,  0],hex:'#ffdc00',textHex:'#b8870a'},
-  {id:'C',name:'Голубой',short:'Гол.',rgb:[  0,183,235],hex:'#00b7eb',textHex:'#0077aa'},
-  {id:'M',name:'Розовый',short:'Роз.',rgb:[255,  0,144],hex:'#ff0090',textHex:'#cc0070'},
-  {id:'K',name:'Чёрный', short:'Чёр.',rgb:[  0,  0,  0],hex:'#000000',textHex:'#888888'},
-  {id:'W',name:'Белый',  short:'Бел.',rgb:[255,255,255],hex:'#ffffff',textHex:'#999999'},
+// 5 цветов: Yellow, Cyan, Magenta, blacK, White
+const COLORS = [
+  { id: 'Y', name: 'Жёлтый',  short: 'Жёл.', rgb: [255, 220,   0], hex: '#ffdc00', textHex: '#b8870a' },
+  { id: 'C', name: 'Голубой', short: 'Гол.', rgb: [  0, 183, 235], hex: '#00b7eb', textHex: '#0077aa' },
+  { id: 'M', name: 'Розовый', short: 'Роз.', rgb: [255,   0, 144], hex: '#ff0090', textHex: '#cc0070' },
+  { id: 'K', name: 'Чёрный',  short: 'Чёр.', rgb: [  0,   0,   0], hex: '#000000', textHex: '#888888' },
+  { id: 'W', name: 'Белый',   short: 'Бел.', rgb: [255, 255, 255], hex: '#ffffff', textHex: '#999999' },
 ];
 
-let canvas=document.getElementById('canvas'), ctx=canvas.getContext('2d');
-let image=null, nails=[], sequence=[], isGenerating=false;
-let mode='bw', currentFilter='normal', animFrame=null;
-let imgX=0, imgY=0, imgScale=1, imgNatW=0, imgNatH=0;
-let fakeCanvas=document.createElement('canvas'), fakeCtx=fakeCanvas.getContext('2d');
-let pixelCanvas=document.createElement('canvas'), pixelCtx=pixelCanvas.getContext('2d');
-let width, height, x0, y0, radius, dpr=window.devicePixelRatio||1;
-let contrastTable=[], brightnessTable=[];
-let touches=[], isDragging=false, lastX=0, lastY=0;
-let lineCache=null, cacheBuilt=false;
+// ─── Состояние ────────────────────────────────────────────────────────────────
+let canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d');
+let image = null, nails = [], sequence = [], isGenerating = false;
+let mode = 'bw', currentFilter = 'normal', animFrame = null;
+let imgX = 0, imgY = 0, imgScale = 1, imgNatW = 0, imgNatH = 0;
+let fakeCanvas = document.createElement('canvas'), fakeCtx = fakeCanvas.getContext('2d');
+let pixelCanvas = document.createElement('canvas'), pixelCtx = pixelCanvas.getContext('2d');
+let width, height, x0, y0, radius, dpr = window.devicePixelRatio || 1;
+let contrastTable = [], brightnessTable = [];
+let touches = [], isDragging = false, lastX = 0, lastY = 0;
+let activeColors = new Set(['Y','C','M','K','W']); // все активны
 
-const FILTERS={
-  normal:    l=>l,
-  hard:      l=>Math.max(0,Math.min(255,Math.round((l-128)*2.5+128))),
-  soft:      l=>Math.round(l*0.6+50),
-  silhouette:l=>l<128?0:255
+const FILTERS = {
+  normal:    l => l,
+  hard:      l => Math.max(0, Math.min(255, Math.round((l - 128) * 2.5 + 128))),
+  soft:      l => Math.round(l * 0.6 + 50),
+  silhouette:l => l < 128 ? 0 : 255
 };
 
-function initCanvas(){
-  const wrap=document.getElementById('canvas-wrap');
-  const size=Math.min(wrap.clientWidth,400);
-  width=size; height=size; x0=width/2; y0=height/2;
-  radius=Math.min(width,height)/2-PADDING;
-  canvas.width=width*dpr; canvas.height=height*dpr;
-  canvas.style.width=width+'px'; canvas.style.height=height+'px';
-  ctx.scale(dpr,dpr);
-  fakeCanvas.width=width*dpr; fakeCanvas.height=height*dpr; fakeCtx.scale(dpr,dpr);
-  pixelCanvas.width=width; pixelCanvas.height=height;
+// ─── Инициализация ────────────────────────────────────────────────────────────
+function initCanvas() {
+  const wrap = document.getElementById('canvas-wrap');
+  const size = Math.min(wrap.clientWidth, 400);
+  width = size; height = size; x0 = width / 2; y0 = height / 2;
+  radius = Math.min(width, height) / 2 - PADDING;
+  canvas.width = width * dpr; canvas.height = height * dpr;
+  canvas.style.width = width + 'px'; canvas.style.height = height + 'px';
+  ctx.scale(dpr, dpr);
+  fakeCanvas.width = width * dpr; fakeCanvas.height = height * dpr; fakeCtx.scale(dpr, dpr);
+  pixelCanvas.width = width; pixelCanvas.height = height;
   drawEmpty();
 }
 
-function drawEmpty(){
-  ctx.clearRect(0,0,width,height);
-  ctx.beginPath(); ctx.arc(x0,y0,radius,0,Math.PI*2);
-  ctx.fillStyle='#fff'; ctx.fill();
-  ctx.strokeStyle='#ccc'; ctx.lineWidth=1; ctx.stroke();
+function drawEmpty() {
+  ctx.clearRect(0, 0, width, height);
+  ctx.beginPath(); ctx.arc(x0, y0, radius, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff'; ctx.fill();
+  ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1; ctx.stroke();
 }
 
-function limitPixel(v){return Math.max(0,Math.min(255,Math.round(v)));}
-function getLightness(r,g,b){return Math.floor(0.2126*r+0.7152*g+0.0722*b);}
+function limitPixel(v) { return Math.max(0, Math.min(255, Math.round(v))); }
 
-function updateContrast(){
-  let val=+document.getElementById('contrast-box').value;
-  document.getElementById('contrast-val').textContent=val>0?'+'+val:val;
-  let c=1+val/100;
-  contrastTable=Array.from({length:256},(_,i)=>limitPixel((i-128)*c+128));
+function updateContrast() {
+  let val = +document.getElementById('contrast-box').value;
+  document.getElementById('contrast-val').textContent = val > 0 ? '+' + val : val;
+  let c = 1 + val / 100;
+  contrastTable = Array.from({length: 256}, (_, i) => limitPixel((i - 128) * c + 128));
 }
-function updateBrightness(){
-  let val=+document.getElementById('brightness-box').value;
-  document.getElementById('brightness-val').textContent=val>0?'+'+val:val;
-  let b=1+val/100;
-  brightnessTable=Array.from({length:256},(_,i)=>limitPixel(i*b));
+function updateBrightness() {
+  let val = +document.getElementById('brightness-box').value;
+  document.getElementById('brightness-val').textContent = val > 0 ? '+' + val : val;
+  let b = 1 + val / 100;
+  brightnessTable = Array.from({length: 256}, (_, i) => limitPixel(i * b));
 }
 
-// ── Кэш линий ────────────────────────────────────────────────────────────────
-function buildLineCache(){
-  return new Promise(resolve=>{
-    const overlay=document.createElement('div');
-    overlay.className='cache-overlay';
-    overlay.innerHTML=`<div class="cache-spinner"></div><div class="cache-text">Подготовка гвоздей…</div>`;
-    document.getElementById('canvas-wrap').appendChild(overlay);
-    requestAnimationFrame(()=>setTimeout(()=>{
-      const N=NAILS_COUNT;
-      lineCache=[];
-      for(let i=0;i<N;i++) lineCache.push(new Array(N).fill(null));
-      for(let i=0;i<N;i++){
-        for(let j=i+1;j<N;j++){
-          const px=rasterizeLine(nails[i].x,nails[i].y,nails[j].x,nails[j].y);
-          lineCache[i][j]=px; lineCache[j][i]=px;
-        }
-      }
-      cacheBuilt=true;
-      overlay.remove();
-      resolve();
-    },50));
+// ─── Чипы цветов ──────────────────────────────────────────────────────────────
+function initColorChips() {
+  const container = document.getElementById('color-chips');
+  container.innerHTML = '';
+  COLORS.forEach(c => {
+    const chip = document.createElement('div');
+    chip.className = 'color-chip active';
+    chip.style.color = c.textHex;
+    chip.style.borderColor = c.hex;
+    chip.dataset.id = c.id;
+    chip.innerHTML = `<div class="color-dot" style="background:${c.hex};border:1px solid #333"></div>${c.short}`;
+    // Чипы — только отображение, все всегда активны
+    container.appendChild(chip);
   });
 }
 
-function rasterizeLine(x1,y1,x2,y2){
-  const pts=[];
-  let dx=Math.abs(x2-x1),dy=Math.abs(y2-y1);
-  let sx=Math.sign(x2-x1),sy=Math.sign(y2-y1),err=dx-dy;
-  let cx=x1,cy=y1;
-  while(cx!==x2||cy!==y2){
-    if(cx>=0&&cx<width&&cy>=0&&cy<height) pts.push(cy*width+cx);
-    let e2=err*2;
-    if(e2>-dy){err-=dy;cx+=sx;} if(e2<dx){err+=dx;cy+=sy;}
+// ─── Загрузка фото ────────────────────────────────────────────────────────────
+document.getElementById('file-input').addEventListener('change', function() {
+  if (!this.files[0]) return;
+  this.style.pointerEvents = 'none'; this.style.zIndex = '-1';
+  let img = new Image();
+  img.onload = () => {
+    image = img; imgNatW = img.width; imgNatH = img.height;
+    let s = (radius * 2) / Math.max(img.width, img.height);
+    imgScale = s; imgX = x0 - img.width * s / 2; imgY = y0 - img.height * s / 2;
+    document.getElementById('canvas-hint').style.display = 'none';
+    drawPhoto(); initNails();
+    document.getElementById('generate-btn').removeAttribute('disabled');
+  };
+  img.src = URL.createObjectURL(this.files[0]);
+});
+
+function getLightness(r, g, b) { return Math.floor(0.2126 * r + 0.7152 * g + 0.0722 * b); }
+
+function drawPhoto() {
+  if (!image) return;
+  ctx.clearRect(0, 0, width, height);
+  ctx.save();
+  ctx.beginPath(); ctx.arc(x0, y0, radius, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff'; ctx.fill(); ctx.clip();
+  let iw = imgNatW * imgScale, ih = imgNatH * imgScale;
+  fakeCtx.clearRect(0, 0, width, height);
+  fakeCtx.drawImage(image, imgX, imgY, iw, ih);
+  let data = fakeCtx.getImageData(0, 0, width * dpr, height * dpr), px = data.data;
+  let isColor = mode === 'color';
+  for (let i = 0; i < px.length; i += 4) {
+    if (isColor) {
+      for (let c = 0; c < 3; c++) { let v = px[i+c]; v = brightnessTable[v]; v = contrastTable[v]; px[i+c] = v; }
+    } else {
+      let l = getLightness(px[i], px[i+1], px[i+2]);
+      l = brightnessTable[l]; l = contrastTable[l]; l = FILTERS[currentFilter](l);
+      px[i] = px[i+1] = px[i+2] = l;
+    }
   }
-  if(x2>=0&&x2<width&&y2>=0&&y2<height) pts.push(y2*width+x2);
-  return new Int32Array(pts);
+  fakeCtx.putImageData(data, 0, 0);
+  ctx.drawImage(fakeCanvas, 0, 0, width, height);
+  ctx.restore();
+  ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(x0, y0, radius, 0, Math.PI * 2); ctx.stroke();
 }
 
-// ── Пиксели изображения ───────────────────────────────────────────────────────
-function getBWPixels(){
-  pixelCtx.clearRect(0,0,width,height);
-  pixelCtx.fillStyle='#fff'; pixelCtx.fillRect(0,0,width,height);
-  pixelCtx.save();
-  pixelCtx.beginPath(); pixelCtx.arc(x0,y0,radius,0,Math.PI*2); pixelCtx.clip();
-  pixelCtx.drawImage(image,imgX,imgY,imgNatW*imgScale,imgNatH*imgScale);
-  pixelCtx.restore();
-  let data=pixelCtx.getImageData(0,0,width,height).data;
-  let px=new Float32Array(width*height);
-  for(let i=0;i<data.length;i+=4){
-    let l=getLightness(data[i],data[i+1],data[i+2]);
-    l=brightnessTable[l]; l=contrastTable[l]; l=FILTERS[currentFilter](l);
-    const pi=i/4, px_x=pi%width, px_y=Math.floor(pi/width);
-    // Снаружи круга — белый (255 = не рисовать)
-    if((px_x-x0)**2+(px_y-y0)**2>radius**2) l=255;
-    px[pi]=l;
+// ─── Touch/Mouse для перемещения фото ────────────────────────────────────────
+function getOff(e) { let r = canvas.getBoundingClientRect(); return {x: e.clientX - r.left, y: e.clientY - r.top}; }
+canvas.addEventListener('mousedown', e => { if (!image || isGenerating) return; isDragging = true; let p = getOff(e); lastX = p.x; lastY = p.y; e.preventDefault(); });
+canvas.addEventListener('mousemove', e => { if (!isDragging || !image || isGenerating) return; let p = getOff(e); imgX += p.x - lastX; imgY += p.y - lastY; lastX = p.x; lastY = p.y; drawPhoto(); e.preventDefault(); });
+canvas.addEventListener('mouseup', () => isDragging = false);
+canvas.addEventListener('mouseleave', () => isDragging = false);
+canvas.addEventListener('wheel', e => {
+  if (!image || isGenerating) return; e.preventDefault();
+  let f = e.deltaY < 0 ? 1.1 : 0.9, p = getOff(e);
+  let dx = (p.x - imgX) / imgScale, dy = (p.y - imgY) / imgScale;
+  imgScale = Math.max(0.1, Math.min(10, imgScale * f));
+  imgX = p.x - dx * imgScale; imgY = p.y - dy * imgScale; drawPhoto();
+}, {passive: false});
+canvas.addEventListener('touchstart', e => {
+  if (!image || isGenerating) return; e.preventDefault();
+  touches = Array.from(e.targetTouches).map(t => ({x: t.clientX, y: t.clientY}));
+  if (e.targetTouches.length === 1) { isDragging = true; lastX = touches[0].x; lastY = touches[0].y; }
+}, {passive: false});
+canvas.addEventListener('touchmove', e => {
+  if (!image || isGenerating) return; e.preventDefault();
+  let cur = Array.from(e.targetTouches).map(t => ({x: t.clientX, y: t.clientY}));
+  if (cur.length === 1 && isDragging) {
+    imgX += cur[0].x - lastX; imgY += cur[0].y - lastY; lastX = cur[0].x; lastY = cur[0].y; drawPhoto();
+  } else if (cur.length === 2 && touches.length === 2) {
+    let d1 = Math.hypot(touches[1].x - touches[0].x, touches[1].y - touches[0].y);
+    let d2 = Math.hypot(cur[1].x - cur[0].x, cur[1].y - cur[0].y);
+    let f = d2 / d1, r = canvas.getBoundingClientRect();
+    let cx = (cur[0].x + cur[1].x) / 2 - r.left, cy = (cur[0].y + cur[1].y) / 2 - r.top;
+    let dx = (cx - imgX) / imgScale, dy = (cy - imgY) / imgScale;
+    imgScale = Math.max(0.1, Math.min(10, imgScale * f));
+    imgX = cx - dx * imgScale; imgY = cy - dy * imgScale;
+    imgX += (cur[0].x + cur[1].x) / 2 - (touches[0].x + touches[1].x) / 2;
+    imgY += (cur[0].y + cur[1].y) / 2 - (touches[0].y + touches[1].y) / 2;
+    drawPhoto();
   }
-  return px;
+  touches = cur;
+}, {passive: false});
+canvas.addEventListener('touchend', e => { e.preventDefault(); isDragging = false; touches = []; }, {passive: false});
+
+function initNails() {
+  nails = [];
+  for (let i = 0; i < NAILS_COUNT; i++) {
+    let t = i * 2 * Math.PI / NAILS_COUNT;
+    nails.push({x: Math.round(x0 + radius * Math.cos(t)), y: Math.round(y0 + radius * Math.sin(t))});
+  }
 }
 
-function getColorPixelsRGB(){
-  pixelCtx.clearRect(0,0,width,height);
-  pixelCtx.fillStyle='#fff'; pixelCtx.fillRect(0,0,width,height);
+function lineRasterization(x1, y1, x2, y2) {
+  let line = new Set(), dx = Math.abs(x2 - x1), dy = Math.abs(y2 - y1);
+  let sx = Math.sign(x2 - x1), sy = Math.sign(y2 - y1), err = dx - dy;
+  while (x1 != x2 || y1 != y2) {
+    line.add(y1 * width + x1); let e2 = err * 2;
+    if (e2 > -dy) { err -= dy; x1 += sx; }
+    if (e2 < dx) { err += dx; y1 += sy; }
+  }
+  line.add(y2 * width + x2); return line;
+}
+
+// ─── Получение пикселей изображения ─────────────────────────────────────────
+function getImagePixelsRGB() {
+  pixelCtx.clearRect(0, 0, width, height);
+  pixelCtx.fillStyle = '#fff'; pixelCtx.fillRect(0, 0, width, height);
   pixelCtx.save();
-  pixelCtx.beginPath(); pixelCtx.arc(x0,y0,radius,0,Math.PI*2); pixelCtx.clip();
-  pixelCtx.drawImage(image,imgX,imgY,imgNatW*imgScale,imgNatH*imgScale);
+  pixelCtx.beginPath(); pixelCtx.arc(x0, y0, radius, 0, Math.PI * 2); pixelCtx.clip();
+  pixelCtx.drawImage(image, imgX, imgY, imgNatW * imgScale, imgNatH * imgScale);
   pixelCtx.restore();
-  const data=pixelCtx.getImageData(0,0,width,height).data;
-  const rgb=new Float32Array(width*height*3);
-  for(let i=0;i<width*height;i++){
-    let r=data[i*4],g=data[i*4+1],b=data[i*4+2];
-    r=brightnessTable[r]; r=contrastTable[r];
-    g=brightnessTable[g]; g=contrastTable[g];
-    b=brightnessTable[b]; b=contrastTable[b];
-    const px_x=i%width, px_y=Math.floor(i/width);
-    if((px_x-x0)**2+(px_y-y0)**2>radius**2){r=g=b=255;}
-    rgb[i*3]=r; rgb[i*3+1]=g; rgb[i*3+2]=b;
+  const data = pixelCtx.getImageData(0, 0, width, height).data;
+  const rgb = new Uint8Array(width * height * 3);
+  const total = width * height;
+  for (let i = 0; i < total; i++) {
+    let r = data[i*4], g = data[i*4+1], b = data[i*4+2];
+    // Применяем яркость/контраст
+    r = brightnessTable[r]; r = contrastTable[r];
+    g = brightnessTable[g]; g = contrastTable[g];
+    b = brightnessTable[b]; b = contrastTable[b];
+    // Снаружи круга — белый
+    const px_x = i % width, px_y = Math.floor(i / width);
+    if ((px_x - x0) ** 2 + (px_y - y0) ** 2 > radius ** 2) { r = g = b = 255; }
+    rgb[i*3] = r; rgb[i*3+1] = g; rgb[i*3+2] = b;
   }
   return rgb;
 }
 
-// ── Оценка линии: среднее значение пикселей ──────────────────────────────────
-// Для ч/б: ищем линию с минимальной яркостью (самые тёмные пиксели)
-// Нормализуем по длине чтобы не давать преимущество длинным линиям
-function scoreBW(pixels, arr){
-  let s=0;
-  for(let k=0;k<arr.length;k++) s+=pixels[arr[k]];
-  return s/arr.length;
-}
+// ─── Карта «нужды» для каждого цвета ─────────────────────────────────────────
+// Возвращает Float32Array: насколько пиксель «требует» данного цвета (0=не нужен, 1=максимально нужен)
+function buildNeedMap(rgb, colorDef) {
+  const n = width * height;
+  const need = new Float32Array(n);
+  const [cr, cg, cb] = colorDef.rgb;
+  const isBlack = cr === 0 && cg === 0 && cb === 0;
+  const isWhite = cr === 255 && cg === 255 && cb === 255;
 
-// Для цвета: ищем линию где пиксели максимально похожи на нужный цвет
-function scoreColor(rgb, arr, cr, cg, cb){
-  let s=0;
-  for(let k=0;k<arr.length;k++){
-    const idx=arr[k]*3;
-    const r=rgb[idx], g=rgb[idx+1], b=rgb[idx+2];
-    // Инвертируем расстояние: чем ближе к цвету, тем меньше score (лучше)
-    const dist=Math.sqrt((r-cr)**2+(g-cg)**2+(b-cb)**2);
-    s+=dist;
+  for (let i = 0; i < n; i++) {
+    const r = rgb[i*3], g = rgb[i*3+1], b = rgb[i*3+2];
+    let score;
+    if (isBlack) {
+      // Чёрный нужен там где темно
+      score = 1 - getLightness(r, g, b) / 255;
+    } else if (isWhite) {
+      // Белый нужен там где светло (используется на тёмных рамах)
+      score = getLightness(r, g, b) / 255;
+    } else {
+      // Для CMY: насколько пиксель близок к этому цвету
+      // Нормализуем вектор: используем dot-product в цветовом пространстве
+      const dist = Math.sqrt((r-cr)**2 + (g-cg)**2 + (b-cb)**2);
+      const maxDist = Math.sqrt(255**2 * 3);
+      score = 1 - dist / maxDist;
+      // Дополнительно усиливаем: цвет нужен только если он насыщен (не серый)
+      const sat = Math.max(r,g,b) - Math.min(r,g,b);
+      score *= (sat / 255);
+    }
+    need[i] = Math.max(0, score);
   }
-  return s/arr.length;
+  return need;
 }
 
-// ── Применение линии — убираем вклад из пиксельного буфера ───────────────────
-function removeBW(pixels, arr){
-  for(let k=0;k<arr.length;k++){
-    pixels[arr[k]]=Math.min(255, pixels[arr[k]]+LINE_DARKNESS);
+// ─── Цветовая ошибка (текущая — желаемая) для линии ─────────────────────────
+function getLineMeanNeed(needMap, linePixels) {
+  let sum = 0;
+  for (const idx of linePixels) sum += needMap[idx];
+  return sum / linePixels.size;
+}
+
+// ─── Генерация ────────────────────────────────────────────────────────────────
+function setState(state) {
+  document.getElementById('state-ready').style.display   = state === 'ready'   ? 'block' : 'none';
+  document.getElementById('state-running').style.display = state === 'running' ? 'block' : 'none';
+  document.getElementById('state-done').style.display    = state === 'done'    ? 'flex'  : 'none';
+  document.getElementById('settings-block').style.display = state === 'ready'  ? 'flex'  : 'none';
+  document.getElementById('progress-block').style.display = state === 'running'? 'flex'  : 'none';
+}
+
+function startGenerate() {
+  if (isGenerating || !image) return;
+  isGenerating = true;
+  sequence = [];
+
+  // Очищаем канвас
+  ctx.clearRect(0, 0, width, height);
+  ctx.beginPath(); ctx.arc(x0, y0, radius, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff'; ctx.fill();
+  ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.fillStyle = NAIL_COLOR;
+  for (let n of nails) { ctx.beginPath(); ctx.arc(n.x, n.y, NAIL_RADIUS, 0, Math.PI * 2); ctx.fill(); }
+
+  setState('running');
+
+  const total = +document.getElementById('lines-count-box').value;
+  const t0 = performance.now();
+
+  if (mode === 'bw') {
+    // ── ЧБ режим (без изменений) ───────────────────────────────────────────
+    let pixels = getBWPixels();
+    let lw = limitPixel(LINE_WEIGHT / 100 * 255 / dpr);
+    let nail = 0;
+    const colorProgressRow = document.getElementById('color-progress-row');
+    colorProgressRow.innerHTML = '';
+
+    function runBatchBW() {
+      for (let b = 0; b < 20; b++) {
+        if (sequence.length >= total) { finishGenerate(t0, total); return; }
+        sequence.push({ nail, colorIndex: 3 }); // чёрный
+        let nn = nail, nl = null, ml = Infinity;
+        for (let i = 0; i < nails.length; i++) {
+          if (i === nail) continue;
+          let line = lineRasterization(nails[i].x, nails[i].y, nails[nail].x, nails[nail].y);
+          let l = 0; for (let idx of line) l += pixels[idx]; l /= line.size;
+          if (l < ml) { ml = l; nn = i; nl = line; }
+        }
+        for (let idx of nl) pixels[idx] = Math.min(255, pixels[idx] + lw);
+        ctx.lineWidth = 0.2;
+        ctx.strokeStyle = `rgba(0,0,0,${LINE_WEIGHT/100})`;
+        ctx.beginPath(); ctx.moveTo(nails[nail].x, nails[nail].y);
+        ctx.lineTo(nails[nn].x, nails[nn].y); ctx.stroke();
+        nail = nn;
+      }
+      updateProgress(sequence.length, total, t0);
+      animFrame = requestAnimationFrame(runBatchBW);
+    }
+    animFrame = requestAnimationFrame(runBatchBW);
+
+  } else {
+    // ── ЦВЕТНОЙ режим ──────────────────────────────────────────────────────
+    const rgb = getImagePixelsRGB();
+    const interval = Math.max(10, +document.getElementById('color-interval-box').value || 100);
+
+    // Строим карты «нужды» для каждого цвета
+    const needMaps = COLORS.map(c => buildNeedMap(rgb, c));
+    const residuals = needMaps.map(m => new Float32Array(m));
+
+    // Определяем пропорции для квот (для отображения прогресса)
+    const colorTotals = needMaps.map(m => { let s = 0; for (let v of m) s += v; return s; });
+    const grandTotal = colorTotals.reduce((a, b) => a + b, 0);
+    const colorQuotas = colorTotals.map(t => Math.round(t / grandTotal * total));
+    let diff = total - colorQuotas.reduce((a, b) => a + b, 0);
+    colorQuotas[0] += diff;
+
+    // Текущая позиция гвоздя для каждого цвета
+    const nailPos = new Array(5).fill(0);
+    const colorCounts = new Array(5).fill(0);
+
+    // Порядок цветов по убыванию нужды (самый нужный первым)
+    const colorOrder = [0,1,2,3,4].sort((a, b) => colorTotals[b] - colorTotals[a]);
+
+    // Текущий цвет и счётчик шагов в текущем интервале
+    let currentColorOrderIdx = 0;
+    let stepsInCurrentColor = 0;
+    let currentCi = colorOrder[0];
+
+    // Отображение прогресса по цветам
+    const colorProgressRow = document.getElementById('color-progress-row');
+    colorProgressRow.innerHTML = '';
+    const countEls = COLORS.map((c, i) => {
+      const chip = document.createElement('div');
+      chip.className = 'color-progress-chip';
+      chip.style.background = c.hex + '22';
+      chip.style.color = c.id === 'W' ? '#999' : (c.id === 'K' ? '#aaa' : c.hex);
+      chip.style.border = c.id === 'K' ? '1px solid #fff4' : (c.id === 'W' ? '1px solid #fff3' : `1px solid ${c.hex}44`);
+      const dotBorder = c.id === 'K' ? 'border:1.5px solid #888' : (c.id === 'W' ? 'border:1.5px solid #666' : 'border:none');
+      chip.innerHTML = `<div style="width:8px;height:8px;border-radius:50%;background:${c.hex};${dotBorder}"></div><span id="cnt-${c.id}">0/${colorQuotas[i]}</span>`;
+      colorProgressRow.appendChild(chip);
+      return document.getElementById('cnt-' + c.id);
+    });
+
+    const lw = limitPixel(LINE_WEIGHT / 100 * 255 / dpr);
+
+    function runBatchColor() {
+      for (let b = 0; b < 10; b++) {
+        if (sequence.length >= total) { finishGenerate(t0, total); return; }
+
+        // Переключаем цвет по интервалу
+        if (stepsInCurrentColor >= interval) {
+          stepsInCurrentColor = 0;
+          currentColorOrderIdx = (currentColorOrderIdx + 1) % colorOrder.length;
+          currentCi = colorOrder[currentColorOrderIdx];
+        }
+
+        const ci = currentCi;
+        const nail = nailPos[ci];
+        const residual = residuals[ci];
+        const color = COLORS[ci];
+
+        // Ищем лучший следующий гвоздь для этого цвета
+        let bestNail = nail, bestLine = null, bestScore = -Infinity;
+        for (let i = 0; i < nails.length; i++) {
+          if (i === nail) continue;
+          const line = lineRasterization(nails[i].x, nails[i].y, nails[nail].x, nails[nail].y);
+          let score = 0; for (const idx of line) score += residual[idx]; score /= line.size;
+          if (score > bestScore) { bestScore = score; bestNail = i; bestLine = line; }
+        }
+
+        // Уменьшаем residual
+        for (const idx of bestLine) residual[idx] = Math.max(0, residual[idx] - lw / 255);
+
+        // Рисуем линию на канвасе
+        const [cr, cg, cb] = color.rgb;
+        ctx.lineWidth = 0.2;
+        ctx.strokeStyle = `rgba(${cr},${cg},${cb},${LINE_WEIGHT/100})`;
+        ctx.beginPath();
+        ctx.moveTo(nails[nail].x, nails[nail].y);
+        ctx.lineTo(nails[bestNail].x, nails[bestNail].y);
+        ctx.stroke();
+
+        // Сохраняем в sequence
+        sequence.push({ nail, colorIndex: ci });
+
+        nailPos[ci] = bestNail;
+        colorCounts[ci]++;
+        stepsInCurrentColor++;
+        countEls[ci].textContent = `${colorCounts[ci]}/${colorQuotas[ci]}`;
+      }
+
+      updateProgress(sequence.length, total, t0);
+      animFrame = requestAnimationFrame(runBatchColor);
+    }
+    animFrame = requestAnimationFrame(runBatchColor);
   }
 }
 
-function removeColor(rgb, arr, cr, cg, cb){
-  // Сдвигаем пиксели от цвета нити к белому
-  const shift=LINE_DARKNESS/255;
-  for(let k=0;k<arr.length;k++){
-    const idx=arr[k]*3;
-    rgb[idx]  =Math.min(255, rgb[idx]  +(255-cr)*shift);
-    rgb[idx+1]=Math.min(255, rgb[idx+1]+(255-cg)*shift);
-    rgb[idx+2]=Math.min(255, rgb[idx+2]+(255-cb)*shift);
+function getBWPixels() {
+  pixelCtx.clearRect(0, 0, width, height);
+  pixelCtx.fillStyle = '#fff'; pixelCtx.fillRect(0, 0, width, height);
+  pixelCtx.save();
+  pixelCtx.beginPath(); pixelCtx.arc(x0, y0, radius, 0, Math.PI * 2); pixelCtx.clip();
+  pixelCtx.drawImage(image, imgX, imgY, imgNatW * imgScale, imgNatH * imgScale);
+  pixelCtx.restore();
+  let data = pixelCtx.getImageData(0, 0, width, height).data, px = [];
+  for (let i = 0; i < data.length; i += 4) {
+    let l = getLightness(data[i], data[i+1], data[i+2]);
+    l = brightnessTable[l]; l = contrastTable[l]; l = FILTERS[currentFilter](l);
+    let px_x = (i / 4) % width, px_y = Math.floor((i / 4) / width);
+    if ((px_x - x0) ** 2 + (px_y - y0) ** 2 > radius ** 2) l = 255;
+    px.push(l);
   }
+  return px;
 }
 
-// ── Touch/Mouse ───────────────────────────────────────────────────────────────
-function drawPhoto(){
-  if(!image)return;
-  ctx.clearRect(0,0,width,height);
-  ctx.save();
-  ctx.beginPath(); ctx.arc(x0,y0,radius,0,Math.PI*2);
-  ctx.fillStyle='#fff'; ctx.fill(); ctx.clip();
-  let iw=imgNatW*imgScale, ih=imgNatH*imgScale;
-  fakeCtx.clearRect(0,0,width,height);
-  fakeCtx.drawImage(image,imgX,imgY,iw,ih);
-  let data=fakeCtx.getImageData(0,0,width*dpr,height*dpr), px=data.data;
-  let isColor=mode==='color';
-  for(let i=0;i<px.length;i+=4){
-    if(isColor){for(let c=0;c<3;c++){let v=px[i+c];v=brightnessTable[v];v=contrastTable[v];px[i+c]=v;}}
-    else{let l=getLightness(px[i],px[i+1],px[i+2]);l=brightnessTable[l];l=contrastTable[l];l=FILTERS[currentFilter](l);px[i]=px[i+1]=px[i+2]=l;}
-  }
-  fakeCtx.putImageData(data,0,0);
-  ctx.drawImage(fakeCanvas,0,0,width,height);
-  ctx.restore();
-  ctx.strokeStyle='#ccc'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.arc(x0,y0,radius,0,Math.PI*2); ctx.stroke();
+function updateProgress(done, total, t0) {
+  const pct = Math.round(done / total * 100);
+  document.getElementById('progress-bar').style.width = pct + '%';
+  const el = ((performance.now() - t0) / 1000).toFixed(1);
+  const rem = done > 0 ? ((performance.now() - t0) / done * (total - done) / 1000).toFixed(1) : '...';
+  document.getElementById('status-text').textContent = `${done} / ${total} линий · ${el}с · осталось ~${rem}с`;
 }
 
-function getOff(e){let r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};}
-canvas.addEventListener('mousedown',e=>{if(!image||isGenerating)return;isDragging=true;let p=getOff(e);lastX=p.x;lastY=p.y;e.preventDefault();});
-canvas.addEventListener('mousemove',e=>{if(!isDragging||!image||isGenerating)return;let p=getOff(e);imgX+=p.x-lastX;imgY+=p.y-lastY;lastX=p.x;lastY=p.y;drawPhoto();e.preventDefault();});
-canvas.addEventListener('mouseup',()=>isDragging=false);
-canvas.addEventListener('mouseleave',()=>isDragging=false);
-canvas.addEventListener('wheel',e=>{
-  if(!image||isGenerating)return;e.preventDefault();
-  let f=e.deltaY<0?1.1:0.9,p=getOff(e);
-  let dx=(p.x-imgX)/imgScale,dy=(p.y-imgY)/imgScale;
-  imgScale=Math.max(0.1,Math.min(10,imgScale*f));
-  imgX=p.x-dx*imgScale;imgY=p.y-dy*imgScale;drawPhoto();
-},{passive:false});
-canvas.addEventListener('touchstart',e=>{
-  if(!image||isGenerating)return;e.preventDefault();
-  touches=Array.from(e.targetTouches).map(t=>({x:t.clientX,y:t.clientY}));
-  if(e.targetTouches.length===1){isDragging=true;lastX=touches[0].x;lastY=touches[0].y;}
-},{passive:false});
-canvas.addEventListener('touchmove',e=>{
-  if(!image||isGenerating)return;e.preventDefault();
-  let cur=Array.from(e.targetTouches).map(t=>({x:t.clientX,y:t.clientY}));
-  if(cur.length===1&&isDragging){
-    imgX+=cur[0].x-lastX;imgY+=cur[0].y-lastY;lastX=cur[0].x;lastY=cur[0].y;drawPhoto();
-  }else if(cur.length===2&&touches.length===2){
-    let d1=Math.hypot(touches[1].x-touches[0].x,touches[1].y-touches[0].y);
-    let d2=Math.hypot(cur[1].x-cur[0].x,cur[1].y-cur[0].y);
-    let f=d2/d1,r=canvas.getBoundingClientRect();
-    let cx=(cur[0].x+cur[1].x)/2-r.left,cy=(cur[0].y+cur[1].y)/2-r.top;
-    let dx=(cx-imgX)/imgScale,dy=(cy-imgY)/imgScale;
-    imgScale=Math.max(0.1,Math.min(10,imgScale*f));
-    imgX=cx-dx*imgScale;imgY=cy-dy*imgScale;
-    imgX+=(cur[0].x+cur[1].x)/2-(touches[0].x+touches[1].x)/2;
-    imgY+=(cur[0].y+cur[1].y)/2-(touches[0].y+touches[1].y)/2;
-    drawPhoto();
-  }
-  touches=cur;
-},{passive:false});
-canvas.addEventListener('touchend',e=>{e.preventDefault();isDragging=false;touches=[];},{passive:false});
-
-document.getElementById('file-input').addEventListener('change',function(){
-  if(!this.files[0])return;
-  this.style.pointerEvents='none';this.style.zIndex='-1';
-  let img=new Image();
-  img.onload=()=>{
-    image=img;imgNatW=img.width;imgNatH=img.height;
-    let s=(radius*2)/Math.max(img.width,img.height);
-    imgScale=s;imgX=x0-img.width*s/2;imgY=y0-img.height*s/2;
-    document.getElementById('canvas-hint').style.display='none';
-    drawPhoto();initNails();
-    cacheBuilt=false;lineCache=null;
-    document.getElementById('generate-btn').removeAttribute('disabled');
-  };
-  img.src=URL.createObjectURL(this.files[0]);
-});
-
-function initNails(){
-  nails=[];
-  for(let i=0;i<NAILS_COUNT;i++){
-    let t=i*2*Math.PI/NAILS_COUNT;
-    nails.push({x:Math.round(x0+radius*Math.cos(t)),y:Math.round(y0+radius*Math.sin(t))});
-  }
-}
-
-function setState(state){
-  document.getElementById('state-ready').style.display  =state==='ready'  ?'block':'none';
-  document.getElementById('state-running').style.display=state==='running'?'block':'none';
-  document.getElementById('state-done').style.display   =state==='done'   ?'flex' :'none';
-  document.getElementById('settings-block').style.display=state==='ready' ?'flex' :'none';
-  document.getElementById('progress-block').style.display=state==='running'?'flex':'none';
-}
-function updateProgress(done,total,t0){
-  document.getElementById('progress-bar').style.width=Math.round(done/total*100)+'%';
-  const el=((performance.now()-t0)/1000).toFixed(1);
-  const rem=done>0?((performance.now()-t0)/done*(total-done)/1000).toFixed(1):'...';
-  document.getElementById('status-text').textContent=`${done} / ${total} · ${el}с · ~${rem}с`;
-}
-function finishGenerate(t0){
-  isGenerating=false;
-  const el=((performance.now()-t0)/1000).toFixed(1);
-  document.getElementById('status-text').textContent=`✅ Готово! ${sequence.length} линий за ${el}с`;
+function finishGenerate(t0, total) {
+  isGenerating = false;
+  const el = ((performance.now() - t0) / 1000).toFixed(1);
+  document.getElementById('status-text').textContent = `✅ Готово! ${sequence.length} линий за ${el}с`;
   setState('done');
 }
 
-async function startGenerate(){
-  if(isGenerating||!image)return;
-  isGenerating=true; sequence=[];
-  setState('running');
-
-  if(!cacheBuilt){
-    document.getElementById('status-text').textContent='Подготовка…';
-    await buildLineCache();
-  }
-
-  // Очищаем canvas
-  ctx.clearRect(0,0,width,height);
-  ctx.beginPath();ctx.arc(x0,y0,radius,0,Math.PI*2);
-  ctx.fillStyle='#fff';ctx.fill();
-  ctx.strokeStyle='#ccc';ctx.lineWidth=1;ctx.stroke();
-  ctx.fillStyle=NAIL_COLOR;
-  for(let n of nails){ctx.beginPath();ctx.arc(n.x,n.y,NAIL_RADIUS,0,Math.PI*2);ctx.fill();}
-
-  const total=+document.getElementById('lines-count-box').value;
-  const t0=performance.now();
-  // Прозрачность линии на canvas — подбираем под LINE_DARKNESS
-  // Чем меньше LINE_DARKNESS тем тоньше/прозрачнее линии
-  const lineAlpha=Math.min(0.9, LINE_DARKNESS/255*2);
-
-  if(mode==='bw'){
-    document.getElementById('color-progress-row').innerHTML='';
-    const pixels=getBWPixels();
-    let nail=0;
-    // Минимальная длина хорды — не рисуем соседние гвозди (меньше 5 позиций)
-    const MIN_DIST=5;
-
-    function runBW(){
-      for(let b=0;b<25;b++){
-        if(sequence.length>=total){finishGenerate(t0);return;}
-        sequence.push({nail,colorIndex:3});
-
-        let bestNail=-1, bestScore=Infinity;
-        for(let i=0;i<NAILS_COUNT;i++){
-          if(i===nail)continue;
-          // Пропускаем слишком близкие гвозди
-          const dist=Math.min(Math.abs(i-nail),NAILS_COUNT-Math.abs(i-nail));
-          if(dist<MIN_DIST)continue;
-          const sc=scoreBW(pixels,lineCache[nail][i]);
-          if(sc<bestScore){bestScore=sc;bestNail=i;}
-        }
-        if(bestNail===-1)bestNail=(nail+NAILS_COUNT/2)%NAILS_COUNT;
-
-        removeBW(pixels,lineCache[nail][bestNail]);
-
-        ctx.lineWidth=0.3;
-        ctx.strokeStyle=`rgba(0,0,0,${lineAlpha})`;
-        ctx.beginPath();ctx.moveTo(nails[nail].x,nails[nail].y);
-        ctx.lineTo(nails[bestNail].x,nails[bestNail].y);ctx.stroke();
-
-        nail=bestNail;
-      }
-      updateProgress(sequence.length,total,t0);
-      animFrame=requestAnimationFrame(runBW);
-    }
-    animFrame=requestAnimationFrame(runBW);
-
-  }else{
-    const interval=Math.max(10,+document.getElementById('color-interval-box').value||100);
-    const rgb=getColorPixelsRGB();
-    const colorTotals=COLORS.map((_,ci)=>{
-      let s=0; const[cr,cg,cb]=COLORS[ci].rgb;
-      const isK=cr===0&&cg===0&&cb===0;
-      for(let i=0;i<width*height;i++){
-        const r=rgb[i*3],g=rgb[i*3+1],b=rgb[i*3+2];
-        if(isK) s+=1-getLightness(r,g,b)/255;
-        else{ const dist=Math.sqrt((r-cr)**2+(g-cg)**2+(b-cb)**2); s+=1-dist/(255*Math.sqrt(3)); }
-      }
-      return s;
-    });
-    const grandTotal=colorTotals.reduce((a,b)=>a+b,0);
-    const colorQuotas=colorTotals.map(t=>Math.round(t/grandTotal*total));
-    let diff=total-colorQuotas.reduce((a,b)=>a+b,0); colorQuotas[0]+=diff;
-    const colorOrder=[0,1,2,3,4].sort((a,b)=>colorTotals[b]-colorTotals[a]);
-    const nailPos=new Array(5).fill(0);
-    const colorCounts=new Array(5).fill(0);
-    let currentColorOrderIdx=0,stepsInCurrentColor=0,currentCi=colorOrder[0];
-    const MIN_DIST=5;
-
-    const colorProgressRow=document.getElementById('color-progress-row');
-    colorProgressRow.innerHTML='';
-    const countEls=COLORS.map((c,i)=>{
-      const chip=document.createElement('div');
-      chip.className='color-progress-chip';
-      chip.style.background=c.hex+'22';
-      chip.style.color=c.id==='W'?'#999':(c.id==='K'?'#aaa':c.hex);
-      chip.style.border=`1px solid ${c.hex}44`;
-      chip.innerHTML=`<div style="width:8px;height:8px;border-radius:50%;background:${c.hex};border:1px solid #444"></div><span id="cnt-${c.id}">0/${colorQuotas[i]}</span>`;
-      colorProgressRow.appendChild(chip);
-      return document.getElementById('cnt-'+c.id);
-    });
-
-    function runColor(){
-      for(let b=0;b<12;b++){
-        if(sequence.length>=total){finishGenerate(t0);return;}
-        if(stepsInCurrentColor>=interval){
-          stepsInCurrentColor=0;
-          currentColorOrderIdx=(currentColorOrderIdx+1)%colorOrder.length;
-          currentCi=colorOrder[currentColorOrderIdx];
-        }
-        const ci=currentCi;
-        const nail=nailPos[ci];
-        const[cr,cg,cb]=COLORS[ci].rgb;
-
-        let bestNail=-1, bestScore=Infinity;
-        for(let i=0;i<NAILS_COUNT;i++){
-          if(i===nail)continue;
-          const dist=Math.min(Math.abs(i-nail),NAILS_COUNT-Math.abs(i-nail));
-          if(dist<MIN_DIST)continue;
-          const sc=scoreColor(rgb,lineCache[nail][i],cr,cg,cb);
-          if(sc<bestScore){bestScore=sc;bestNail=i;}
-        }
-        if(bestNail===-1)bestNail=(nail+NAILS_COUNT/2)%NAILS_COUNT;
-
-        removeColor(rgb,lineCache[nail][bestNail],cr,cg,cb);
-
-        ctx.lineWidth=0.3;
-        ctx.strokeStyle=`rgba(${cr},${cg},${cb},${lineAlpha})`;
-        ctx.beginPath();ctx.moveTo(nails[nail].x,nails[nail].y);
-        ctx.lineTo(nails[bestNail].x,nails[bestNail].y);ctx.stroke();
-
-        sequence.push({nail,colorIndex:ci});
-        nailPos[ci]=bestNail; colorCounts[ci]++; stepsInCurrentColor++;
-        countEls[ci].textContent=`${colorCounts[ci]}/${colorQuotas[ci]}`;
-      }
-      updateProgress(sequence.length,total,t0);
-      animFrame=requestAnimationFrame(runColor);
-    }
-    animFrame=requestAnimationFrame(runColor);
-  }
-}
-
-function resetAll(){
-  if(animFrame)cancelAnimationFrame(animFrame);
-  isGenerating=false;sequence=[];
-  if(image)drawPhoto();else drawEmpty();
-  document.getElementById('progress-bar').style.width='0%';
+function resetAll() {
+  if (animFrame) cancelAnimationFrame(animFrame);
+  isGenerating = false; sequence = [];
+  if (image) drawPhoto(); else drawEmpty();
+  document.getElementById('progress-bar').style.width = '0%';
   setState('ready');
 }
-function saveImage(){
-  let a=document.createElement('a');
-  a.href=canvas.toDataURL('image/png');
-  a.download='stringart.png';a.click();
+
+function saveImage() {
+  let a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = 'stringart.png'; a.click();
 }
-function openInKnitter(){
-  try{
-    let pc=document.createElement('canvas');
-    pc.width=width;pc.height=height;
-    let pCtx=pc.getContext('2d');
+
+function openInKnitter() {
+  try {
+    let pc = document.createElement('canvas');
+    pc.width = width; pc.height = height;
+    let pCtx = pc.getContext('2d');
     pCtx.save();
-    pCtx.beginPath();pCtx.arc(x0,y0,radius,0,Math.PI*2);pCtx.clip();
-    pCtx.drawImage(image,imgX,imgY,imgNatW*imgScale,imgNatH*imgScale);
+    pCtx.beginPath(); pCtx.arc(x0, y0, radius, 0, Math.PI * 2); pCtx.clip();
+    pCtx.drawImage(image, imgX, imgY, imgNatW * imgScale, imgNatH * imgScale);
     pCtx.restore();
-    localStorage.setItem('ck_from_generator',JSON.stringify({
-      sequence,colors:COLORS,mode,
-      image:pc.toDataURL('image/jpeg',0.7)
+
+    localStorage.setItem('ck_from_generator', JSON.stringify({
+      sequence: sequence,        // [{nail, colorIndex}, ...]
+      colors: COLORS,            // полные данные о цветах
+      mode: mode,
+      image: pc.toDataURL('image/jpeg', 0.7)
     }));
-    window.location.href='index.html';
-  }catch(e){alert('Ошибка: '+e.message);}
+    window.location.href = 'index.html';
+  } catch(e) { alert('Ошибка: ' + e.message); }
 }
-function setMode(m){
-  mode=m;
-  document.getElementById('btn-bw').classList.toggle('active',m==='bw');
-  document.getElementById('btn-color').classList.toggle('active',m==='color');
-  document.getElementById('filter-block').style.display=m==='bw'?'block':'none';
-  document.getElementById('color-select-block').style.display=m==='color'?'block':'none';
-  document.getElementById('interval-col').style.display=m==='color'?'block':'none';
-  if(image)drawPhoto();
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('btn-bw').classList.toggle('active', m === 'bw');
+  document.getElementById('btn-color').classList.toggle('active', m === 'color');
+  document.getElementById('filter-block').style.display = m === 'bw' ? 'block' : 'none';
+  document.getElementById('color-select-block').style.display = m === 'color' ? 'block' : 'none';
+  document.getElementById('interval-col').style.display = m === 'color' ? 'block' : 'none';
+  if (image) drawPhoto();
 }
-function setFilter(f){
-  currentFilter=f;
-  document.querySelectorAll('.filter-btn').forEach((b,i)=>{
-    b.classList.toggle('active',['normal','hard','soft','silhouette'][i]===f);
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach((b, i) => {
+    b.classList.toggle('active', ['normal','hard','soft','silhouette'][i] === f);
   });
-  if(image)drawPhoto();
+  if (image) drawPhoto();
 }
-function initColorChips(){
-  const container=document.getElementById('color-chips');
-  container.innerHTML='';
-  COLORS.forEach(c=>{
-    const chip=document.createElement('div');
-    chip.className='color-chip active';
-    chip.style.color=c.textHex;chip.style.borderColor=c.hex;
-    chip.innerHTML=`<div class="color-dot" style="background:${c.hex};border:1px solid #333"></div>${c.short}`;
-    container.appendChild(chip);
-  });
-}
-document.getElementById('contrast-box').addEventListener('input',()=>{updateContrast();if(image)drawPhoto();});
-document.getElementById('brightness-box').addEventListener('input',()=>{updateBrightness();if(image)drawPhoto();});
-requestAnimationFrame(()=>{
-  initCanvas();updateContrast();updateBrightness();initNails();initColorChips();setState('ready');
+
+document.getElementById('contrast-box').addEventListener('input', () => { updateContrast(); if (image) drawPhoto(); });
+document.getElementById('brightness-box').addEventListener('input', () => { updateBrightness(); if (image) drawPhoto(); });
+
+requestAnimationFrame(() => {
+  initCanvas(); updateContrast(); updateBrightness(); initNails(); initColorChips();
+  setState('ready');
 });
 </script>
 </body>
