@@ -187,30 +187,18 @@ function ColorKnitter() {
     const fromGen = localStorage.getItem('ck_from_generator');
     if (!fromGen) return;
     try {
-      const { sequence: genSeq, colors: genColors, image: imgData } = JSON.parse(fromGen);
+      const { sequence: genSeq, image: imgData } = JSON.parse(fromGen);
       localStorage.removeItem('ck_from_generator');
       localStorage.setItem('ck_has_sequence', '1');
 
       // Конвертируем массив индексов [0..259] в формат sequence вязалки
       // Каждый элемент: value = index+1 (1..260), color = чёрный
       if (genSeq && genSeq.length > 0) {
-        const seq = genSeq.map((item, i) => {
-          const color = (genColors && item.colorIndex !== undefined)
-            ? genColors[item.colorIndex].rgb
-            : [0, 0, 0];
-          const prevColor = i > 0
-            ? ((genColors && genSeq[i-1].colorIndex !== undefined)
-              ? genColors[genSeq[i-1].colorIndex].rgb
-              : [0,0,0])
-            : null;
-          const isColorChange = prevColor !== null &&
-            (prevColor[0]!==color[0]||prevColor[1]!==color[1]||prevColor[2]!==color[2]);
-          return {
-            value: item.nail + 1,
-            color,
-            isColorChange
-          };
-        });
+        const seq = genSeq.map((idx, i) => ({
+          value: idx + 1,
+          color: [0, 0, 0],
+          isColorChange: false
+        }));
         setSequence(seq);
         setCurrentIndex(0);
         setRemainingSteps(0);
@@ -273,12 +261,12 @@ function ColorKnitter() {
   };
   const speak = (item) => {
     if(!item)return;
-    // Говорим цвет только при смене нити, иначе только позицию
-    const t = item.isColorChange
+    // Говорим цвет только при смене цвета, иначе только координату
+    const text = item.isColorChange
       ? `${colorName(item.color)}, ${getSector(item.value)}${getPos(item.value)}`
       : `${getSector(item.value)}${getPos(item.value)}`;
     window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(t); u.lang='ru-RU';
+    const u = new SpeechSynthesisUtterance(text); u.lang='ru-RU';
     window.speechSynthesis.speak(u);
   };
 
