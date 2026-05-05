@@ -192,14 +192,16 @@ function ColorKnitter() {
       localStorage.removeItem('ck_from_generator');
       localStorage.setItem('ck_has_sequence', '1');
 
-      // Конвертируем массив индексов [0..259] в формат sequence вязалки
-      // Каждый элемент: value = index+1 (1..260), color = чёрный
       if (genSeq && genSeq.length > 0) {
-        const seq = genSeq.map((idx, i) => ({
-          value: idx + 1,
-          color: [0, 0, 0],
-          isColorChange: false
-        }));
+        const seq = genSeq.map((item) => {
+          // Генератор может слать {nail, colorIndex} или просто число
+          const nailIdx = typeof item === 'object' ? item.nail : item;
+          return {
+            value: nailIdx + 1, // 0..259 → 1..260
+            color: [0, 0, 0],
+            isColorChange: false
+          };
+        });
         setSequence(seq);
         setCurrentIndex(0);
         setRemainingSteps(0);
