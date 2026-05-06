@@ -14,15 +14,12 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
     }
-    // Если нет флага активной вязалки и нет данных от генератора — на генератор
     if (!localStorage.getItem('ck_has_sequence') && !localStorage.getItem('ck_from_generator')) {
       window.location.replace('generator.html');
     }
     function unlockSpeech() {
-      const u = new SpeechSynthesisUtterance('');
-      u.volume = 0;
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(u);
+      const u = new SpeechSynthesisUtterance(''); u.volume = 0;
+      window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
       document.removeEventListener('touchstart', unlockSpeech);
       document.removeEventListener('click', unlockSpeech);
     }
@@ -39,7 +36,16 @@
     .logo-row img { height: 36px; width: auto; border-radius: 8px; }
     .logo-back { position: absolute; left: 12px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
 
-    .status-box { margin: 16px 12px; border: 2.5px solid #fff; border-radius: 999px; padding: 10px 20px; text-align: center; font-size: 18px; font-weight: 700; color: #fff; }
+    .status-box {
+      margin: 16px 12px;
+      border: 2.5px solid #fff;
+      border-radius: 999px;
+      padding: 10px 20px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
 
     .speed-row { display: flex; justify-content: center; gap: 8px; margin: 16px 12px; align-items: center; }
     .speed-btn { flex: 1; max-width: 64px; padding: 7px 0; border-radius: 999px; border: 2.5px solid transparent; background: transparent; color: #aaa; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
@@ -54,9 +60,49 @@
     .sector-label.bl { align-items: flex-end; justify-content: flex-start; padding: 0 0 10px 10px; }
     .sector-label.br { align-items: flex-end; justify-content: flex-end; padding: 0 10px 10px 0; }
 
+    /* Текущий шаг — цвет через переменную */
     .steps-row { display: flex; justify-content: center; align-items: center; gap: 6px; margin: 16px 12px; }
     .step-item { text-align: center; font-weight: bold; }
-    .step-item.cur { border: 2px solid #EFCA46; border-radius: 12px; padding: 2px 8px; }
+    .step-item.cur {
+      border: 2px solid var(--step-border, #EFCA46);
+      border-radius: 12px;
+      padding: 2px 8px;
+      color: var(--step-color, #EFCA46) !important;
+    }
+    /* Тень для чёрной нити в цветном режиме */
+    .step-item.cur.thread-black {
+      text-shadow: 0 0 6px #fff, 0 0 4px #fff;
+    }
+
+    /* Баннер смены нити */
+    .color-change-banner {
+      margin: 0 12px 8px;
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: bannerPop 0.3s ease;
+      border: 2px solid var(--thread-color, #fff);
+      background: rgba(255,255,255,0.06);
+    }
+    @keyframes bannerPop {
+      from { transform: scale(0.95); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+    .color-change-dot {
+      width: 28px; height: 28px; border-radius: 50%;
+      flex-shrink: 0;
+      border: 2px solid rgba(255,255,255,0.3);
+      box-shadow: 0 0 10px var(--thread-color, #fff);
+    }
+    .color-change-text { font-size: 14px; font-weight: 700; line-height: 1.4; }
+    .color-change-text .color-name { font-size: 18px; color: var(--thread-color, #fff); }
+
+    /* Ползунок прозрачности */
+    .opacity-slider-row {
+      display: flex; align-items: center; gap: 8px; margin: 0 12px 8px;
+    }
 
     .bottom-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; padding: 10px 20px 24px; background: #1a1a1a; border-top: 1px solid #2a2a2a; border-radius: 24px 24px 0 0; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
     .bar-btn { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; transition: transform 0.15s, opacity 0.15s; }
@@ -98,7 +144,6 @@
     .s-btn-sm-ol { background: transparent; border: 1px solid #444; color: #ccc; }
     .s-btn-sm-del { background: #dc2626; color: white; }
 
-    .opacity-row { display: flex; align-items: center; gap: 8px; }
     .divider { border: none; border-top: 1px solid #2a2a2a; }
 
     .goal-msg { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: #EFCA46; color: black; font-size: 28px; font-weight: 900; padding: 20px 36px; border-radius: 20px; z-index: 200; box-shadow: 0 4px 32px rgba(0,0,0,0.5); animation: popIn 0.3s ease; pointer-events: none; }
@@ -113,51 +158,73 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
 
 <script type="text/babel">
-const { useState, useEffect, useRef } = React;
+const { useState, useEffect, useRef, useCallback } = React;
 const STORAGE_KEY = 'ck_state_v1';
 const SPEEDS = [0.5, 0.75, 1, 1.25, 2];
 
+// Цвета нитей (синхронно с генератором)
+const THREAD_COLORS = [
+  { id: 'Y', name: 'Жёлтый',  rgb: [255, 220,   0], hex: '#ffdc00' },
+  { id: 'C', name: 'Голубой', rgb: [  0, 183, 235], hex: '#00b7eb' },
+  { id: 'M', name: 'Розовый', rgb: [255,   0, 144], hex: '#ff0090' },
+  { id: 'K', name: 'Чёрный',  rgb: [  0,   0,   0], hex: '#000000' },
+  { id: 'W', name: 'Белый',   rgb: [255, 255, 255], hex: '#ffffff' },
+];
+
 function saveToStorage(data) {
-  // Пробуем сохранить с фото
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); return; } catch(e) {}
-  // Если не влезло — сжимаем фото
   if (data.circleImage) {
     try {
-      const img = new Image();
-      img.src = data.circleImage;
-      const c = document.createElement('canvas');
-      c.width = 400; c.height = 400;
+      const img = new Image(); img.src = data.circleImage;
+      const c = document.createElement('canvas'); c.width = 400; c.height = 400;
       c.getContext('2d').drawImage(img, 0, 0, 400, 400);
       const compressed = c.toDataURL('image/jpeg', 0.5);
       localStorage.setItem(STORAGE_KEY, JSON.stringify({...data, circleImage: compressed}));
       return;
     } catch(e) {}
   }
-  // Совсем не влезло — сохраняем без фото
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify({...data, circleImage: null})); } catch(_) {}
 }
+
 function loadFromStorage() {
-  try { const s = localStorage.getItem(STORAGE_KEY); return s ? JSON.parse(s) : null; } catch(_) { return null; }
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    if (!s) return null;
+    const data = JSON.parse(s);
+    // Проверяем валидность sequence: если первый элемент не имеет value — сбрасываем
+    if (data.sequence && data.sequence.length > 0) {
+      const first = data.sequence[0];
+      if (!first.value || isNaN(first.value)) {
+        localStorage.removeItem(STORAGE_KEY);
+        return null;
+      }
+    }
+    return data;
+  } catch(_) { return null; }
 }
 
 function ColorKnitter() {
   const restored = loadFromStorage();
 
-  const [sequence, setSequence]               = useState(restored?.sequence || []);
-  const [currentIndex, setCurrentIndex]       = useState(restored?.currentIndex || 0);
-  const [isPlaying, setIsPlaying]             = useState(false);
+  const [sequence, setSequence]             = useState(restored?.sequence || []);
+  const [currentIndex, setCurrentIndex]     = useState(restored?.currentIndex || 0);
+  const [isPlaying, setIsPlaying]           = useState(false);
   const [speedMultiplier, setSpeedMultiplier] = useState(restored?.speedMultiplier || 1);
-  const [targetSteps, setTargetSteps]         = useState(restored?.targetSteps || 0);
-  const [findStep, setFindStep]               = useState(restored?.findStep || 1);
-  const [savedStates, setSavedStates]         = useState(restored?.savedStates || []);
-  const [remainingSteps, setRemainingSteps]   = useState(restored?.remainingSteps || 0);
-  const [showNextLine, setShowNextLine]       = useState(restored?.showNextLine || false);
-  const [circleImage, setCircleImage]         = useState(restored?.circleImage || null);
-  const [imageOpacity, setImageOpacity]       = useState(restored?.imageOpacity ?? 0.55);
-  const [showSettings, setShowSettings]       = useState(false);
-  const [showSaved, setShowSaved]             = useState(false);
-  const [radioPlaying, setRadioPlaying]       = useState(false);
-  const [goalMessage, setGoalMessage]         = useState(false);
+  const [targetSteps, setTargetSteps]       = useState(restored?.targetSteps || 0);
+  const [findStep, setFindStep]             = useState(restored?.findStep || 1);
+  const [savedStates, setSavedStates]       = useState(restored?.savedStates || []);
+  const [remainingSteps, setRemainingSteps] = useState(restored?.remainingSteps || 0);
+  const [showNextLine, setShowNextLine]     = useState(restored?.showNextLine || false);
+  const [circleImage, setCircleImage]       = useState(restored?.circleImage || null);
+  const [imageOpacity, setImageOpacity]     = useState(restored?.imageOpacity ?? 0.55);
+  const [showSettings, setShowSettings]     = useState(false);
+  const [showSaved, setShowSaved]           = useState(false);
+  const [radioPlaying, setRadioPlaying]     = useState(false);
+  const [goalMessage, setGoalMessage]       = useState(false);
+  const [isColorMode, setIsColorMode]       = useState(restored?.isColorMode || false);
+  const [colorInterval, setColorInterval]   = useState(restored?.colorInterval || 100);
+  // Баннер смены нити
+  const [colorChangeBanner, setColorChangeBanner] = useState(null); // {colorIndex, name, hex}
 
   const fileInputRef    = useRef(null);
   const imageInputRef   = useRef(null);
@@ -170,6 +237,34 @@ function ColorKnitter() {
   const audioRef        = useRef(null);
   sequenceRef.current   = sequence;
 
+  // ── Получаем текущий цвет нити ───────────────────────────────────────────
+  const getCurrentThread = useCallback((idx = currentIndex) => {
+    const item = sequence[idx];
+    if (!item) return null;
+    const colorIndex = item.colorIndex ?? 3; // default: чёрный
+    return THREAD_COLORS[colorIndex] || THREAD_COLORS[3];
+  }, [sequence, currentIndex]);
+
+  const currentThread = getCurrentThread();
+  const isBlackThread = currentThread?.id === 'K';
+  // threadHex — реальный цвет нити (для канваса и передачи в CSS vars через JS)
+  const threadHex = (!isColorMode && isBlackThread) ? '#EFCA46' : (currentThread?.hex || '#EFCA46');
+
+  // Обновляем CSS переменные для цвета нити
+  useEffect(() => {
+    let stepColor, stepBorder;
+    if (!isColorMode && isBlackThread) {
+      stepColor = '#EFCA46'; stepBorder = '#EFCA46';
+    } else if (isColorMode && isBlackThread) {
+      stepColor = '#000000'; stepBorder = '#ffffff';
+    } else {
+      stepColor = threadHex; stepBorder = threadHex;
+    }
+    document.documentElement.style.setProperty('--step-color', stepColor);
+    document.documentElement.style.setProperty('--step-border', stepBorder);
+    document.documentElement.style.setProperty('--thread-color', threadHex);
+  }, [threadHex, isColorMode, isBlackThread]);
+
   useEffect(() => {
     audioRef.current = new Audio('https://pianosolo.streamguys1.com/live?listenerid=8b5691fb9de68c165068d33274d23ef1&awparams=companionAds%3Atrue&aw_0_req.gdpr=true&us_privacy=1YNN');
     audioRef.current.volume = 0.2;
@@ -178,36 +273,59 @@ function ColorKnitter() {
 
   useEffect(() => {
     if (!audioRef.current) return;
-    if (radioPlaying) audioRef.current.play().catch(()=>{});
+    if (radioPlaying) audioRef.current.play().catch(() => {});
     else audioRef.current.pause();
   }, [radioPlaying]);
 
-  // Проверяем данные от генератора
+  // ── Загрузка данных от генератора ────────────────────────────────────────
   useEffect(() => {
     const fromGen = localStorage.getItem('ck_from_generator');
     if (!fromGen) return;
     try {
-      const { sequence: genSeq, image: imgData } = JSON.parse(fromGen);
+      const { sequence: genSeq, colors, mode, image: imgData } = JSON.parse(fromGen);
       localStorage.removeItem('ck_from_generator');
       localStorage.setItem('ck_has_sequence', '1');
 
-      // Конвертируем массив индексов [0..259] в формат sequence вязалки
-      // Каждый элемент: value = index+1 (1..260), color = чёрный
       if (genSeq && genSeq.length > 0) {
-        const seq = genSeq.map((idx, i) => ({
-          value: idx + 1,
-          color: [0, 0, 0],
-          isColorChange: false
-        }));
+        let seq;
+        const first = genSeq[0];
+        if (first && typeof first === 'object' && 'nail' in first) {
+          // Новый формат: [{nail, colorIndex}, ...] — и ЧБ и цветной
+          seq = genSeq.map((item, i) => {
+            const prev = i > 0 ? genSeq[i - 1] : null;
+            const ci = item.colorIndex ?? 3;
+            const prevCi = prev ? (prev.colorIndex ?? 3) : ci;
+            const isColorChange = prev !== null && prevCi !== ci;
+            return {
+              value: item.nail + 1,
+              colorIndex: ci,
+              isColorChange,
+            };
+          });
+        } else if (typeof first === 'number') {
+          // Старый ЧБ формат: массив чисел
+          seq = genSeq.map(idx => ({
+            value: idx + 1,
+            colorIndex: 3,
+            isColorChange: false,
+          }));
+        } else {
+          // Старый формат с value/color
+          seq = genSeq.map(item => ({
+            value: item.value || 1,
+            colorIndex: item.colorIndex ?? 3,
+            isColorChange: item.isColorChange || false,
+          }));
+        }
         setSequence(seq);
         setCurrentIndex(0);
         setRemainingSteps(0);
+        setIsColorMode(mode === 'color');
         stepCountRef.current = 0;
         goalReachedRef.current = false;
         speak(seq[0]);
       }
 
-      // Загружаем картинку как подложку
       if (imgData) {
         const img = new Image();
         img.onload = () => { loadedImgRef.current = img; setCircleImage(imgData); };
@@ -218,21 +336,61 @@ function ColorKnitter() {
 
   useEffect(() => {
     saveToStorage({ sequence, currentIndex, speedMultiplier, targetSteps, findStep,
-      savedStates, remainingSteps, showNextLine, circleImage, imageOpacity });
+      savedStates, remainingSteps, showNextLine, circleImage, imageOpacity, isColorMode, colorInterval });
   }, [sequence, currentIndex, speedMultiplier, targetSteps, findStep,
       savedStates, remainingSteps, showNextLine, circleImage, imageOpacity]);
 
   const fmt = (s) => {
-    const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sc = s%60;
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sc = s % 60;
     return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;
   };
 
   const calcElapsed = () => Math.round(currentIndex * (6 - speedMultiplier) / 1.1);
 
+  const getSector = (n) => { if (!n || isNaN(n) || n < 1) return '?'; if (n <= 65) return 'D'; if (n <= 130) return 'C'; if (n <= 195) return 'A'; return 'B'; };
+  const getPos    = (n) => { if (!n || isNaN(n) || n < 1) return 0; const b = {D:1,C:66,A:131,B:196}; const s = getSector(n); return s === '?' ? 0 : n - b[s] + 1; };
+  const getAngle  = (sec, pos) => { const b = {A: Math.PI, B: Math.PI*1.5, C: Math.PI*0.5, D: 0}; return b[sec] + (pos-1) * (Math.PI*0.5/65); };
+
+  const colorName = (item) => {
+    if (!item) return '';
+    const thread = THREAD_COLORS[item.colorIndex ?? 3];
+    return thread ? thread.name : 'чёрный';
+  };
+
+  const colorIntervalRef = useRef(colorInterval);
+  colorIntervalRef.current = colorInterval;
+
+  // Проверяем нужна ли смена нити на шаге next (в цветном режиме)
+  const checkColorChange = (prevIdx, nextIdx) => {
+    if (!isColorMode) return false;
+    const seq = sequenceRef.current;
+    const prevItem = seq[prevIdx];
+    const nextItem = seq[nextIdx];
+    if (!prevItem || !nextItem) return false;
+    // Смена если colorIndex изменился
+    return prevItem.colorIndex !== nextItem.colorIndex;
+  };
+
+  const speak = (item) => {
+    if (!item) return;
+    const t = item.isColorChange
+      ? `${colorName(item)}, ${getSector(item.value)}${getPos(item.value)}`
+      : `${getSector(item.value)}${getPos(item.value)}`;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(t); u.lang = 'ru-RU';
+    window.speechSynthesis.speak(u);
+  };
+
   const moveSteps = (steps) => {
     setCurrentIndex(prev => {
-      const next = Math.max(0, Math.min(sequenceRef.current.length-1, prev+steps));
-      speak(sequenceRef.current[next]);
+      const next = Math.max(0, Math.min(sequenceRef.current.length - 1, prev + steps));
+      const item = sequenceRef.current[next];
+      if (steps > 0 && checkColorChange(prev, next)) {
+        setIsPlaying(false);
+        const thread = THREAD_COLORS[item.colorIndex ?? 3];
+        setColorChangeBanner({ ...thread });
+      }
+      speak(item);
       return next;
     });
   };
@@ -240,174 +398,165 @@ function ColorKnitter() {
   useEffect(() => {
     const onKey = (e) => {
       if (!sequenceRef.current.length) return;
-      if (e.key==='ArrowRight'&&!e.ctrlKey){e.preventDefault();moveSteps(1);}
-      else if(e.key==='ArrowLeft'&&!e.ctrlKey){e.preventDefault();moveSteps(-1);}
-      else if(e.key===' '){e.preventDefault();setIsPlaying(p=>!p);}
+      if (e.key === 'ArrowRight' && !e.ctrlKey) { e.preventDefault(); moveSteps(1); }
+      else if (e.key === 'ArrowLeft' && !e.ctrlKey) { e.preventDefault(); moveSteps(-1); }
+      else if (e.key === ' ') { e.preventDefault(); setIsPlaying(p => !p); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const getSector = (n) => { if(!n)return''; if(n<=65)return'D'; if(n<=130)return'C'; if(n<=195)return'A'; return'B'; };
-  const getPos    = (n) => { if(!n)return 0; const b={D:1,C:66,A:131,B:196}; return n-b[getSector(n)]+1; };
-  const getAngle  = (sec,pos) => { const b={A:Math.PI,B:Math.PI*1.5,C:Math.PI*0.5,D:0}; return b[sec]+(pos-1)*(Math.PI*0.5/65); };
-  const colorName = ([r,g,b]) => {
-    if(r===0&&g===0&&b===0)return'чёрный';
-    if(r===255&&g===255&&b===255)return'белый';
-    if(r===0&&g===0&&b===255)return'синий';
-    if(r===255&&g===255&&b===0)return'жёлтый';
-    if(r===0&&g===255&&b===255)return'голубой';
-    return'розовый';
-  };
-  const speak = (item) => {
-    if(!item)return;
-    const t = item.isColorChange
-      ? `${colorName(item.color)}, ${getSector(item.value)}${getPos(item.value)}`
-      : `${getSector(item.value)}${getPos(item.value)}`;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(t); u.lang='ru-RU';
-    window.speechSynthesis.speak(u);
+  const stopAutoPlay = () => {
+    if (playIntervalRef.current) { clearInterval(playIntervalRef.current); playIntervalRef.current = null; }
   };
 
+  const checkGoal = () => {
+    if (targetSteps > 0) {
+      stepCountRef.current += 1;
+      setRemainingSteps(targetSteps - stepCountRef.current);
+      if (stepCountRef.current >= targetSteps) {
+        setIsPlaying(false); stopAutoPlay(); goalReachedRef.current = true;
+        setGoalMessage(true);
+        setTimeout(() => setGoalMessage(false), 4000);
+      }
+    }
+  };
+
+  const startAutoPlay = () => {
+    if (playIntervalRef.current) return;
+    if (goalReachedRef.current && targetSteps > 0) { stepCountRef.current = 0; setRemainingSteps(targetSteps); goalReachedRef.current = false; }
+    const delay = (6 - speedMultiplier) / 1.1 * 1000;
+    playIntervalRef.current = setInterval(() => {
+      setCurrentIndex(prev => {
+        const next = prev + 1;
+        if (next >= sequenceRef.current.length) { setIsPlaying(false); stopAutoPlay(); return prev; }
+        const item = sequenceRef.current[next];
+        // Смена цвета — пауза
+        if (checkColorChange(prev, next)) {
+          setIsPlaying(false);
+          stopAutoPlay();
+          const thread = THREAD_COLORS[item.colorIndex ?? 3];
+          setColorChangeBanner({ ...thread });
+        }
+        checkGoal();
+        speak(item);
+        return next;
+      });
+    }, delay);
+  };
+
+  useEffect(() => {
+    if (isPlaying) { if (sequence[currentIndex]) speak(sequence[currentIndex]); startAutoPlay(); }
+    else stopAutoPlay();
+    return stopAutoPlay;
+  }, [isPlaying, speedMultiplier]);
+
+  // Скрываем баннер при старте воспроизведения
+  useEffect(() => {
+    if (isPlaying) setColorChangeBanner(null);
+  }, [isPlaying]);
+
   const parseFile = (text) => {
-    const lines=text.split('\n'); const temp=[]; let color=[0,0,0],hasZero=false;
-    lines.forEach(line=>{
-      line=line.trim(); if(!line)return;
-      if(line.startsWith('Thread:')){const m=line.match(/\[(\d+),\s*(\d+),\s*(\d+)\]/);if(m)color=[+m[1],+m[2],+m[3]];}
-      else{
-        const nums=line.split(/[\s,]+/).map(Number).filter(n=>!isNaN(n));
-        if(nums.some(n=>n===0))hasZero=true;
-        nums.forEach(n=>temp.push({value:hasZero?n+1:n,color:[...color],isColorChange:temp.length>0&&!temp[temp.length-1].color.every((c,i)=>c===color[i])}));
+    const lines = text.split('\n'); const temp = []; let color = [0,0,0], hasZero = false;
+    lines.forEach(line => {
+      line = line.trim(); if (!line) return;
+      if (line.startsWith('Thread:')) { const m = line.match(/\[(\d+),\s*(\d+),\s*(\d+)\]/); if (m) color = [+m[1], +m[2], +m[3]]; }
+      else {
+        const nums = line.split(/[\s,]+/).map(Number).filter(n => !isNaN(n));
+        if (nums.some(n => n === 0)) hasZero = true;
+        nums.forEach(n => temp.push({
+          value: hasZero ? n + 1 : n,
+          colorIndex: 3,
+          isColorChange: temp.length > 0 && !temp[temp.length-1].color?.every((c, i) => c === color[i])
+        }));
       }
     });
     return temp;
   };
 
   const handleFileUpload = async (e) => {
-    const file=e.target.files[0]; if(!file)return;
-    const text=await file.text(); const seq=parseFile(text);
+    const file = e.target.files[0]; if (!file) return;
+    const text = await file.text(); const seq = parseFile(text);
     setSequence(seq); setCurrentIndex(0); setIsPlaying(false);
-    setRemainingSteps(targetSteps); stepCountRef.current=0; goalReachedRef.current=false;
-    if(seq.length>0)speak(seq[0]);
+    setRemainingSteps(targetSteps); stepCountRef.current = 0; goalReachedRef.current = false;
+    if (seq.length > 0) speak(seq[0]);
   };
 
   const handleImageUpload = (e) => {
-    const file=e.target.files[0]; if(!file)return;
-    const r=new FileReader();
-    r.onload=(ev)=>{const img=new Image();img.onload=()=>{loadedImgRef.current=img;setCircleImage(ev.target.result);};img.src=ev.target.result;};
+    const file = e.target.files[0]; if (!file) return;
+    const r = new FileReader();
+    r.onload = (ev) => { const img = new Image(); img.onload = () => { loadedImgRef.current = img; setCircleImage(ev.target.result); }; img.src = ev.target.result; };
     r.readAsDataURL(file);
   };
 
   const saveProgress = () => {
-    const s={id:Date.now(),currentIndex,findStep,targetSteps,remainingSteps,sequenceLength:sequence.length,timestamp:new Date().toISOString()};
-    setSavedStates(prev=>[s,...prev].slice(0,20));
+    const s = {id: Date.now(), currentIndex, findStep, targetSteps, remainingSteps, sequenceLength: sequence.length, timestamp: new Date().toISOString()};
+    setSavedStates(prev => [s, ...prev].slice(0, 20));
   };
 
   const loadProgress = (s) => {
-    setCurrentIndex(s.currentIndex); setFindStep(s.findStep||1);
+    setCurrentIndex(s.currentIndex); setFindStep(s.findStep || 1);
     setTargetSteps(s.targetSteps); setRemainingSteps(s.remainingSteps);
-    setIsPlaying(false); stepCountRef.current=s.targetSteps-s.remainingSteps; goalReachedRef.current=false;
+    setIsPlaying(false); stepCountRef.current = s.targetSteps - s.remainingSteps; goalReachedRef.current = false;
   };
 
-  const stopAutoPlay = () => {
-    if(playIntervalRef.current){clearInterval(playIntervalRef.current);playIntervalRef.current=null;}
+  const rgbHex = (c) => '#' + c.map(v => v.toString(16).padStart(2,'0')).join('');
+
+  const stepLabel = (item) => {
+    if (!item || !item.value || isNaN(item.value)) return '---';
+    const s = getSector(item.value);
+    if (s === '?') return '---';
+    return `${s}${getPos(item.value)}`;
   };
 
-  const checkGoal = () => {
-    if(targetSteps>0){
-      stepCountRef.current+=1;
-      setRemainingSteps(targetSteps-stepCountRef.current);
-      if(stepCountRef.current>=targetSteps){
-        setIsPlaying(false); stopAutoPlay(); goalReachedRef.current=true;
-        setGoalMessage(true);
-        setTimeout(()=>setGoalMessage(false), 4000);
+  // ── Отрисовка канваса ─────────────────────────────────────────────────────
+  useEffect(() => {
+    const canvas = canvasRef.current; if (!canvas) return;
+    const vw = Math.min(window.innerWidth, 440);
+    canvas.width = vw - 24; canvas.height = canvas.width;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height, cx = w / 2, cy = h / 2;
+    const radius = Math.min(w, h) / 2 - 14;
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.beginPath(); ctx.arc(cx, cy, radius, 0, 2 * Math.PI); ctx.fillStyle = 'white'; ctx.fill();
+
+    // Рисуем все пройденные линии
+    if (sequence.length > 0) {
+      ctx.globalAlpha = 0.7;
+      for (let i = 0; i < currentIndex; i++) {
+        if (i >= sequence.length - 1) break;
+        const a1 = getAngle(getSector(sequence[i].value), getPos(sequence[i].value));
+        const a2 = getAngle(getSector(sequence[i+1].value), getPos(sequence[i+1].value));
+        const thread = THREAD_COLORS[sequence[i+1].colorIndex ?? 3];
+        const [r, g, b] = thread?.rgb || [0,0,0];
+        // Затемняем цвет для уже пройденных линий
+        const dr = Math.floor(r * 0.6 + 255 * 0.4);
+        const dg = Math.floor(g * 0.6 + 255 * 0.4);
+        const db = Math.floor(b * 0.6 + 255 * 0.4);
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(${dr},${dg},${db},0.6)`;
+        ctx.lineWidth = 0.2;
+        ctx.moveTo(cx + radius * Math.cos(a1), cy + radius * Math.sin(a1));
+        ctx.lineTo(cx + radius * Math.cos(a2), cy + radius * Math.sin(a2));
+        ctx.stroke();
       }
-    }
-  };
-
-  const startAutoPlay = () => {
-    if(playIntervalRef.current)return;
-    if(goalReachedRef.current&&targetSteps>0){stepCountRef.current=0;setRemainingSteps(targetSteps);goalReachedRef.current=false;}
-    const delay=(6-speedMultiplier)/1.1*1000;
-    playIntervalRef.current=setInterval(()=>{
-      setCurrentIndex(prev=>{
-        const next=prev+1;
-        if(next>=sequenceRef.current.length){setIsPlaying(false);stopAutoPlay();return prev;}
-        if(sequenceRef.current[next].isColorChange){setIsPlaying(false);stopAutoPlay();}
-        checkGoal();
-        speak(sequenceRef.current[next]);
-        return next;
-      });
-    },delay);
-  };
-
-  useEffect(()=>{
-    if(isPlaying){if(sequence[currentIndex])speak(sequence[currentIndex]);startAutoPlay();}
-    else stopAutoPlay();
-    return stopAutoPlay;
-  },[isPlaying,speedMultiplier]);
-
-  const rgbHex   = (c) => '#'+c.map(v=>v.toString(16).padStart(2,'0')).join('');
-  const dimColor = (c,f=0.7) => c.map(v=>Math.floor(v+(255-v)*(1-f)));
-  const stepLabel= (item) => item?`${getSector(item.value)}${getPos(item.value)}`:'';
-
-  useEffect(()=>{
-    const canvas=canvasRef.current; if(!canvas)return;
-    const vw=Math.min(window.innerWidth,440);
-    canvas.width=vw-24; canvas.height=canvas.width;
-    const ctx=canvas.getContext('2d');
-    const w=canvas.width,h=canvas.height,cx=w/2,cy=h/2;
-    const radius=Math.min(w,h)/2-14;
-
-    ctx.clearRect(0,0,w,h);
-    ctx.beginPath(); ctx.arc(cx,cy,radius,0,2*Math.PI); ctx.fillStyle='white'; ctx.fill();
-
-    if(sequence.length>0){
-      ctx.globalAlpha=0.7;
-      for(let i=0;i<currentIndex;i++){
-        if(i>=sequence.length-1)break;
-        const a1=getAngle(getSector(sequence[i].value),getPos(sequence[i].value));
-        const a2=getAngle(getSector(sequence[i+1].value),getPos(sequence[i+1].value));
-        ctx.beginPath(); ctx.strokeStyle=rgbHex(dimColor(sequence[i+1].color,0.6)); ctx.lineWidth=0.2;
-        ctx.moveTo(cx+radius*Math.cos(a1),cy+radius*Math.sin(a1));
-        ctx.lineTo(cx+radius*Math.cos(a2),cy+radius*Math.sin(a2)); ctx.stroke();
-      }
-      ctx.globalAlpha=1;
+      ctx.globalAlpha = 1;
     }
 
-    if(circleImage&&imageOpacity>0&&loadedImgRef.current){
-      const img=loadedImgRef.current;
-      const scale=(radius*2)/Math.min(img.width,img.height);
-      const dw=img.width*scale,dh=img.height*scale;
-      ctx.save(); ctx.beginPath(); ctx.arc(cx,cy,radius,0,2*Math.PI); ctx.clip();
-      ctx.globalAlpha=imageOpacity; ctx.drawImage(img,cx-dw/2,cy-dh/2,dw,dh);
-      ctx.globalAlpha=1; ctx.restore();
+    // Фото-подложка
+    if (circleImage && imageOpacity > 0 && loadedImgRef.current) {
+      const img = loadedImgRef.current;
+      const scale = (radius * 2) / Math.min(img.width, img.height);
+      const dw = img.width * scale, dh = img.height * scale;
+      ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, radius, 0, 2 * Math.PI); ctx.clip();
+      ctx.globalAlpha = imageOpacity; ctx.drawImage(img, cx - dw/2, cy - dh/2, dw, dh);
+      ctx.globalAlpha = 1; ctx.restore();
     }
 
-    // Окантовка разделена на секторы
-    const rimR = radius + 5.5;
-    const rimW = 8;
+    // Окантовка секторов
+    const rimR = radius + 5.5, rimW = 8;
     ctx.lineWidth = rimW;
-    // Сектор A (верх-лево) и D (низ-право) — серые: A от 180° до 270°, D от 0° до 90°
-    // Сектор B (верх-право) и C (низ-лево) — белые: B от 270° до 360°, C от 90° до 180°
-    const sectors = [
-      { start: Math.PI,       end: Math.PI * 1.5, color: '#b5b5b5' }, // A
-      { start: Math.PI * 1.5, end: Math.PI * 2,   color: 'white'   }, // B
-      { start: 0,             end: Math.PI * 0.5, color: 'white'   }, // C (D по углам — низ-право белый)
-      { start: Math.PI * 0.5, end: Math.PI,       color: '#b5b5b5' }, // C (низ-лево серый)
-    ];
-    // Пересчитаем правильно по реальному расположению секторов:
-    // D: 0–90° (правый верх), C: 90–180° (правый низ), A: 180–270° (левый низ), B: 270–360° (левый верх)
-    // Хотим: A(лево-верх) и D(право-низ) серые, B и C белые
-    // A = 180–270, D = 270–360+0–90 нет... D=0–90
-    // Серые: A(180°–270°) и... подождём — A левый верх = 180–270, D правый низ нет
-    // По getAngle: A=180°, B=270°, C=90°, D=0°
-    // Значит: A занимает 180–270, B — 270–360, C — 90–180 (нет, C=90°+65шагов*0.5PI/65)
-    // Упрощённо: каждый сектор ровно 90°
-    // Левый верх = A: 180–270° → серый
-    // Правый верх = B: 270–360° → белый  
-    // Левый низ = C: 90–180° → белый
-    // Правый низ = D: 0–90° → серый
     const currentSector = sequence[currentIndex] ? getSector(sequence[currentIndex].value) : null;
     const rimSectors = [
       { start: Math.PI,       end: Math.PI * 1.5, color: '#b5b5b5', sector: 'A' },
@@ -418,100 +567,132 @@ function ColorKnitter() {
     rimSectors.forEach(({start, end, color, sector}) => {
       ctx.beginPath();
       ctx.arc(cx, cy, rimR, start, end);
-      ctx.strokeStyle = sector === currentSector ? '#efca46' : color;
+      // Активный сектор — цветом текущей нити
+      ctx.strokeStyle = sector === currentSector ? threadHex : color;
       ctx.stroke();
     });
 
-    // Синяя линия (над фото, под чёрной)
-    if(showNextLine&&currentIndex<sequence.length-1){
-      const a1=getAngle(getSector(sequence[currentIndex].value),getPos(sequence[currentIndex].value));
-      const a2=getAngle(getSector(sequence[currentIndex+1].value),getPos(sequence[currentIndex+1].value));
-      const nx1=cx+radius*Math.cos(a1),ny1=cy+radius*Math.sin(a1);
-      const nx2=cx+radius*Math.cos(a2),ny2=cy+radius*Math.sin(a2);
-      ctx.beginPath(); ctx.strokeStyle='#3b82f6'; ctx.lineWidth=2; ctx.setLineDash([6,4]);
-      ctx.moveTo(nx1,ny1); ctx.lineTo(nx2,ny2); ctx.stroke(); ctx.setLineDash([]);
-      const na=Math.atan2(ny2-ny1,nx2-nx1),nal=14,naw=Math.PI/7;
+    // Синяя линия следующего хода
+    if (showNextLine && currentIndex < sequence.length - 1) {
+      const a1 = getAngle(getSector(sequence[currentIndex].value), getPos(sequence[currentIndex].value));
+      const a2 = getAngle(getSector(sequence[currentIndex+1].value), getPos(sequence[currentIndex+1].value));
+      const nx1 = cx + radius * Math.cos(a1), ny1 = cy + radius * Math.sin(a1);
+      const nx2 = cx + radius * Math.cos(a2), ny2 = cy + radius * Math.sin(a2);
+      ctx.beginPath(); ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
+      ctx.moveTo(nx1, ny1); ctx.lineTo(nx2, ny2); ctx.stroke(); ctx.setLineDash([]);
+      const na = Math.atan2(ny2-ny1, nx2-nx1), nal = 14, naw = Math.PI/7;
       ctx.beginPath();
-      ctx.moveTo(nx2,ny2);
-      ctx.lineTo(nx2-nal*Math.cos(na-naw),ny2-nal*Math.sin(na-naw));
-      ctx.lineTo(nx2-nal*Math.cos(na+naw),ny2-nal*Math.sin(na+naw));
-      ctx.closePath(); ctx.fillStyle='#3b82f6'; ctx.fill();
+      ctx.moveTo(nx2, ny2);
+      ctx.lineTo(nx2 - nal*Math.cos(na-naw), ny2 - nal*Math.sin(na-naw));
+      ctx.lineTo(nx2 - nal*Math.cos(na+naw), ny2 - nal*Math.sin(na+naw));
+      ctx.closePath(); ctx.fillStyle = '#3b82f6'; ctx.fill();
     }
 
-    // Чёрная линия (самая верхняя)
-    if(currentIndex>0){
-      const a1=getAngle(getSector(sequence[currentIndex-1].value),getPos(sequence[currentIndex-1].value));
-      const a2=getAngle(getSector(sequence[currentIndex].value),getPos(sequence[currentIndex].value));
-      const x1=cx+radius*Math.cos(a1),y1=cy+radius*Math.sin(a1);
-      const x2=cx+radius*Math.cos(a2),y2=cy+radius*Math.sin(a2);
-      ctx.beginPath(); ctx.strokeStyle='black'; ctx.lineWidth=2;
-      ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-      const ang=Math.atan2(y2-y1,x2-x1),al=14,aw=Math.PI/7;
+    // Текущая линия — цветом нити
+    if (currentIndex > 0) {
+      const thread = THREAD_COLORS[sequence[currentIndex]?.colorIndex ?? 3];
+      const [lr, lg, lb] = thread?.rgb || [0, 0, 0];
+      const a1 = getAngle(getSector(sequence[currentIndex-1].value), getPos(sequence[currentIndex-1].value));
+      const a2 = getAngle(getSector(sequence[currentIndex].value), getPos(sequence[currentIndex].value));
+      const x1 = cx + radius * Math.cos(a1), y1 = cy + radius * Math.sin(a1);
+      const x2 = cx + radius * Math.cos(a2), y2 = cy + radius * Math.sin(a2);
       ctx.beginPath();
-      ctx.moveTo(x2,y2);
-      ctx.lineTo(x2-al*Math.cos(ang-aw),y2-al*Math.sin(ang-aw));
-      ctx.lineTo(x2-al*Math.cos(ang+aw),y2-al*Math.sin(ang+aw));
-      ctx.closePath(); ctx.fillStyle='black'; ctx.fill();
+      // Если белая нить — рисуем с чёрной обводкой
+      if (thread?.id === 'W') {
+        ctx.lineWidth = 4; ctx.strokeStyle = '#666';
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      }
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = `rgb(${lr},${lg},${lb})`;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      const ang = Math.atan2(y2-y1, x2-x1), al = 14, aw = Math.PI/7;
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - al*Math.cos(ang-aw), y2 - al*Math.sin(ang-aw));
+      ctx.lineTo(x2 - al*Math.cos(ang+aw), y2 - al*Math.sin(ang+aw));
+      ctx.closePath();
+      ctx.fillStyle = `rgb(${lr},${lg},${lb})`;
+      ctx.fill();
+      // Обводка стрелки для белой нити
+      if (thread?.id === 'W') {
+        ctx.strokeStyle = '#666'; ctx.lineWidth = 1; ctx.stroke();
+      }
     }
 
-    // Красный указатель (поверх всего)
-    if(sequence[currentIndex]){
-      const a=getAngle(getSector(sequence[currentIndex].value),getPos(sequence[currentIndex].value));
+    // Указатель: чёрная нить → красный (оригинал), белая → серый, остальные → цвет нити
+    if (sequence[currentIndex]) {
+      const a = getAngle(getSector(sequence[currentIndex].value), getPos(sequence[currentIndex].value));
+      const thread = THREAD_COLORS[sequence[currentIndex]?.colorIndex ?? 3];
       ctx.beginPath();
-      ctx.moveTo(cx+radius*Math.cos(a),cy+radius*Math.sin(a));
-      ctx.lineTo(cx+(radius+8)*Math.cos(a),cy+(radius+8)*Math.sin(a));
-      ctx.strokeStyle='#ff0000'; ctx.lineWidth=2; ctx.stroke();
+      ctx.moveTo(cx + radius * Math.cos(a), cy + radius * Math.sin(a));
+      ctx.lineTo(cx + (radius+8) * Math.cos(a), cy + (radius+8) * Math.sin(a));
+      ctx.strokeStyle = thread?.id === 'W' ? '#aaa'
+        : (thread?.id === 'K' ? (isColorMode ? '#ffffff' : '#ff0000')
+        : (thread?.hex || '#ff0000'));
+      ctx.lineWidth = 2; ctx.stroke();
     }
-  },[currentIndex,sequence,showNextLine,circleImage,imageOpacity]);
+  }, [currentIndex, sequence, showNextLine, circleImage, imageOpacity, threadHex]);
 
   const renderSteps = () => {
-    if(!sequence.length)return null;
-    const total=5,prev=2;
-    let start=Math.max(0,currentIndex-prev);
-    let end=Math.min(sequence.length-1,start+total-1);
-    if(end-start<total-1)start=Math.max(0,end-total+1);
-    const steps=[];
-    for(let i=start;i<=end;i++)steps.push({i,item:sequence[i],cur:i===currentIndex});
-    return(
+    if (!sequence.length) return null;
+    const total = 5, prev = 2;
+    let start = Math.max(0, currentIndex - prev);
+    let end = Math.min(sequence.length - 1, start + total - 1);
+    if (end - start < total - 1) start = Math.max(0, end - total + 1);
+    const steps = [];
+    for (let i = start; i <= end; i++) steps.push({i, item: sequence[i], cur: i === currentIndex});
+    return (
       <div className="steps-row">
-        {steps.map(({i,item,cur})=>(
-          <div key={i} className={`step-item${cur?' cur':''}`}
-            style={{color:cur?'#EFCA46':'white',fontSize:cur?'3rem':'1.6rem',minWidth:cur?80:50}}>
-            {stepLabel(item)}
-          </div>
-        ))}
+        {steps.map(({i, item, cur}) => {
+          const thread = THREAD_COLORS[item?.colorIndex ?? 3];
+          const isBlack = thread?.id === 'K';
+          const isBlackColorMode = isBlack && isColorMode;
+          return (
+            <div
+              key={i}
+              className={`step-item${cur ? (' cur' + (isBlackColorMode ? ' thread-black' : '')) : ''}`}
+              style={{
+                color: cur ? (isBlackColorMode ? '#000' : threadHex) : 'white',
+                fontSize: cur ? '3rem' : '1.6rem',
+                minWidth: cur ? 80 : 50,
+              }}
+            >
+              {stepLabel(item)}
+            </div>
+          );
+        })}
       </div>
     );
   };
 
   const statusParts = () => {
-    if(!sequence.length)return null;
-    const parts=[`${currentIndex+1}/${sequence.length} (${Math.round((currentIndex+1)/sequence.length*100)}%)`];
-    if(targetSteps>0)parts.push(`Цель: ${remainingSteps}`);
+    if (!sequence.length) return null;
+    const parts = [`${currentIndex+1}/${sequence.length} (${Math.round((currentIndex+1)/sequence.length*100)}%)`];
+    if (targetSteps > 0) parts.push(`Цель: ${remainingSteps}`);
     parts.push(fmt(calcElapsed()));
     return parts;
   };
 
-  return(
+  return (
     <div id="app">
       {goalMessage && <div className="goal-msg">🎯 Цель достигнута!</div>}
 
       <div className="logo-row">
-        <a href="generator.html" className="logo-back" onClick={()=>localStorage.removeItem('ck_has_sequence')}>
+        <a href="generator.html" className="logo-back" onClick={() => localStorage.removeItem('ck_has_sequence')}>
           <img src="ic_back.png" alt="назад" style={{width:36,height:36}} />
         </a>
-        <img src="icon.png" alt="CK" onError={e=>e.target.style.display='none'} />
+        <img src="icon.png" alt="CK" onError={e => e.target.style.display='none'} />
       </div>
 
       <div className="status-box">
-        {statusParts() ? statusParts().map((p,i,arr)=>(
-          <span key={i}>{p}{i<arr.length-1&&<span style={{margin:'0 8px',color:'#666'}}>|</span>}</span>
+        {statusParts() ? statusParts().map((p, i, arr) => (
+          <span key={i}>{p}{i < arr.length-1 && <span style={{margin:'0 8px',color:'#666'}}>|</span>}</span>
         )) : 'Загрузите файл'}
       </div>
 
       <div className="speed-row">
-        {SPEEDS.map(s=>(
-          <button key={s} className={`speed-btn${speedMultiplier===s?' active':''}`} onClick={()=>setSpeedMultiplier(s)}>
+        {SPEEDS.map(s => (
+          <button key={s} className={`speed-btn${speedMultiplier === s ? ' active' : ''}`} onClick={() => setSpeedMultiplier(s)}>
             {s}x
           </button>
         ))}
@@ -529,33 +710,62 @@ function ColorKnitter() {
 
       {renderSteps()}
 
-      {/* Ползунок прозрачности под шагами если загружено фото */}
+      {/* Баннер смены нити */}
+      {colorChangeBanner && (
+        <div className="color-change-banner" style={{'--thread-color': colorChangeBanner.id === 'K' ? '#fff' : colorChangeBanner.hex}}>
+          <div
+            className="color-change-dot"
+            style={{
+              background: colorChangeBanner.hex,
+              border: colorChangeBanner.id === 'K' ? '2px solid #fff' : (colorChangeBanner.id === 'W' ? '2px solid #555' : `2px solid ${colorChangeBanner.hex}88`),
+              boxShadow: colorChangeBanner.id === 'K' ? '0 0 8px #fff6' : `0 0 10px ${colorChangeBanner.hex}`,
+            }}
+          />
+          <div className="color-change-text">
+            <div style={{fontSize:12,color:'#aaa',marginBottom:2}}>Смените нить на</div>
+            <div className="color-name" style={{color: colorChangeBanner.id === 'K' ? '#fff' : colorChangeBanner.hex}}>{colorChangeBanner.name}</div>
+          </div>
+          <button
+            onClick={() => { setColorChangeBanner(null); setIsPlaying(true); }}
+            style={{
+              marginLeft:'auto', padding:'6px 14px', borderRadius:8, fontWeight:700, fontSize:13, cursor:'pointer',
+              background: colorChangeBanner.id === 'K' ? 'transparent' : colorChangeBanner.hex,
+              color: colorChangeBanner.id === 'K' ? '#fff' : (colorChangeBanner.id === 'W' || colorChangeBanner.id === 'Y' ? '#000' : '#fff'),
+              border: colorChangeBanner.id === 'K' ? '2px solid #fff' : 'none',
+            }}
+          >
+            Готово ▶
+          </button>
+        </div>
+      )}
+
+      {/* Ползунок прозрачности фото */}
       {circleImage && (
-        <div style={{display:'flex',alignItems:'center',gap:8,margin:'0 12px 8px'}}>
+        <div className="opacity-slider-row">
           <span style={{fontSize:12,color:'#aaa',whiteSpace:'nowrap'}}>Фото:</span>
           <input type="range" min="0" max="1" step="0.05" value={imageOpacity}
-            onChange={e=>setImageOpacity(Number(e.target.value))}
-            style={{flex:1,accentColor:'#EFCA46'}} />
+            onChange={e => setImageOpacity(Number(e.target.value))}
+            style={{flex:1, accentColor: threadHex}} />
           <span style={{fontSize:12,color:'#aaa',width:32,textAlign:'right'}}>{Math.round(imageOpacity*100)}%</span>
         </div>
       )}
 
-      <div className={`settings-panel${showSettings?' open':''}`}>
+      <div className={`settings-panel${showSettings ? ' open' : ''}`}>
         <div className="toggle-row">
           <span>Линия следующего хода</span>
           <label className="toggle-switch">
-            <input type="checkbox" checked={showNextLine} onChange={e=>setShowNextLine(e.target.checked)} />
+            <input type="checkbox" checked={showNextLine} onChange={e => setShowNextLine(e.target.checked)} />
             <span className="toggle-slider"></span>
           </label>
         </div>
         <hr className="divider" />
         <div>
           <input ref={imageInputRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleImageUpload} />
-          <button className="s-btn s-btn-outline" onClick={()=>imageInputRef.current.click()}>🖼️ Загрузить фото</button>
-          {circleImage&&(
-            <div className="opacity-row" style={{marginTop:8}}>
+          <button className="s-btn s-btn-outline" onClick={() => imageInputRef.current.click()}>🖼️ Загрузить фото</button>
+          {circleImage && (
+            <div style={{display:'flex',alignItems:'center',gap:8,marginTop:8}}>
               <span style={{fontSize:12,color:'#aaa',whiteSpace:'nowrap'}}>Прозрачность:</span>
-              <input type="range" min="0" max="1" step="0.05" value={imageOpacity} onChange={e=>setImageOpacity(Number(e.target.value))} style={{flex:1}} />
+              <input type="range" min="0" max="1" step="0.05" value={imageOpacity} onChange={e => setImageOpacity(Number(e.target.value))} style={{flex:1}} />
               <span style={{fontSize:12,color:'#aaa',width:32,textAlign:'right'}}>{Math.round(imageOpacity*100)}%</span>
             </div>
           )}
@@ -564,62 +774,69 @@ function ColorKnitter() {
         <div className="grid2">
           <div>
             <span className="s-input-label">Цель (шагов):</span>
-            <input type="number" value={targetSteps} min={0} onChange={e=>{const v=Number(e.target.value);setTargetSteps(v);stepCountRef.current=0;setRemainingSteps(v);goalReachedRef.current=false;}} />
+            <input type="number" value={targetSteps} min={0} onChange={e => {const v = Number(e.target.value); setTargetSteps(v); stepCountRef.current = 0; setRemainingSteps(v); goalReachedRef.current = false;}} />
           </div>
           <div>
             <span className="s-input-label">Перейти к шагу:</span>
-            <input type="number" value={findStep} min={1} max={sequence.length||1}
-              onChange={e=>{const v=Number(e.target.value);if(v>=1&&v<=sequence.length){setFindStep(v);setCurrentIndex(v-1);speak(sequence[v-1]);}}} />
+            <input type="number" value={findStep} min={1} max={sequence.length || 1}
+              onChange={e => {const v = Number(e.target.value); if (v >= 1 && v <= sequence.length) {setFindStep(v); setCurrentIndex(v-1); speak(sequence[v-1]);}}} />
           </div>
         </div>
+        {isColorMode && (
+          <div>
+            <span className="s-input-label">Интервал смены нити (шагов на цвет):</span>
+            <input type="number" value={colorInterval} min={10} max={2000}
+              onChange={e => { const v = Number(e.target.value); if (v >= 10) setColorInterval(v); }} />
+          </div>
+        )}
         <hr className="divider" />
         <div className="s-btn-row">
           <input ref={fileInputRef} type="file" accept=".txt" style={{display:'none'}} onChange={handleFileUpload} />
-          <button className="s-btn s-btn-primary" onClick={()=>fileInputRef.current.click()}>📂 Загрузить файл</button>
+          <button className="s-btn s-btn-primary" onClick={() => fileInputRef.current.click()}>📂 Загрузить файл</button>
           <button className="s-btn s-btn-outline" onClick={saveProgress} disabled={!sequence.length}>💾 Сохранить</button>
         </div>
-        <button className="s-btn s-btn-secondary" onClick={()=>setShowSaved(v=>!v)}>
-          {showSaved?'Скрыть':'Показать'} сохранения ({savedStates.length})
+        <button className="s-btn s-btn-secondary" onClick={() => setShowSaved(v => !v)}>
+          {showSaved ? 'Скрыть' : 'Показать'} сохранения ({savedStates.length})
         </button>
-        {showSaved&&(
+        {showSaved && (
           <div className="saved-list">
-            {savedStates.length===0&&<div style={{fontSize:13,color:'#666',textAlign:'center'}}>Нет сохранений</div>}
-            {savedStates.map(s=>(
+            {savedStates.length === 0 && <div style={{fontSize:13,color:'#666',textAlign:'center'}}>Нет сохранений</div>}
+            {savedStates.map(s => (
               <div key={s.id} className="saved-item">
                 <div className="saved-item-top">
                   <span>{new Date(s.timestamp).toLocaleString()}</span>
-                  <span>Шаг {s.currentIndex+1}/{s.sequenceLength||'?'}</span>
+                  <span>Шаг {s.currentIndex+1}/{s.sequenceLength || '?'}</span>
                 </div>
                 <div className="saved-item-btns">
-                  <button className="s-btn-sm s-btn-sm-ol" onClick={()=>loadProgress(s)}>Загрузить</button>
-                  <button className="s-btn-sm s-btn-sm-del" onClick={()=>setSavedStates(p=>p.filter(x=>x.id!==s.id))}>Удалить</button>
+                  <button className="s-btn-sm s-btn-sm-ol" onClick={() => loadProgress(s)}>Загрузить</button>
+                  <button className="s-btn-sm s-btn-sm-del" onClick={() => setSavedStates(p => p.filter(x => x.id !== s.id))}>Удалить</button>
                 </div>
               </div>
             ))}
           </div>
         )}
         <hr className="divider" />
-        <button className="s-btn" style={{background:'#7f1d1d',color:'#fca5a5',border:'none'}} onClick={()=>{
-          if('serviceWorker' in navigator){
-            caches.keys().then(keys=>Promise.all(keys.map(k=>caches.delete(k)))).then(()=>window.location.reload(true));
+        <button className="s-btn" style={{background:'#7f1d1d',color:'#fca5a5',border:'none'}} onClick={() => {
+          if ('serviceWorker' in navigator) {
+            caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => window.location.reload(true));
           } else { window.location.reload(true); }
         }}>🔄 Очистить кеш и обновить</button>
       </div>
 
       <div className="bottom-bar">
-        <button className={`bar-btn${radioPlaying?' active-radio':''}`} onClick={()=>setRadioPlaying(p=>!p)}>
+        <button className={`bar-btn${radioPlaying ? ' active-radio' : ''}`} onClick={() => setRadioPlaying(p => !p)}>
           <img src="ic_music.png" alt="radio" />
         </button>
-        <button className="bar-btn" onClick={()=>moveSteps(-1)} disabled={currentIndex<=0}>
+        <button className="bar-btn" onClick={() => moveSteps(-1)} disabled={currentIndex <= 0}>
           <img src="ic_back.png" alt="back" />
         </button>
-        <button className="bar-btn play" onClick={()=>setIsPlaying(p=>!p)} disabled={!sequence.length}>
-          <img src={isPlaying?'ic_pause.png':'ic_play.png'} alt="play" />
+        <button className="bar-btn play" onClick={() => setIsPlaying(p => !p)} disabled={!sequence.length}>
+          <img src={isPlaying ? 'ic_pause.png' : 'ic_play.png'} alt="play" />
         </button>
-        <button className="bar-btn" onClick={()=>moveSteps(1)} disabled={currentIndex>=sequence.length-1}>
+        <button className="bar-btn" onClick={() => moveSteps(1)} disabled={currentIndex >= sequence.length - 1}>
           <img src="ic_next.png" alt="next" />
         </button>
-        <button className={`bar-btn${showSettings?' active-radio':''}`} onClick={()=>setShowSettings(p=>!p)}>
+        <button className={`bar-btn${showSettings ? ' active-radio' : ''}`} onClick={() => setShowSettings(p => !p)}>
           <img src="ic_settings.png" alt="settings" />
         </button>
       </div>
