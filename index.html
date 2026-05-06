@@ -14,6 +14,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
     }
+    // Если нет флага активной вязалки и нет данных от генератора — на генератор
     if (!localStorage.getItem('ck_has_sequence') && !localStorage.getItem('ck_from_generator')) {
       window.location.replace('generator.html');
     }
@@ -35,7 +36,7 @@
     #root { width: 100%; max-width: 440px; min-height: 100vh; display: flex; flex-direction: column; padding: 0 0 110px 0; }
 
     .logo-row { display: flex; justify-content: center; align-items: center; padding: 8px 0 4px; position: relative; }
-    .logo-row img.logo-icon { height: 36px; width: auto; border-radius: 8px; }
+    .logo-row img { height: 36px; width: auto; border-radius: 8px; }
     .logo-back { position: absolute; left: 12px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
 
     .status-box { margin: 16px 12px; border: 2.5px solid #fff; border-radius: 999px; padding: 10px 20px; text-align: center; font-size: 18px; font-weight: 700; color: #fff; }
@@ -63,12 +64,12 @@
     .bar-btn:disabled { opacity: 0.3; }
     .bar-btn img { width: 52px; height: 52px; border-radius: 50%; }
     .bar-btn.play img { width: 68px; height: 68px; }
-    .bar-btn.active-radio img { filter: brightness(0) saturate(100%) invert(80%) sepia(80%) saturate(500%) hue-rotate(0deg); }
+    .bar-btn.active-radio img { filter: brightness(0) saturate(100%) invert(40%) sepia(80%) saturate(500%) hue-rotate(230deg); }
 
     .settings-panel { display: none; position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); width: calc(100% - 24px); max-width: 416px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 20px; padding: 16px; z-index: 99; max-height: 70vh; overflow-y: auto; }
     .settings-panel.open { display: flex; flex-direction: column; gap: 14px; }
 
-    input[type=range] { width: 100%; accent-color: #EFCA46; }
+    input[type=range] { width: 100%; accent-color: #7c3aed; }
     .toggle-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #ccc; }
     .toggle-switch { position: relative; width: 40px; height: 24px; flex-shrink: 0; }
     .toggle-switch input { opacity: 0; width: 0; height: 0; }
@@ -76,14 +77,16 @@
     .toggle-slider:before { content:''; position:absolute; width:16px; height:16px; left:4px; top:4px; background:white; border-radius:50%; box-shadow:0 1px 3px rgba(0,0,0,.4); transition:transform 0.2s; }
     input:checked + .toggle-slider { background: #EFCA46; }
     input:checked + .toggle-slider:before { transform: translateX(16px); background: black; }
+    input[type=range] { width: 100%; accent-color: #EFCA46; }
 
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .s-input-label { font-size: 12px; color: #aaa; margin-bottom: 4px; display: block; }
     input[type=number] { width: 100%; background: #111; border: 1.5px solid #333; border-radius: 8px; padding: 7px; text-align: center; font-size: 15px; color: white; outline: none; }
+    input[type=number]:focus { border-color: #7c3aed; }
 
     .s-btn { width: 100%; padding: 10px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; }
     .s-btn-outline { background: transparent; border: 1.5px solid #444; color: #ccc; }
-    .s-btn-primary { background: #EFCA46; color: black; }
+    .s-btn-primary { background: #7c3aed; color: white; }
     .s-btn-row { display: flex; gap: 8px; }
     .s-btn-row .s-btn { flex: 1; }
     .s-btn-secondary { background: #222; color: #ccc; border: 1.5px solid #333; }
@@ -116,7 +119,9 @@ const STORAGE_KEY = 'ck_state_v1';
 const SPEEDS = [0.5, 0.75, 1, 1.25, 2];
 
 function saveToStorage(data) {
+  // Пробуем сохранить с фото
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); return; } catch(e) {}
+  // Если не влезло — сжимаем фото
   if (data.circleImage) {
     try {
       const img = new Image();
@@ -129,35 +134,11 @@ function saveToStorage(data) {
       return;
     } catch(e) {}
   }
+  // Совсем не влезло — сохраняем без фото
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify({...data, circleImage: null})); } catch(_) {}
 }
-
 function loadFromStorage() {
   try { const s = localStorage.getItem(STORAGE_KEY); return s ? JSON.parse(s) : null; } catch(_) { return null; }
-}
-
-// Конвертация данных от генератора в формат вязалки
-function convertGeneratorData(raw) {
-  try {
-    const { sequence: genSeq, colors, image: imgData } = raw;
-    if (!genSeq || !genSeq.length) return null;
-
-    const result = [];
-    for (let i = 0; i < genSeq.length; i++) {
-      const item = genSeq[i];
-      const nailIdx = (typeof item === 'object' && item !== null) ? (item.nail ?? item) : item;
-      const colorIdx = (typeof item === 'object' && item !== null) ? (item.colorIndex ?? 3) : 3;
-      const colorDef = (colors && colors[colorIdx]) ? colors[colorIdx] : null;
-      const color = colorDef ? (colorDef.rgb || [0,0,0]) : [0,0,0];
-      const value = Number(nailIdx) + 1;
-      const isColorChange = i > 0 ? !result[i-1].color.every((c,ci) => c === color[ci]) : false;
-      result.push({ value, color, isColorChange });
-    }
-    return { seq: result, imgData };
-  } catch(e) {
-    console.error('convertGeneratorData error:', e);
-    return null;
-  }
 }
 
 function ColorKnitter() {
@@ -190,55 +171,58 @@ function ColorKnitter() {
   const audioRef        = useRef(null);
   sequenceRef.current   = sequence;
 
-  // Восстановление фото из localStorage
-  useEffect(() => {
-    if (restored?.circleImage) {
-      const img = new Image();
-      img.onload = () => { loadedImgRef.current = img; };
-      img.src = restored.circleImage;
-    }
-  }, []);
-
-  // Радио
   useEffect(() => {
     audioRef.current = new Audio('https://pianosolo.streamguys1.com/live?listenerid=8b5691fb9de68c165068d33274d23ef1&awparams=companionAds%3Atrue&aw_0_req.gdpr=true&us_privacy=1YNN');
     audioRef.current.volume = 0.2;
     return () => { audioRef.current.pause(); };
   }, []);
+
   useEffect(() => {
     if (!audioRef.current) return;
     if (radioPlaying) audioRef.current.play().catch(()=>{});
     else audioRef.current.pause();
   }, [radioPlaying]);
 
-  // Данные от генератора
+  // Проверяем данные от генератора
   useEffect(() => {
-    const raw = localStorage.getItem('ck_from_generator');
-    if (!raw) return;
-    let parsed;
-    try { parsed = JSON.parse(raw); } catch(e) { localStorage.removeItem('ck_from_generator'); return; }
-    localStorage.removeItem('ck_from_generator');
-    localStorage.setItem('ck_has_sequence', '1');
+    const fromGen = localStorage.getItem('ck_from_generator');
+    if (!fromGen) return;
+    try {
+      const { sequence: genSeq, colors, mode: genMode, image: imgData } = JSON.parse(fromGen);
+      localStorage.removeItem('ck_from_generator');
+      localStorage.setItem('ck_has_sequence', '1');
 
-    const converted = convertGeneratorData(parsed);
-    if (!converted) return;
-    const { seq, imgData } = converted;
+      if (genSeq && genSeq.length > 0) {
+        // Строим массив в два прохода чтобы избежать self-reference
+        const seq = genSeq.map((item) => {
+          const nailIdx = (typeof item === 'object' && item !== null) ? item.nail : item;
+          const colorIdx = (typeof item === 'object' && item !== null) ? (item.colorIndex ?? 3) : 3;
+          const colorDef = colors ? colors[colorIdx] : null;
+          const color = colorDef ? colorDef.rgb : [0, 0, 0];
+          const value = nailIdx + 1;
+          return { value, color, isColorChange: false };
+        });
+        // Второй проход — проставляем isColorChange
+        for (let i = 1; i < seq.length; i++) {
+          seq[i].isColorChange = !seq[i].color.every((c, ci) => c === seq[i-1].color[ci]);
+        }
+        setSequence(seq);
+        setCurrentIndex(0);
+        setRemainingSteps(0);
+        stepCountRef.current = 0;
+        goalReachedRef.current = false;
+        speak(seq[0]);
+      }
 
-    setSequence(seq);
-    setCurrentIndex(0);
-    setRemainingSteps(0);
-    stepCountRef.current = 0;
-    goalReachedRef.current = false;
-    if (seq.length > 0) speak(seq[0]);
-
-    if (imgData) {
-      const img = new Image();
-      img.onload = () => { loadedImgRef.current = img; setCircleImage(imgData); };
-      img.src = imgData;
-    }
+      // Загружаем картинку как подложку
+      if (imgData) {
+        const img = new Image();
+        img.onload = () => { loadedImgRef.current = img; setCircleImage(imgData); };
+        img.src = imgData;
+      }
+    } catch(e) { console.error('Ошибка загрузки из генератора:', e); }
   }, []);
 
-  // Автосохранение
   useEffect(() => {
     saveToStorage({ sequence, currentIndex, speedMultiplier, targetSteps, findStep,
       savedStates, remainingSteps, showNextLine, circleImage, imageOpacity });
@@ -249,19 +233,8 @@ function ColorKnitter() {
     const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sc = s%60;
     return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;
   };
+
   const calcElapsed = () => Math.round(currentIndex * (6 - speedMultiplier) / 1.1);
-
-  const getSector = (n) => { if(!n)return''; if(n<=65)return'D'; if(n<=130)return'C'; if(n<=195)return'A'; return'B'; };
-  const getPos    = (n) => { if(!n)return 0; const b={D:1,C:66,A:131,B:196}; return n-b[getSector(n)]+1; };
-  const getAngle  = (sec,pos) => { const b={A:Math.PI,B:Math.PI*1.5,C:Math.PI*0.5,D:0}; return b[sec]+(pos-1)*(Math.PI*0.5/65); };
-
-  const speak = (item) => {
-    if (!item) return;
-    const label = `${getSector(item.value)}${getPos(item.value)}`;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(label); u.lang = 'ru-RU';
-    window.speechSynthesis.speak(u);
-  };
 
   const moveSteps = (steps) => {
     setCurrentIndex(prev => {
@@ -281,6 +254,27 @@ function ColorKnitter() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+
+  const getSector = (n) => { if(!n)return''; if(n<=65)return'D'; if(n<=130)return'C'; if(n<=195)return'A'; return'B'; };
+  const getPos    = (n) => { if(!n)return 0; const b={D:1,C:66,A:131,B:196}; return n-b[getSector(n)]+1; };
+  const getAngle  = (sec,pos) => { const b={A:Math.PI,B:Math.PI*1.5,C:Math.PI*0.5,D:0}; return b[sec]+(pos-1)*(Math.PI*0.5/65); };
+  const colorName = ([r,g,b]) => {
+    if(r===0&&g===0&&b===0)return'чёрный';
+    if(r===255&&g===255&&b===255)return'белый';
+    if(r===0&&g===0&&b===255)return'синий';
+    if(r===255&&g===255&&b===0)return'жёлтый';
+    if(r===0&&g===255&&b===255)return'голубой';
+    return'розовый';
+  };
+  const speak = (item) => {
+    if(!item)return;
+    const t = item.isColorChange
+      ? `${colorName(item.color)}, ${getSector(item.value)}${getPos(item.value)}`
+      : `${getSector(item.value)}${getPos(item.value)}`;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(t); u.lang='ru-RU';
+    window.speechSynthesis.speak(u);
+  };
 
   const parseFile = (text) => {
     const lines=text.split('\n'); const temp=[]; let color=[0,0,0],hasZero=false;
@@ -397,20 +391,45 @@ function ColorKnitter() {
       ctx.globalAlpha=1; ctx.restore();
     }
 
-    // Окантовка по секторам
-    const rimR=radius+5.5, rimW=8;
-    ctx.lineWidth=rimW;
-    const currentSector=sequence[currentIndex]?getSector(sequence[currentIndex].value):null;
-    [{start:Math.PI,      end:Math.PI*1.5,color:'#b5b5b5',sector:'A'},
-     {start:Math.PI*1.5,  end:Math.PI*2,  color:'white',  sector:'B'},
-     {start:0,            end:Math.PI*0.5,color:'#b5b5b5',sector:'D'},
-     {start:Math.PI*0.5,  end:Math.PI,    color:'white',  sector:'C'}]
-    .forEach(({start,end,color,sector})=>{
-      ctx.beginPath(); ctx.arc(cx,cy,rimR,start,end);
-      ctx.strokeStyle=sector===currentSector?'#EFCA46':color; ctx.stroke();
+    // Окантовка разделена на секторы
+    const rimR = radius + 5.5;
+    const rimW = 8;
+    ctx.lineWidth = rimW;
+    // Сектор A (верх-лево) и D (низ-право) — серые: A от 180° до 270°, D от 0° до 90°
+    // Сектор B (верх-право) и C (низ-лево) — белые: B от 270° до 360°, C от 90° до 180°
+    const sectors = [
+      { start: Math.PI,       end: Math.PI * 1.5, color: '#b5b5b5' }, // A
+      { start: Math.PI * 1.5, end: Math.PI * 2,   color: 'white'   }, // B
+      { start: 0,             end: Math.PI * 0.5, color: 'white'   }, // C (D по углам — низ-право белый)
+      { start: Math.PI * 0.5, end: Math.PI,       color: '#b5b5b5' }, // C (низ-лево серый)
+    ];
+    // Пересчитаем правильно по реальному расположению секторов:
+    // D: 0–90° (правый верх), C: 90–180° (правый низ), A: 180–270° (левый низ), B: 270–360° (левый верх)
+    // Хотим: A(лево-верх) и D(право-низ) серые, B и C белые
+    // A = 180–270, D = 270–360+0–90 нет... D=0–90
+    // Серые: A(180°–270°) и... подождём — A левый верх = 180–270, D правый низ нет
+    // По getAngle: A=180°, B=270°, C=90°, D=0°
+    // Значит: A занимает 180–270, B — 270–360, C — 90–180 (нет, C=90°+65шагов*0.5PI/65)
+    // Упрощённо: каждый сектор ровно 90°
+    // Левый верх = A: 180–270° → серый
+    // Правый верх = B: 270–360° → белый  
+    // Левый низ = C: 90–180° → белый
+    // Правый низ = D: 0–90° → серый
+    const currentSector = sequence[currentIndex] ? getSector(sequence[currentIndex].value) : null;
+    const rimSectors = [
+      { start: Math.PI,       end: Math.PI * 1.5, color: '#b5b5b5', sector: 'A' },
+      { start: Math.PI * 1.5, end: Math.PI * 2,   color: 'white',   sector: 'B' },
+      { start: 0,             end: Math.PI * 0.5, color: '#b5b5b5', sector: 'D' },
+      { start: Math.PI * 0.5, end: Math.PI,       color: 'white',   sector: 'C' },
+    ];
+    rimSectors.forEach(({start, end, color, sector}) => {
+      ctx.beginPath();
+      ctx.arc(cx, cy, rimR, start, end);
+      ctx.strokeStyle = sector === currentSector ? '#efca46' : color;
+      ctx.stroke();
     });
 
-    // Синяя линия
+    // Синяя линия (над фото, под чёрной)
     if(showNextLine&&currentIndex<sequence.length-1){
       const a1=getAngle(getSector(sequence[currentIndex].value),getPos(sequence[currentIndex].value));
       const a2=getAngle(getSector(sequence[currentIndex+1].value),getPos(sequence[currentIndex+1].value));
@@ -419,13 +438,14 @@ function ColorKnitter() {
       ctx.beginPath(); ctx.strokeStyle='#3b82f6'; ctx.lineWidth=2; ctx.setLineDash([6,4]);
       ctx.moveTo(nx1,ny1); ctx.lineTo(nx2,ny2); ctx.stroke(); ctx.setLineDash([]);
       const na=Math.atan2(ny2-ny1,nx2-nx1),nal=14,naw=Math.PI/7;
-      ctx.beginPath(); ctx.moveTo(nx2,ny2);
+      ctx.beginPath();
+      ctx.moveTo(nx2,ny2);
       ctx.lineTo(nx2-nal*Math.cos(na-naw),ny2-nal*Math.sin(na-naw));
       ctx.lineTo(nx2-nal*Math.cos(na+naw),ny2-nal*Math.sin(na+naw));
       ctx.closePath(); ctx.fillStyle='#3b82f6'; ctx.fill();
     }
 
-    // Чёрная линия со стрелкой
+    // Чёрная линия (самая верхняя)
     if(currentIndex>0){
       const a1=getAngle(getSector(sequence[currentIndex-1].value),getPos(sequence[currentIndex-1].value));
       const a2=getAngle(getSector(sequence[currentIndex].value),getPos(sequence[currentIndex].value));
@@ -434,13 +454,14 @@ function ColorKnitter() {
       ctx.beginPath(); ctx.strokeStyle='black'; ctx.lineWidth=2;
       ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
       const ang=Math.atan2(y2-y1,x2-x1),al=14,aw=Math.PI/7;
-      ctx.beginPath(); ctx.moveTo(x2,y2);
+      ctx.beginPath();
+      ctx.moveTo(x2,y2);
       ctx.lineTo(x2-al*Math.cos(ang-aw),y2-al*Math.sin(ang-aw));
       ctx.lineTo(x2-al*Math.cos(ang+aw),y2-al*Math.sin(ang+aw));
       ctx.closePath(); ctx.fillStyle='black'; ctx.fill();
     }
 
-    // Красный указатель
+    // Красный указатель (поверх всего)
     if(sequence[currentIndex]){
       const a=getAngle(getSector(sequence[currentIndex].value),getPos(sequence[currentIndex].value));
       ctx.beginPath();
@@ -486,7 +507,7 @@ function ColorKnitter() {
         <a href="generator.html" className="logo-back" onClick={()=>localStorage.removeItem('ck_has_sequence')}>
           <img src="ic_back.png" alt="назад" style={{width:36,height:36}} />
         </a>
-        <img className="logo-icon" src="icon.png" alt="CK" onError={e=>e.target.style.display='none'} />
+        <img src="icon.png" alt="CK" onError={e=>e.target.style.display='none'} />
       </div>
 
       <div className="status-box">
@@ -515,6 +536,7 @@ function ColorKnitter() {
 
       {renderSteps()}
 
+      {/* Ползунок прозрачности под шагами если загружено фото */}
       {circleImage && (
         <div style={{display:'flex',alignItems:'center',gap:8,margin:'0 12px 8px'}}>
           <span style={{fontSize:12,color:'#aaa',whiteSpace:'nowrap'}}>Фото:</span>
