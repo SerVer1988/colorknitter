@@ -14,6 +14,10 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
     }
+    // Если есть данные от генератора — очищаем старое состояние чтобы не было конфликта
+    if (localStorage.getItem('ck_from_generator')) {
+      localStorage.removeItem('ck_state_v1');
+    }
     if (!localStorage.getItem('ck_has_sequence') && !localStorage.getItem('ck_from_generator')) {
       window.location.replace('generator.html');
     }
