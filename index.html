@@ -77,7 +77,6 @@
     .toggle-slider:before { content:''; position:absolute; width:16px; height:16px; left:4px; top:4px; background:white; border-radius:50%; box-shadow:0 1px 3px rgba(0,0,0,.4); transition:transform 0.2s; }
     input:checked + .toggle-slider { background: #EFCA46; }
     input:checked + .toggle-slider:before { transform: translateX(16px); background: black; }
-    input[type=range] { width: 100%; accent-color: #EFCA46; }
 
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .s-input-label { font-size: 12px; color: #aaa; margin-bottom: 4px; display: block; }
@@ -188,24 +187,18 @@ function ColorKnitter() {
     const fromGen = localStorage.getItem('ck_from_generator');
     if (!fromGen) return;
     try {
-      const { sequence: genSeq, colors, mode: genMode, image: imgData } = JSON.parse(fromGen);
+      const { sequence: genSeq, image: imgData } = JSON.parse(fromGen);
       localStorage.removeItem('ck_from_generator');
       localStorage.setItem('ck_has_sequence', '1');
 
+      // Конвертируем массив индексов [0..259] в формат sequence вязалки
+      // Каждый элемент: value = index+1 (1..260), color = чёрный
       if (genSeq && genSeq.length > 0) {
-        // Строим массив в два прохода чтобы избежать self-reference
-        const seq = genSeq.map((item) => {
-          const nailIdx = (typeof item === 'object' && item !== null) ? item.nail : item;
-          const colorIdx = (typeof item === 'object' && item !== null) ? (item.colorIndex ?? 3) : 3;
-          const colorDef = colors ? colors[colorIdx] : null;
-          const color = colorDef ? colorDef.rgb : [0, 0, 0];
-          const value = nailIdx + 1;
-          return { value, color, isColorChange: false };
-        });
-        // Второй проход — проставляем isColorChange
-        for (let i = 1; i < seq.length; i++) {
-          seq[i].isColorChange = !seq[i].color.every((c, ci) => c === seq[i-1].color[ci]);
-        }
+        const seq = genSeq.map((idx, i) => ({
+          value: idx + 1,
+          color: [0, 0, 0],
+          isColorChange: false
+        }));
         setSequence(seq);
         setCurrentIndex(0);
         setRemainingSteps(0);
