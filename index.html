@@ -347,7 +347,7 @@ function ColorKnitter() {
       else{
         const nums=line.split(/[\s,]+/).map(Number).filter(n=>!isNaN(n));
         if(nums.some(n=>n===0))hasZero=true;
-        nums.forEach(n=>temp.push({value:hasZero?n+1:n,colorIndex:3,isColorChange:temp.length>0&&!temp[temp.length-1].color?.every((c,i)=>c===color[i])}));
+        nums.forEach(n=>temp.push({value:hasZero?n+1:n,colorIndex:3,isColorChange:false}));
       }
     });
     return temp;
