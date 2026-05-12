@@ -41,7 +41,6 @@
 
     .status-box { margin: 16px 12px; border: 2.5px solid #fff; border-radius: 999px; padding: 10px 20px; text-align: center; font-size: 18px; font-weight: 700; color: #fff; }
 
-    /* ── СКОРОСТИ: чуть меньше шрифт чтобы 6 кнопок влезли ── */
     .speed-row { display: flex; justify-content: center; gap: 6px; margin: 16px 12px; align-items: center; }
     .speed-btn { flex: 1; padding: 7px 0; border-radius: 999px; border: 2.5px solid transparent; background: transparent; color: #aaa; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
     .speed-btn.active { border-color: #fff; color: #fff; }
@@ -73,8 +72,6 @@
     .bar-btn:disabled { opacity: 0.3; }
     .bar-btn img { width: 52px; height: 52px; border-radius: 50%; }
     .bar-btn.play img { width: 68px; height: 68px; }
-
-    /* ── ИСПРАВЛЕНИЕ №2: активные кнопки — жёлтые, не фиолетовые ── */
     .bar-btn.active-yellow img {
       filter: brightness(0) saturate(100%) invert(83%) sepia(50%) saturate(600%) hue-rotate(5deg) brightness(1.05);
     }
@@ -102,6 +99,15 @@
     .s-btn-row .s-btn { flex: 1; }
     .s-btn-secondary { background: #222; color: #ccc; border: 1.5px solid #333; }
 
+    /* поиск позиции */
+    .search-row { display: flex; gap: 8px; align-items: stretch; }
+    .search-input { flex: 1; background: #111; border: 1.5px solid #333; border-radius: 8px; padding: 7px 10px; font-size: 14px; color: white; outline: none; min-width: 0; }
+    .search-input:focus { border-color: #EFCA46; }
+    .search-input::placeholder { color: #555; }
+    .search-result { font-size: 12px; margin-top: 5px; padding: 5px 10px; border-radius: 6px; }
+    .search-result.found    { color: #EFCA46; background: rgba(239,202,70,0.1);  border: 1px solid rgba(239,202,70,0.3); }
+    .search-result.not-found{ color: #f87171; background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); }
+
     .saved-list { display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; }
     .saved-item { background: #111; border: 1px solid #2a2a2a; border-radius: 10px; padding: 8px 10px; font-size: 12px; }
     .saved-item-top { display: flex; justify-content: space-between; color: #888; margin-bottom: 6px; }
@@ -123,10 +129,7 @@
 <script type="text/babel">
 const { useState, useEffect, useRef, useCallback } = React;
 const STORAGE_KEY = 'ck_state_v1';
-
-// ── ИСПРАВЛЕНИЕ №1: новый набор скоростей ──
 const SPEEDS = [0.5, 1, 1.5, 2, 2.5, 3];
-
 const THREAD_COLORS = [
   { id: 'Y', name: 'Жёлтый',  rgb: [255, 220,   0], hex: '#ffdc00' },
   { id: 'C', name: 'Голубой', rgb: [  0, 183, 235], hex: '#00b7eb' },
@@ -181,6 +184,9 @@ function ColorKnitter() {
   const [goalMessage, setGoalMessage]         = useState(false);
   const [isColorMode, setIsColorMode]         = useState(restored?.isColorMode || false);
   const [colorChangeBanner, setColorChangeBanner] = useState(null);
+  // поиск позиции
+  const [searchInput, setSearchInput]   = useState('');
+  const [searchResult, setSearchResult] = useState(null); // null | {found, text}
 
   const fileInputRef    = useRef(null);
   const imageInputRef   = useRef(null);
@@ -191,9 +197,8 @@ function ColorKnitter() {
   const loadedImgRef    = useRef(null);
   const sequenceRef     = useRef(sequence);
   const audioRef        = useRef(null);
-  // ── ИСПРАВЛЕНИЕ №3: рефы для клика-снаружи ──
-  const settingsPanelRef  = useRef(null);
-  const settingsBtnRef    = useRef(null);
+  const settingsPanelRef = useRef(null);
+  const settingsBtnRef   = useRef(null);
 
   sequenceRef.current = sequence;
 
@@ -233,7 +238,7 @@ function ColorKnitter() {
     else audioRef.current.pause();
   }, [radioPlaying]);
 
-  // ── ИСПРАВЛЕНИЕ №3: закрываем настройки при клике вне панели ──
+  // закрываем настройки при клике вне панели
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (!showSettings) return;
@@ -306,6 +311,38 @@ function ColorKnitter() {
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(label); u.lang = 'ru-RU';
     window.speechSynthesis.speak(u);
+  };
+
+  const stepLabel = (item) => {
+    if(!item||!item.value||isNaN(item.value))return'---';
+    const s=getSector(item.value); if(s==='?')return'---';
+    return `${s}${getPos(item.value)}`;
+  };
+
+  // поиск трёх последовательных позиций
+  // Вводим 3 метки в том порядке, в котором они идут в последовательности.
+  // Курсор встаёт на последний элемент найденной тройки.
+  const handleSearch = () => {
+    const parts = searchInput.trim().toUpperCase().split(/[\s,]+/).filter(Boolean);
+    if (parts.length !== 3) {
+      setSearchResult({ found: false, text: 'Введите ровно 3 позиции через пробел' });
+      return;
+    }
+    for (let i = 0; i <= sequence.length - 3; i++) {
+      if (
+        stepLabel(sequence[i])   === parts[0] &&
+        stepLabel(sequence[i+1]) === parts[1] &&
+        stepLabel(sequence[i+2]) === parts[2]
+      ) {
+        const target = i + 2;
+        setCurrentIndex(target);
+        setFindStep(target + 1);
+        speak(sequence[target]);
+        setSearchResult({ found: true, text: `Найдено на шаге ${target + 1}` });
+        return;
+      }
+    }
+    setSearchResult({ found: false, text: 'Не найдено' });
   };
 
   const moveSteps = (steps) => {
@@ -406,12 +443,6 @@ function ColorKnitter() {
     setCurrentIndex(s.currentIndex);setFindStep(s.findStep||1);
     setTargetSteps(s.targetSteps);setRemainingSteps(s.remainingSteps);
     setIsPlaying(false);stepCountRef.current=s.targetSteps-s.remainingSteps;goalReachedRef.current=false;
-  };
-
-  const stepLabel = (item) => {
-    if(!item||!item.value||isNaN(item.value))return'---';
-    const s=getSector(item.value); if(s==='?')return'---';
-    return `${s}${getPos(item.value)}`;
   };
 
   useEffect(()=>{
@@ -582,7 +613,6 @@ function ColorKnitter() {
         </div>
       )}
 
-      {/* ── ИСПРАВЛЕНИЕ №3: ref на панель настроек ── */}
       <div ref={settingsPanelRef} className={`settings-panel${showSettings?' open':''}`}>
         <div className="toggle-row">
           <span>Линия следующего хода</span>
@@ -616,6 +646,34 @@ function ColorKnitter() {
           </div>
         </div>
         <hr className="divider"/>
+
+        {/* ── НОВОЕ: поиск по 3 меткам ── */}
+        <div>
+          <span className="s-input-label">Найти позицию по 3 меткам подряд:</span>
+          <div className="search-row">
+            <input
+              className="search-input"
+              type="text"
+              placeholder="напр. A5 B12 C3"
+              value={searchInput}
+              onChange={e=>{ setSearchInput(e.target.value); setSearchResult(null); }}
+              onKeyDown={e=>{ if(e.key==='Enter'){ e.preventDefault(); handleSearch(); } }}
+            />
+            <button
+              className="s-btn s-btn-primary"
+              style={{width:'auto',padding:'7px 16px',flexShrink:0}}
+              onClick={handleSearch}
+              disabled={!sequence.length}
+            >🔍</button>
+          </div>
+          {searchResult&&(
+            <div className={`search-result ${searchResult.found?'found':'not-found'}`}>
+              {searchResult.text}
+            </div>
+          )}
+        </div>
+        <hr className="divider"/>
+
         <div className="s-btn-row">
           <input ref={fileInputRef} type="file" accept=".txt" style={{display:'none'}} onChange={handleFileUpload}/>
           <button className="s-btn s-btn-primary" onClick={()=>fileInputRef.current.click()}>📂 Загрузить файл</button>
@@ -649,7 +707,6 @@ function ColorKnitter() {
       </div>
 
       <div className="bottom-bar">
-        {/* ── ИСПРАВЛЕНИЕ №2: active-yellow вместо active-radio ── */}
         <button className={`bar-btn${radioPlaying?' active-yellow':''}`} onClick={()=>setRadioPlaying(p=>!p)}>
           <img src="ic_music.png" alt="radio"/>
         </button>
@@ -662,7 +719,6 @@ function ColorKnitter() {
         <button className="bar-btn" onClick={()=>moveSteps(1)} disabled={currentIndex>=sequence.length-1}>
           <img src="ic_next.png" alt="next"/>
         </button>
-        {/* ── ИСПРАВЛЕНИЕ №2+3: ref и active-yellow на кнопку настроек ── */}
         <button ref={settingsBtnRef} className={`bar-btn${showSettings?' active-yellow':''}`} onClick={()=>setShowSettings(p=>!p)}>
           <img src="ic_settings.png" alt="settings"/>
         </button>
