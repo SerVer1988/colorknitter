@@ -14,7 +14,6 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
     }
-    // Если есть данные от генератора — очищаем старое состояние чтобы не было конфликта
     if (localStorage.getItem('ck_from_generator')) {
       localStorage.removeItem('ck_state_v1');
     }
@@ -42,8 +41,9 @@
 
     .status-box { margin: 16px 12px; border: 2.5px solid #fff; border-radius: 999px; padding: 10px 20px; text-align: center; font-size: 18px; font-weight: 700; color: #fff; }
 
-    .speed-row { display: flex; justify-content: center; gap: 8px; margin: 16px 12px; align-items: center; }
-    .speed-btn { flex: 1; max-width: 64px; padding: 7px 0; border-radius: 999px; border: 2.5px solid transparent; background: transparent; color: #aaa; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    /* ── СКОРОСТИ: чуть меньше шрифт чтобы 6 кнопок влезли ── */
+    .speed-row { display: flex; justify-content: center; gap: 6px; margin: 16px 12px; align-items: center; }
+    .speed-btn { flex: 1; padding: 7px 0; border-radius: 999px; border: 2.5px solid transparent; background: transparent; color: #aaa; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
     .speed-btn.active { border-color: #fff; color: #fff; }
 
     .canvas-wrap { display: flex; justify-content: center; padding: 16px 12px; position: relative; }
@@ -73,7 +73,11 @@
     .bar-btn:disabled { opacity: 0.3; }
     .bar-btn img { width: 52px; height: 52px; border-radius: 50%; }
     .bar-btn.play img { width: 68px; height: 68px; }
-    .bar-btn.active-radio img { filter: brightness(0) saturate(100%) invert(40%) sepia(80%) saturate(500%) hue-rotate(230deg); }
+
+    /* ── ИСПРАВЛЕНИЕ №2: активные кнопки — жёлтые, не фиолетовые ── */
+    .bar-btn.active-yellow img {
+      filter: brightness(0) saturate(100%) invert(83%) sepia(50%) saturate(600%) hue-rotate(5deg) brightness(1.05);
+    }
 
     .settings-panel { display: none; position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); width: calc(100% - 24px); max-width: 416px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 20px; padding: 16px; z-index: 99; max-height: 70vh; overflow-y: auto; }
     .settings-panel.open { display: flex; flex-direction: column; gap: 14px; }
@@ -119,7 +123,10 @@
 <script type="text/babel">
 const { useState, useEffect, useRef, useCallback } = React;
 const STORAGE_KEY = 'ck_state_v1';
-const SPEEDS = [0.5, 0.75, 1, 1.25, 2];
+
+// ── ИСПРАВЛЕНИЕ №1: новый набор скоростей ──
+const SPEEDS = [0.5, 1, 1.5, 2, 2.5, 3];
+
 const THREAD_COLORS = [
   { id: 'Y', name: 'Жёлтый',  rgb: [255, 220,   0], hex: '#ffdc00' },
   { id: 'C', name: 'Голубой', rgb: [  0, 183, 235], hex: '#00b7eb' },
@@ -157,33 +164,37 @@ function loadFromStorage() {
 
 function ColorKnitter() {
   const restored = loadFromStorage();
-  const [sequence, setSequence]             = useState(restored?.sequence || []);
-  const [currentIndex, setCurrentIndex]     = useState(restored?.currentIndex || 0);
-  const [isPlaying, setIsPlaying]           = useState(false);
+  const [sequence, setSequence]               = useState(restored?.sequence || []);
+  const [currentIndex, setCurrentIndex]       = useState(restored?.currentIndex || 0);
+  const [isPlaying, setIsPlaying]             = useState(false);
   const [speedMultiplier, setSpeedMultiplier] = useState(restored?.speedMultiplier || 1);
-  const [targetSteps, setTargetSteps]       = useState(restored?.targetSteps || 0);
-  const [findStep, setFindStep]             = useState(restored?.findStep || 1);
-  const [savedStates, setSavedStates]       = useState(restored?.savedStates || []);
-  const [remainingSteps, setRemainingSteps] = useState(restored?.remainingSteps || 0);
-  const [showNextLine, setShowNextLine]     = useState(restored?.showNextLine || false);
-  const [circleImage, setCircleImage]       = useState(restored?.circleImage || null);
-  const [imageOpacity, setImageOpacity]     = useState(restored?.imageOpacity ?? 0.55);
-  const [showSettings, setShowSettings]     = useState(false);
-  const [showSaved, setShowSaved]           = useState(false);
-  const [radioPlaying, setRadioPlaying]     = useState(false);
-  const [goalMessage, setGoalMessage]       = useState(false);
-  const [isColorMode, setIsColorMode]       = useState(restored?.isColorMode || false);
+  const [targetSteps, setTargetSteps]         = useState(restored?.targetSteps || 0);
+  const [findStep, setFindStep]               = useState(restored?.findStep || 1);
+  const [savedStates, setSavedStates]         = useState(restored?.savedStates || []);
+  const [remainingSteps, setRemainingSteps]   = useState(restored?.remainingSteps || 0);
+  const [showNextLine, setShowNextLine]       = useState(restored?.showNextLine || false);
+  const [circleImage, setCircleImage]         = useState(restored?.circleImage || null);
+  const [imageOpacity, setImageOpacity]       = useState(restored?.imageOpacity ?? 0.55);
+  const [showSettings, setShowSettings]       = useState(false);
+  const [showSaved, setShowSaved]             = useState(false);
+  const [radioPlaying, setRadioPlaying]       = useState(false);
+  const [goalMessage, setGoalMessage]         = useState(false);
+  const [isColorMode, setIsColorMode]         = useState(restored?.isColorMode || false);
   const [colorChangeBanner, setColorChangeBanner] = useState(null);
 
-  const fileInputRef  = useRef(null);
-  const imageInputRef = useRef(null);
-  const canvasRef     = useRef(null);
+  const fileInputRef    = useRef(null);
+  const imageInputRef   = useRef(null);
+  const canvasRef       = useRef(null);
   const playIntervalRef = useRef(null);
-  const stepCountRef  = useRef(0);
-  const goalReachedRef = useRef(false);
-  const loadedImgRef  = useRef(null);
-  const sequenceRef   = useRef(sequence);
-  const audioRef      = useRef(null);
+  const stepCountRef    = useRef(0);
+  const goalReachedRef  = useRef(false);
+  const loadedImgRef    = useRef(null);
+  const sequenceRef     = useRef(sequence);
+  const audioRef        = useRef(null);
+  // ── ИСПРАВЛЕНИЕ №3: рефы для клика-снаружи ──
+  const settingsPanelRef  = useRef(null);
+  const settingsBtnRef    = useRef(null);
+
   sequenceRef.current = sequence;
 
   const getCurrentThread = useCallback((idx = currentIndex) => {
@@ -221,6 +232,24 @@ function ColorKnitter() {
     if (radioPlaying) audioRef.current.play().catch(() => {});
     else audioRef.current.pause();
   }, [radioPlaying]);
+
+  // ── ИСПРАВЛЕНИЕ №3: закрываем настройки при клике вне панели ──
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!showSettings) return;
+      const panel = settingsPanelRef.current;
+      const btn   = settingsBtnRef.current;
+      if (panel && !panel.contains(e.target) && btn && !btn.contains(e.target)) {
+        setShowSettings(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside, { passive: true });
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [showSettings]);
 
   useEffect(() => {
     const fromGen = localStorage.getItem('ck_from_generator');
@@ -552,7 +581,9 @@ function ColorKnitter() {
           <span style={{fontSize:12,color:'#aaa',width:32,textAlign:'right'}}>{Math.round(imageOpacity*100)}%</span>
         </div>
       )}
-      <div className={`settings-panel${showSettings?' open':''}`}>
+
+      {/* ── ИСПРАВЛЕНИЕ №3: ref на панель настроек ── */}
+      <div ref={settingsPanelRef} className={`settings-panel${showSettings?' open':''}`}>
         <div className="toggle-row">
           <span>Линия следующего хода</span>
           <label className="toggle-switch">
@@ -616,8 +647,10 @@ function ColorKnitter() {
           else{window.location.reload(true);}
         }}>🔄 Очистить кеш и обновить</button>
       </div>
+
       <div className="bottom-bar">
-        <button className={`bar-btn${radioPlaying?' active-radio':''}`} onClick={()=>setRadioPlaying(p=>!p)}>
+        {/* ── ИСПРАВЛЕНИЕ №2: active-yellow вместо active-radio ── */}
+        <button className={`bar-btn${radioPlaying?' active-yellow':''}`} onClick={()=>setRadioPlaying(p=>!p)}>
           <img src="ic_music.png" alt="radio"/>
         </button>
         <button className="bar-btn" onClick={()=>moveSteps(-1)} disabled={currentIndex<=0}>
@@ -629,7 +662,8 @@ function ColorKnitter() {
         <button className="bar-btn" onClick={()=>moveSteps(1)} disabled={currentIndex>=sequence.length-1}>
           <img src="ic_next.png" alt="next"/>
         </button>
-        <button className={`bar-btn${showSettings?' active-radio':''}`} onClick={()=>setShowSettings(p=>!p)}>
+        {/* ── ИСПРАВЛЕНИЕ №2+3: ref и active-yellow на кнопку настроек ── */}
+        <button ref={settingsBtnRef} className={`bar-btn${showSettings?' active-yellow':''}`} onClick={()=>setShowSettings(p=>!p)}>
           <img src="ic_settings.png" alt="settings"/>
         </button>
       </div>
