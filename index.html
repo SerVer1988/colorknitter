@@ -330,9 +330,9 @@ function ColorKnitter() {
     }
     for (let i = 0; i <= sequence.length - 3; i++) {
       if (
-        stepLabel(sequence[i])   === parts[0] &&
+        stepLabel(sequence[i])   === parts[2] &&
         stepLabel(sequence[i+1]) === parts[1] &&
-        stepLabel(sequence[i+2]) === parts[2]
+        stepLabel(sequence[i+2]) === parts[0]
       ) {
         const target = i + 2;
         setCurrentIndex(target);
