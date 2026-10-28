@@ -1,6 +1,6 @@
 // При любом изменении файлов приложения увеличивайте номер версии,
 // иначе у пользователей останется старая версия из кеша.
-const CACHE = 'colorknitter-v2';
+const CACHE = 'colorknitter-v3';
 
 const FILES = [
   './',
@@ -12,7 +12,6 @@ const FILES = [
   './css/generator.css',
   './js/pwa.js',
   './js/knitter-boot.js',
-  './js/knitter.jsx',
   './js/generator.js',
   './img/logo.png',
   './img/icon-192.png',
