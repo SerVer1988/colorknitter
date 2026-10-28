@@ -1,0 +1,5 @@
+/* Общие стили для обеих страниц */
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { background: #0a0a0a; font-family: Arial, sans-serif; color: white; }
+body { display: flex; justify-content: center; }
+.s-input-label { font-size: 12px; color: #aaa; margin-bottom: 4px; display: block; }
