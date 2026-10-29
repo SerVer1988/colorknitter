@@ -30,12 +30,28 @@
     <input type="file" id="file-input" accept="image/*" />
   </div>
 
+  <div class="tools" id="tools-block" style="display:none">
+    <div class="tool-row">
+      <button class="tool-btn active" data-tool="move" onclick="setTool('move')">✋ Двигать</button>
+      <button class="tool-btn" data-tool="imp" onclick="setTool('imp')">⭐ Главное</button>
+      <button class="tool-btn" data-tool="bg" onclick="setTool('bg')">⬜ Фон</button>
+      <button class="tool-btn" data-tool="erase" onclick="setTool('erase')">🧽 Стереть</button>
+    </div>
+    <div class="brush-row" id="brush-row" style="display:none">
+      <span class="s-input-label" style="margin:0">Кисть</span>
+      <input type="range" id="brush-size" value="22" min="6" max="70" step="2" />
+      <button class="tool-btn" onclick="clearMarks()">🗑 Очистить</button>
+    </div>
+    <div class="s-hint">⭐ — отметьте лицо и глаза, им достанется больше нитей. ⬜ — закрасьте фон, туда нити не пойдут. Двумя пальцами фото можно двигать в любом режиме.</div>
+  </div>
+
   <div class="settings" id="settings-block">
     <div>
       <div class="s-label"><span>Режим</span></div>
       <div class="mode-row">
         <button class="mode-btn active" id="btn-bw" onclick="setMode('bw')">⚫ Чёрный</button>
-        <button class="mode-btn" id="btn-color" onclick="setMode('color')">🌈 Цветной</button>
+        <button class="mode-btn" id="btn-bw2" onclick="setMode('bw2')">◐ Ч+Б</button>
+        <button class="mode-btn" id="btn-color" onclick="setMode('color')">🌈 Цвет</button>
       </div>
     </div>
     <div id="filter-block">
@@ -70,17 +86,31 @@
       </div>
     </div>
     <div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="s-label"><span>Рама</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
         <div>
-          <span class="s-input-label">Диаметр рамы, см</span>
+          <span class="s-input-label">Гвоздей</span>
+          <input type="number" id="nails-box" value="260" min="100" max="400" step="4" />
+        </div>
+        <div>
+          <span class="s-input-label">Диаметр, см</span>
           <input type="number" id="frame-box" value="50" min="10" max="300" step="1" />
         </div>
         <div>
-          <span class="s-input-label">Толщина нити, мм</span>
+          <span class="s-input-label">Нить, мм</span>
           <input type="number" id="thread-box" value="0.25" min="0.05" max="3" step="0.05" />
         </div>
       </div>
-      <div class="s-hint">Влияют на то, сколько линий нужно и как будет выглядеть работа. Швейная нить ≈ 0,2–0,3 мм, мулине в 1 сложение ≈ 0,3 мм.</div>
+      <div class="s-hint"><span id="nails-hint">по 65 в секторе</span>. Число гвоздей делится на 4 (сектора A, B, C, D). Швейная нить ≈ 0,2–0,3 мм, мулине в 1 сложение ≈ 0,3 мм.</div>
+      <button class="link-btn" onclick="downloadTemplate()">📐 Скачать шаблон рамы для печати (SVG)</button>
+    </div>
+    <div>
+      <div class="s-label"><span>Доска</span></div>
+      <div class="filter-row" style="grid-template-columns:repeat(3,1fr)">
+        <button class="filter-btn board-btn active" data-board="white" onclick="setBoard('white')">⬜ Белая</button>
+        <button class="filter-btn board-btn" data-board="grey" onclick="setBoard('grey')">◽ Серая</button>
+        <button class="filter-btn board-btn" data-board="black" onclick="setBoard('black')">⬛ Чёрная</button>
+      </div>
     </div>
   </div>
 
@@ -102,6 +132,7 @@
     <button class="big-btn btn-blue" onclick="openInKnitter()">🪡 Открыть в вязалке</button>
     <div style="display:flex;gap:10px;">
       <button class="big-btn btn-yellow" onclick="saveImage()" style="flex:1">💾 PNG</button>
+      <button class="big-btn btn-yellow" onclick="downloadTxt()" style="flex:1">📄 TXT</button>
       <button class="big-btn btn-secondary" onclick="resetAll()" style="flex:1">↺ Сброс</button>
     </div>
   </div>

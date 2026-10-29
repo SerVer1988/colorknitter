@@ -65,6 +65,7 @@ function CKCore() {
   // o.negWeight — во сколько раз «прощать» ухудшение отдельных пикселей (1 — не прощать)
   // o.lenPow    — нормировка по длине линии (0 — сумма, 1 — среднее)
   // o.margin    — отступ гвоздей от края сетки (по умолчанию 1.5 пикселя)
+  // o.board     — цвет доски в линейном свете ([серый] или [r,g,b]); по умолчанию белая
   function createGenerator(o) {
     const N = o.size, nN = o.nails || 260, CH = o.channels || 1;
     const T = o.target, W = o.weight, A = o.alpha;
@@ -72,7 +73,9 @@ function CKCore() {
     const lenPow = o.lenPow == null ? 0 : o.lenPow;
     const colors = o.colors || [[0, 0, 0]];
     const LUT = CH === 1 ? LUT_L : LUT_SRGB;
-    const S = new Float32Array(N * N * CH).fill(1); // доска белая
+    const board = o.board || [1, 1, 1];
+    const S = new Float32Array(N * N * CH);
+    for (let i = 0; i < N * N; i++) for (let c = 0; c < CH; c++) S[i * CH + c] = board[c] == null ? board[0] : board[c];
     const pos = nailPositions(nN, N, o.margin || 1.5);
 
     // Параметры всех хорд считаем один раз
@@ -94,16 +97,17 @@ function CKCore() {
       let yf = p.y0 + grad * (p.xs + 0.5 - p.x0) - 0.5;
       let g = 0;
       if (CH === 1) {
+        const cg = colors[ci][0]; // серый цвет нити: 0 — чёрная, 1 — белая
         for (let x = p.xs; x <= p.xe; x++, yf += grad) {
           const yi = yf | 0, fr = yf - yi;
           const i1 = x * sMaj + yi * sMin, i2 = i1 + sMin;
           let s = S[i1], t = T[i1];
-          let e1 = LUT[(s * LUT_SIZE) | 0] - t, e2 = LUT[((s - s * k0 * (1 - fr)) * LUT_SIZE) | 0] - t;
+          let e1 = LUT[(s * LUT_SIZE) | 0] - t, e2 = LUT[((s + (cg - s) * k0 * (1 - fr)) * LUT_SIZE) | 0] - t;
           let d = e1 * e1 - e2 * e2;
           if (d < 0) d *= neg;
           g += W[i1] * d;
           s = S[i2]; t = T[i2];
-          e1 = LUT[(s * LUT_SIZE) | 0] - t; e2 = LUT[((s - s * k0 * fr) * LUT_SIZE) | 0] - t;
+          e1 = LUT[(s * LUT_SIZE) | 0] - t; e2 = LUT[((s + (cg - s) * k0 * fr) * LUT_SIZE) | 0] - t;
           d = e1 * e1 - e2 * e2;
           if (d < 0) d *= neg;
           g += W[i2] * d;
@@ -136,7 +140,7 @@ function CKCore() {
         const i1 = x * sMaj + yi * sMin;
         for (let h = 0; h < 2; h++) {
           const pi = h ? i1 + sMin : i1, k = k0 * (h ? fr : 1 - fr);
-          if (CH === 1) S[pi] -= S[pi] * k;
+          if (CH === 1) S[pi] += (col[0] - S[pi]) * k;
           else for (let c = 0; c < 3; c++) { const i = pi * 3 + c; S[i] += (col[c] - S[i]) * k; }
         }
       }
@@ -180,28 +184,35 @@ function CKCore() {
     const nC = gen.colors.length, allowed = o.allowed || gen.colors.map(() => true);
     const blockSize = o.blockSize || 1e9, maxLines = o.maxLines || 3000;
     const minScore = o.minScore || 0;
+    // Автостоп по «выдохшейся» картинке: средняя польза последних ~100 линий
+    // меньше stopFrac от пользы первой линии (0 — не использовать)
+    const stopFrac = o.stopFrac || 0;
+    let firstScore = 0, avgScore = 0;
     const cur = new Array(nC).fill(-1);       // где сейчас висит каждая нить
-    const done = new Array(nC).fill(false);   // нить больше ничего не улучшает
+    // «Нить сейчас ничего не улучшает» — верно только пока другие нити не изменили картинку
+    const doneAt = new Array(nC).fill(-1);
     const seq = [];                           // [гвоздь, индекс цвета] в порядке работы
     let lines = 0, ci = -1, inBlock = 0, finished = false, changes = 0;
+    const isDone = c => doneAt[c] === lines;
 
     // Лучшая стартовая линия для ещё не начатых цветов: полный перебор хорд дорогой,
-    // поэтому оценку берём из кеша и пересчитываем, только когда цвет действительно выбран
+    // поэтому оценку берём из кеша и обновляем каждые 300 линий
     const startCache = new Array(nC).fill(null);
     function startScore(c) {
-      if (!startCache[c]) startCache[c] = gen.bestPair(c);
+      if (!startCache[c] || lines - startCache[c].at > 300) startCache[c] = Object.assign(gen.bestPair(c), { at: lines });
       return startCache[c].score;
     }
     function startColor(c) {
       const bp = gen.bestPair(c);
-      if (!(bp.score > minScore)) { done[c] = true; return false; }
+      startCache[c] = Object.assign(bp, { at: lines });
+      if (!(bp.score > minScore)) { doneAt[c] = lines; return false; }
       cur[c] = bp.a; seq.push([bp.a, c]);
       return true;
     }
     function pickColor() {
       let best = -Infinity, bc = -1;
       for (let c = 0; c < nC; c++) {
-        if (!allowed[c] || done[c]) continue;
+        if (!allowed[c] || isDone(c)) continue;
         const sc = cur[c] < 0 ? startScore(c) : gen.bestFrom(cur[c], c).score;
         if (sc > best) { best = sc; bc = c; }
       }
@@ -212,7 +223,7 @@ function CKCore() {
       const out = [];
       while (out.length < n && !finished) {
         if (lines >= maxLines) { finished = true; break; }
-        if (ci < 0 || inBlock >= blockSize || done[ci]) {
+        if (ci < 0 || inBlock >= blockSize || isDone(ci)) {
           const nc = pickColor();
           if (nc < 0) { finished = true; break; }
           if (nc !== ci && ci >= 0) changes++;
@@ -220,11 +231,14 @@ function CKCore() {
           if (cur[ci] < 0 && !startColor(ci)) continue;
         }
         const nx = gen.bestFrom(cur[ci], ci);
-        if (nx.nail < 0 || !(nx.score > minScore)) { done[ci] = true; continue; }
+        if (nx.nail < 0 || !(nx.score > minScore)) { doneAt[ci] = lines; continue; }
         gen.apply(cur[ci], nx.nail, ci);
         out.push([cur[ci], nx.nail, ci]);
         cur[ci] = nx.nail; seq.push([nx.nail, ci]);
         lines++; inBlock++;
+        if (lines === 1) { firstScore = nx.score; avgScore = nx.score; }
+        else avgScore += (nx.score - avgScore) * 0.01;
+        if (stopFrac && lines > 500 && avgScore < stopFrac * firstScore) finished = true;
       }
       return out;
     }
@@ -237,8 +251,10 @@ function CKCore() {
 
   // ─── Превью: как будет выглядеть работа (нить в масштабе рамы) ─────────────
   // margin — отступ гвоздей от края картинки, как у круга на экране
-  function createPreview(size, nNails, threadPx, colorsLin, margin) {
-    const B = new Float32Array(size * size * 3).fill(1);
+  function createPreview(size, nNails, threadPx, colorsLin, margin, boardLin) {
+    const bd = boardLin || [1, 1, 1];
+    const B = new Float32Array(size * size * 3);
+    for (let i = 0; i < size * size; i++) { B[i * 3] = bd[0]; B[i * 3 + 1] = bd[1]; B[i * 3 + 2] = bd[2]; }
     const pos = nailPositions(nNails, size, margin == null ? 1.5 : margin);
     const R = size / 2 - (margin == null ? 1.5 : margin) + 1;
     function draw(a, b, ci) {

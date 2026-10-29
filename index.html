@@ -47,6 +47,15 @@ function saveToStorage(data) {
   // Совсем не влезло — сохраняем без фото
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify({...data, circleImage: null})); } catch(_) {}
 }
+// Число гвоздей: кратно 4 (четыре сектора), по умолчанию 260
+function normalizeNails(n) {
+  n = Math.round(Number(n));
+  return Number.isFinite(n) && n >= 8 && n <= 2000 && n % 4 === 0 ? n : 260;
+}
+// Цвет доски [r, g, b], по умолчанию белая
+function normalizeBoard(b) {
+  return Array.isArray(b) && b.length === 3 && b.every(v => Number.isFinite(v) && v >= 0 && v <= 255) ? b : [255, 255, 255];
+}
 // Номер шага всегда должен быть внутри схемы
 function clampIndex(i, len) {
   if (!Number.isInteger(i) || len <= 0) return 0;
@@ -84,6 +93,8 @@ function loadFromStorage() {
     d.sequence = normalizeSequence(d.sequence);
     d.currentIndex = clampIndex(d.currentIndex, d.sequence.length);
     if (!Array.isArray(d.savedStates)) d.savedStates = [];
+    d.nails = normalizeNails(d.nails);
+    d.board = normalizeBoard(d.board);
     return d;
   } catch(_) { return null; }
 }
@@ -114,6 +125,10 @@ function ColorKnitter() {
   const stepCountRef    = useRef(0);
   const goalReachedRef  = useRef(false);
   const loadedImgRef    = useRef(null);
+  const [nails, setNailsState] = useState(restored?.nails || 260);
+  const nailsRef = useRef(restored?.nails || 260);
+  const setNails = (n) => { nailsRef.current = n; setNailsState(n); };
+  const [board, setBoard] = useState(restored?.board || [255, 255, 255]);
   const [imgTick, setImgTick] = useState(0);
   // Подложка из сохранения: после перезагрузки картинку нужно загрузить заново
   useEffect(() => {
@@ -143,7 +158,8 @@ function ColorKnitter() {
     const fromGen = localStorage.getItem('ck_from_generator');
     if (!fromGen) return;
     try {
-      const { sequence: genSeq, colors, mode: genMode, image: imgData } = JSON.parse(fromGen);
+      const { sequence: genSeq, colors, mode: genMode, image: imgData, nails: genNails, board: genBoard } = JSON.parse(fromGen);
+      setNails(normalizeNails(genNails)); setBoard(normalizeBoard(genBoard));
       localStorage.removeItem('ck_from_generator');
       localStorage.setItem('ck_has_sequence', '1');
 
@@ -181,9 +197,9 @@ function ColorKnitter() {
 
   useEffect(() => {
     saveToStorage({ sequence, currentIndex, speedMultiplier, targetSteps, findStep,
-      savedStates, remainingSteps, showNextLine, circleImage, imageOpacity });
+      savedStates, remainingSteps, showNextLine, circleImage, imageOpacity, nails, board });
   }, [sequence, currentIndex, speedMultiplier, targetSteps, findStep,
-      savedStates, remainingSteps, showNextLine, circleImage, imageOpacity]);
+      savedStates, remainingSteps, showNextLine, circleImage, imageOpacity, nails, board]);
 
   const fmt = (s) => {
     const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sc = s%60;
@@ -211,16 +227,20 @@ function ColorKnitter() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const getSector = (n) => { if(!n)return''; if(n<=65)return'D'; if(n<=130)return'C'; if(n<=195)return'A'; return'B'; };
-  const getPos    = (n) => { if(!n)return 0; const b={D:1,C:66,A:131,B:196}; return n-b[getSector(n)]+1; };
-  const getAngle  = (sec,pos) => { const b={A:Math.PI,B:Math.PI*1.5,C:Math.PI*0.5,D:0}; return b[sec]+(pos-1)*(Math.PI*0.5/65); };
-  const colorName = ([r,g,b]) => {
-    if(r===0&&g===0&&b===0)return'чёрный';
-    if(r===255&&g===255&&b===255)return'белый';
-    if(r===0&&g===0&&b===255)return'синий';
-    if(r===255&&g===255&&b===0)return'жёлтый';
-    if(r===0&&g===255&&b===255)return'голубой';
-    return'розовый';
+  // Сектора D, C, A, B по четверти гвоздей (при 260 — по 65)
+  const getSector = (n) => { if(!n)return''; const q=nailsRef.current/4; if(n<=q)return'D'; if(n<=2*q)return'C'; if(n<=3*q)return'A'; return'B'; };
+  const getPos    = (n) => { if(!n)return 0; const q=nailsRef.current/4; const b={D:1,C:q+1,A:2*q+1,B:3*q+1}; return n-b[getSector(n)]+1; };
+  const getAngle  = (sec,pos) => { const q=nailsRef.current/4; const b={A:Math.PI,B:Math.PI*1.5,C:Math.PI*0.5,D:0}; return b[sec]+(pos-1)*(Math.PI*0.5/q); };
+  // Название ближайшего цвета (палитра генератора и файлов Крама)
+  const NAMED_COLORS = [
+    ['чёрный',[0,0,0]], ['белый',[255,255,255]], ['жёлтый',[255,220,0]], ['жёлтый',[255,255,0]],
+    ['голубой',[0,183,235]], ['голубой',[0,255,255]], ['розовый',[255,0,144]], ['розовый',[255,0,255]],
+    ['синий',[0,0,255]], ['красный',[220,30,30]], ['зелёный',[0,160,60]], ['оранжевый',[255,140,0]], ['коричневый',[120,70,30]]
+  ];
+  const colorName = (c) => {
+    let best='', bd=Infinity;
+    for(const [name,v] of NAMED_COLORS){ const d=(c[0]-v[0])**2+(c[1]-v[1])**2+(c[2]-v[2])**2; if(d<bd){bd=d;best=name;} }
+    return best;
   };
   const speak = (item) => {
     if(!item)return;
@@ -232,7 +252,27 @@ function ColorKnitter() {
     window.speechSynthesis.speak(u);
   };
 
+  // Файл ColorKnitter: «Гвоздей: N», заголовки «=== Цвет [r, g, b] ... ===», шаги «12. D5»
+  const parseCK = (text) => {
+    const nm=text.match(/Гвоздей:\s*(\d+)/); const n=normalizeNails(nm?+nm[1]:260), q=n/4;
+    const base={D:1,C:q+1,A:2*q+1,B:3*q+1};
+    let color=[0,0,0]; const items=[];
+    let brd=[255,255,255];
+    const bm=text.match(/доска:\s*([а-яё]+)/i);
+    if(bm){ const w=bm[1].toLowerCase(); if(w.startsWith('сер'))brd=[140,140,140]; else if(w.startsWith('чёр')||w.startsWith('чер'))brd=[25,25,25]; }
+    text.split('\n').forEach(raw=>{
+      const line=raw.trim();
+      if(line.startsWith('===')){ const m=line.match(/\[(\d+),\s*(\d+),\s*(\d+)\]/); if(m) color=[+m[1],+m[2],+m[3]]; return; }
+      const m=line.match(/^\d+\.\s*([ABCD])\s*(\d+)$/i);
+      if(m){ const sec=m[1].toUpperCase(), pos=+m[2]; if(pos>=1&&pos<=q) items.push({value:base[sec]+pos-1,color:[...color]}); }
+    });
+    return { items, nails:n, board:brd };
+  };
   const parseFile = (text) => {
+    if(/ColorKnitter/.test(text)&&/Гвоздей:/.test(text)) return parseCK(text);
+    return { items: parseCrum(text), nails: 260, board: [255,255,255] };
+  };
+  const parseCrum = (text) => {
     const lines=text.split('\n'); const temp=[]; let color=[0,0,0],hasZero=false;
     lines.forEach(line=>{
       line=line.trim(); if(!line)return;
@@ -248,8 +288,10 @@ function ColorKnitter() {
 
   const handleFileUpload = async (e) => {
     const file=e.target.files[0]; if(!file)return;
-    const text=await file.text(); const seq=parseFile(text);
-    setSequence(normalizeSequence(seq)); setCurrentIndex(0); setIsPlaying(false);
+    const text=await file.text(); const parsed=parseFile(text);
+    const seq=normalizeSequence(parsed.items);
+    setNails(parsed.nails); setBoard(parsed.board);
+    setSequence(seq); setCurrentIndex(0); setIsPlaying(false);
     setRemainingSteps(targetSteps); stepCountRef.current=0; goalReachedRef.current=false;
     if(seq.length>0)speak(seq[0]);
   };
@@ -325,7 +367,7 @@ function ColorKnitter() {
     const radius=Math.min(w,h)/2-14;
 
     ctx.clearRect(0,0,w,h);
-    ctx.beginPath(); ctx.arc(cx,cy,radius,0,2*Math.PI); ctx.fillStyle='white'; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx,cy,radius,0,2*Math.PI); ctx.fillStyle=`rgb(${board[0]},${board[1]},${board[2]})`; ctx.fill();
 
     if(sequence.length>0){
       ctx.globalAlpha=0.7;
@@ -431,7 +473,7 @@ function ColorKnitter() {
       ctx.strokeStyle='#ff0000'; ctx.lineWidth=2; ctx.stroke();
     }
    } catch(e) { console.error('Ошибка отрисовки круга:', e); }
-  },[currentIndex,sequence,showNextLine,circleImage,imageOpacity,imgTick]);
+  },[currentIndex,sequence,showNextLine,circleImage,imageOpacity,imgTick,nails,board]);
 
   const renderSteps = () => {
     if(!sequence.length)return null;

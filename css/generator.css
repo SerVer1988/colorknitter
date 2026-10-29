@@ -46,3 +46,11 @@ input[type=number]:focus { border-color: #EFCA46; }
 .s-hint { font-size: 11px; color: #777; margin-top: 6px; line-height: 1.4; }
 .color-chip { cursor: pointer; user-select: none; }
 .color-chip:not(.active) { opacity: 0.4; }
+.tools { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.tool-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.tool-btn { padding: 9px 0; border-radius: 10px; border: 2px solid #333; background: transparent; color: #aaa; font-size: 12px; font-weight: 600; cursor: pointer; }
+.tool-btn.active { border-color: #EFCA46; color: #EFCA46; background: #1a1500; }
+.brush-row { display: flex; align-items: center; gap: 10px; }
+.brush-row input[type=range] { flex: 1; }
+.brush-row .tool-btn { padding: 7px 10px; }
+.link-btn { margin-top: 8px; background: none; border: none; color: #EFCA46; font-size: 13px; font-weight: 600; padding: 4px 0; cursor: pointer; text-align: left; }
