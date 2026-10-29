@@ -48,8 +48,8 @@ input:checked + .toggle-slider:before { transform: translateX(16px); background:
 input[type=range] { width: 100%; accent-color: #EFCA46; }
 
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-input[type=number] { width: 100%; background: #111; border: 1.5px solid #333; border-radius: 8px; padding: 7px; text-align: center; font-size: 15px; color: white; outline: none; }
-input[type=number]:focus { border-color: #7c3aed; }
+input[type=number], input[type=text] { width: 100%; background: #111; border: 1.5px solid #333; border-radius: 8px; padding: 7px; text-align: center; font-size: 15px; color: white; outline: none; }
+input[type=number]:focus, input[type=text]:focus { border-color: #7c3aed; }
 
 .s-btn { width: 100%; padding: 10px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; }
 .s-btn-outline { background: transparent; border: 1.5px solid #444; color: #ccc; }
@@ -72,3 +72,10 @@ input[type=number]:focus { border-color: #7c3aed; }
 .goal-msg { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: #EFCA46; color: black; font-size: 28px; font-weight: 900; padding: 20px 36px; border-radius: 20px; z-index: 200; box-shadow: 0 4px 32px rgba(0,0,0,0.5); animation: popIn 0.3s ease; pointer-events: none; }
 @keyframes popIn { from { transform: translate(-50%,-50%) scale(0.7); opacity:0; } to { transform: translate(-50%,-50%) scale(1); opacity:1; } }
   
+.step-dot { width: 10px; height: 10px; border-radius: 50%; margin: 3px auto 0; border: 1px solid #666; }
+.color-info { margin: -6px 12px 10px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.color-line { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; color: #ddd; }
+.color-change { border: 2px solid #EFCA46; background: #1a1500; color: #fff; border-radius: 12px; padding: 8px 10px; line-height: 1.4; }
+.color-dot-inline { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #777; vertical-align: -1px; margin: 0 2px; }
+.pos-results { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; font-size: 13px; color: #ddd; }
+.pos-results .s-btn { margin: 0; }

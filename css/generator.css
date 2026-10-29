@@ -54,3 +54,4 @@ input[type=number]:focus { border-color: #EFCA46; }
 .brush-row input[type=range] { flex: 1; }
 .brush-row .tool-btn { padding: 7px 10px; }
 .link-btn { margin-top: 8px; background: none; border: none; color: #EFCA46; font-size: 13px; font-weight: 600; padding: 4px 0; cursor: pointer; text-align: left; }
+.small-btn { flex: 1; padding: 14px 2px; font-size: 14px; white-space: nowrap; }

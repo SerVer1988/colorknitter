@@ -112,6 +112,9 @@ function ColorKnitter() {
   const [targetDraft, setTargetDraft] = useState(null);
   const [findDraft, setFindDraft]     = useState(null);
   const findPendingRef = useRef(null), findTimerRef = useRef(null);
+  // Поиск «где я остановился» по последним гвоздям
+  const [posQuery, setPosQuery]   = useState('');
+  const [posResult, setPosResult] = useState(null);
   const [savedStates, setSavedStates]         = useState(restored?.savedStates || []);
   const [remainingSteps, setRemainingSteps]   = useState(restored?.remainingSteps || 0);
   const [showNextLine, setShowNextLine]       = useState(restored?.showNextLine || false);
@@ -246,10 +249,14 @@ function ColorKnitter() {
     for(const [name,v] of NAMED_COLORS){ const d=(c[0]-v[0])**2+(c[1]-v[1])**2+(c[2]-v[2])**2; if(d<bd){bd=d;best=name;} }
     return best;
   };
+  // «розовый» → «розовая» (нить) и «розовую» (возьмите)
+  const colorFem = (c) => colorName(c).replace(/ий$/,'яя').replace(/[ыо]й$/,'ая');
+  const colorAcc = (c) => colorName(c).replace(/ий$/,'юю').replace(/[ыо]й$/,'ую');
+  const isMultiColor = sequence.length>1 && sequence.some(it=>it.color.some((v,k)=>v!==sequence[0].color[k]));
   const speak = (item) => {
     if(!item)return;
     const t = item.isColorChange
-      ? `${colorName(item.color)}, ${getSector(item.value)}${getPos(item.value)}`
+      ? `${colorFem(item.color)} нить, ${getSector(item.value)}${getPos(item.value)}`
       : `${getSector(item.value)}${getPos(item.value)}`;
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(t); u.lang='ru-RU';
@@ -299,6 +306,34 @@ function ColorKnitter() {
   const goToStep = (t) => {
     const v=parseInt(t,10), seq=sequenceRef.current;
     if(v>=1&&v<=seq.length){ setFindStep(v); setCurrentIndex(v-1); speak(seq[v-1]); }
+  };
+
+  // «D12 B30 A7» → номера гвоздей; буквы можно латиницей или кириллицей (А, В, С, Д)
+  const parseNails = (text) => {
+    const q=nailsRef.current/4, base={D:1,C:q+1,A:2*q+1,B:3*q+1};
+    const map={'A':'A','А':'A','B':'B','В':'B','C':'C','С':'C','D':'D','Д':'D'};
+    const out=[], re=/([ABCDАВСДabcdавсд])\s*(\d+)/g; let m, any=false;
+    while((m=re.exec(text))){ any=true; const sec=map[m[1].toUpperCase()], pos=+m[2]; out.push(pos>=1&&pos<=q?base[sec]+pos-1:NaN); }
+    if(!any) (text.match(/\d+/g)||[]).forEach(n=>{ const v=+n; out.push(v>=1&&v<=nailsRef.current?v:NaN); });
+    return out;
+  };
+  // Ищем шаги, где эти гвозди идут подряд по одной нити (последний — самый свежий)
+  const findPosition = () => {
+    const vals=parseNails(posQuery);
+    if(vals.length<2||vals.some(v=>!Number.isFinite(v))){ setPosResult({error:'Введите 2–3 гвоздя через пробел, например: D12 B30 A7'}); return; }
+    const seq=sequenceRef.current, prev=new Array(seq.length).fill(-1), last=new Map();
+    seq.forEach((it,i)=>{ const k=it.color.join(','); if(last.has(k)) prev[i]=last.get(k); last.set(k,i); });
+    const hits=[];
+    for(let i=0;i<seq.length;i++){
+      let j=i, ok=true;
+      for(let k=vals.length-1;k>=0;k--){ if(j<0||seq[j].value!==vals[k]){ok=false;break;} if(k>0) j=prev[j]; }
+      if(ok) hits.push(i);
+    }
+    setPosResult({hits, n:vals.length});
+  };
+  const continueFrom = (i) => {
+    const next=Math.min(i+1,sequenceRef.current.length-1);
+    setCurrentIndex(next); setFindStep(next+1); setIsPlaying(false); speak(sequenceRef.current[next]);
   };
 
   const handleFileUpload = async (e) => {
@@ -507,11 +542,42 @@ function ColorKnitter() {
           <div key={i} className={`step-item${cur?' cur':''}`}
             style={{color:cur?'#EFCA46':'white',fontSize:cur?'3rem':'1.6rem',minWidth:cur?80:50}}>
             {stepLabel(item)}
+            {isMultiColor&&<div className="step-dot" style={{background:rgbHex(item.color)}} />}
           </div>
         ))}
       </div>
     );
   };
+
+  const nailLabel = (v) => `${getSector(v)}${getPos(v)}`;
+  const Dot = ({c}) => <span className="color-dot-inline" style={{background:rgbHex(c)}} />;
+  const renderColorInfo = () => {
+    if(!isMultiColor) return null;
+    const item=sequence[currentIndex]; if(!item) return null;
+    let next=-1;
+    for(let j=currentIndex+1;j<sequence.length;j++) if(sequence[j].isColorChange){next=j;break;}
+    const change=item.isColorChange||currentIndex===0;
+    return (
+      <div className="color-info">
+        {change&&(
+          <div className="color-change">
+            {item.from==null
+              ? <>🧵 Новая нить: <Dot c={item.color}/> <b>{colorFem(item.color)}</b> — привяжите к <b>{nailLabel(item.value)}</b></>
+              : <>🔄 Смена нити: возьмите <Dot c={item.color}/> <b>{colorAcc(item.color)}</b> — она висит на <b>{nailLabel(item.from)}</b></>}
+          </div>
+        )}
+        <div className="color-line">
+          <span>Нить: <Dot c={item.color}/> {colorFem(item.color)}</span>
+          <span style={{color:'#888'}}>
+            {next>0
+              ? <>смена через {next-currentIndex} {plural(next-currentIndex,'шаг','шага','шагов')} → <Dot c={sequence[next].color}/> {colorFem(sequence[next].color)}</>
+              : 'смен нити больше нет'}
+          </span>
+        </div>
+      </div>
+    );
+  };
+  const plural = (n,one,few,many) => { const m10=n%10, m100=n%100; return m10===1&&m100!==11?one:(m10>=2&&m10<=4&&(m100<12||m100>14)?few:many); };
 
   const statusParts = () => {
     if(!sequence.length)return null;
@@ -557,6 +623,7 @@ function ColorKnitter() {
       </div>
 
       {renderSteps()}
+      {renderColorInfo()}
 
       {/* Ползунок прозрачности под шагами если загружено фото */}
       {circleImage && (
@@ -611,6 +678,35 @@ function ColorKnitter() {
               onBlur={()=>{clearTimeout(findTimerRef.current); const p=findPendingRef.current; findPendingRef.current=null; if(p!=null)goToStep(p); setFindDraft(null);}}
               onKeyDown={e=>{if(e.key==='Enter')e.target.blur();}} />
           </div>
+        </div>
+        <hr className="divider" />
+        <div>
+          <span className="s-input-label">Где я остановился? Введите 3 последних гвоздя:</span>
+          <div style={{display:'flex',gap:8}}>
+            <input type="text" placeholder="например: D12 B30 A7" value={posQuery} autoCapitalize="characters"
+              onChange={e=>{setPosQuery(e.target.value);setPosResult(null);}}
+              onKeyDown={e=>{if(e.key==='Enter')findPosition();}} style={{flex:1}} />
+            <button className="s-btn s-btn-primary" style={{width:'auto',margin:0,padding:'0 14px'}} onClick={findPosition} disabled={!sequence.length}>🔍</button>
+          </div>
+          {posResult&&(
+            <div className="pos-results">
+              {posResult.error&&<span style={{color:'#f87171'}}>{posResult.error}</span>}
+              {posResult.hits&&posResult.hits.length===0&&<span style={{color:'#f87171'}}>Такой последовательности нет. Проверьте гвозди и их порядок (последний — тот, на котором нить сейчас).</span>}
+              {posResult.hits&&posResult.hits.length===1&&(()=>{const i=posResult.hits[0], last=i>=sequence.length-1;
+                return <>
+                  <span>Вы остановились на шаге <b>{i+1}</b> из {sequence.length}.{last?' Это последний шаг — работа завершена 🎉':` Дальше — шаг ${i+2}: ${nailLabel(sequence[i+1].value)}`}</span>
+                  {!last&&<button className="s-btn s-btn-primary" onClick={()=>continueFrom(i)}>▶ Продолжить с шага {i+2}</button>}
+                </>;})()}
+              {posResult.hits&&posResult.hits.length>1&&<>
+                <span>Найдено совпадений: {posResult.hits.length}. Выберите своё (или добавьте ещё один гвоздь, чтобы уточнить):</span>
+                <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                  {posResult.hits.slice(0,8).map(i=>(
+                    <button key={i} className="s-btn s-btn-outline" style={{width:'auto',padding:'6px 10px'}} onClick={()=>continueFrom(i)}>шаг {i+1}</button>
+                  ))}
+                </div>
+              </>}
+            </div>
+          )}
         </div>
         <hr className="divider" />
         <div className="s-btn-row">

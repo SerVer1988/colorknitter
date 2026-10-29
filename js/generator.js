@@ -594,13 +594,55 @@ function resetAll(){
   setState('ready');
 }
 function download(name, blob){
+  const url=URL.createObjectURL(blob);
+  // приложение на главном экране iPhone не умеет скачивать — открываем файл, его можно сохранить
+  if(navigator.standalone){ window.open(url,'_blank'); return; }
   const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob); a.download=name;
+  a.href=url; a.download=name;
   document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+function dataUrlToBlob(url){
+  const [head,b64]=url.split(','), mime=head.match(/:(.*?);/)[1], bin=atob(b64);
+  const u8=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i);
+  return new Blob([u8],{type:mime});
+}
+// Сохранить файл: на телефоне — через «Поделиться» (там есть «Сохранить изображение»
+// и «Сохранить в Файлы»), на компьютере — обычное скачивание.
+// Файл готовим сразу в обработчике нажатия, иначе телефон может не разрешить «Поделиться».
+async function deliver(name, blob){
+  try{
+    const file=new File([blob],name,{type:blob.type});
+    const touch=window.matchMedia&&matchMedia('(pointer: coarse)').matches;
+    if(touch&&navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:name});
+      return;
+    }
+  }catch(e){ if(e&&e.name==='AbortError') return; } // отменили «Поделиться» — ничего не делаем
+  download(name, blob);
 }
 function saveImage(){
-  canvas.toBlob(b=>download('stringart.png',b),'image/png');
+  deliver('colorknitter_threads.png', dataUrlToBlob(canvas.toDataURL('image/png')));
+}
+// Фото так, как оно выставлено в круге: квадрат, в который точно вписан круг гвоздей
+function photoCanvas(size, transparent){
+  const c=document.createElement('canvas'); c.width=size; c.height=size;
+  const g=c.getContext('2d');
+  g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high';
+  if(!transparent){ g.fillStyle='#fff'; g.fillRect(0,0,size,size); }
+  g.save();
+  g.beginPath(); g.arc(size/2,size/2,size/2,0,Math.PI*2); g.clip();
+  const s=size/(2*radius);
+  g.setTransform(s,0,0,s,size/2-x0*s,size/2-y0*s);
+  g.drawImage(image,imgX,imgY,imgNatW*imgScale,imgNatH*imgScale);
+  g.restore();
+  return c;
+}
+function savePhoto(){
+  if(!image) return;
+  // разрешение — как у самого снимка в пределах круга (от 600 до 2000 пикселей)
+  const size=Math.round(Math.min(2000,Math.max(600,2*radius/imgScale)));
+  deliver('colorknitter_photo.png', dataUrlToBlob(photoCanvas(size,true).toDataURL('image/png')));
 }
 
 // ── Схема ходами (.txt) ──────────────────────────────────────────────────────
@@ -635,7 +677,7 @@ function downloadTxt(){
     L.push(`${i+1}. ${nailLabel(s.nail+1,n)}`);
     at.set(s.colorIndex,s.nail);
   });
-  download(`colorknitter_${n}_${sequence.length}.txt`, new Blob([L.join('\r\n')],{type:'text/plain;charset=utf-8'}));
+  deliver(`colorknitter_${n}_${sequence.length}.txt`, new Blob(['\uFEFF'+L.join('\r\n')],{type:'text/plain'}));
 }
 
 // ── Шаблон рамы для печати (SVG в натуральную величину) ─────────────────────
@@ -664,18 +706,12 @@ function downloadTemplate(){
   out.push(`<text x="${pad/2}" y="${pad/2}" font-size="4" fill="#666">ColorKnitter · ${n} гвоздей · Ø ${frameMm/10} см · печатать в масштабе 100 %</text>`);
   out.push(`<line x1="${pad/2}" y1="${S-pad/2}" x2="${pad/2+100}" y2="${S-pad/2}" stroke="#000" stroke-width="0.5"/><text x="${pad/2}" y="${S-pad/2-2}" font-size="3.5">100 мм — проверка масштаба</text>`);
   out.push('</svg>');
-  download(`шаблон_рамы_${n}_${frameMm/10}см.svg`, new Blob([out.join('\n')],{type:'image/svg+xml'}));
+  deliver(`colorknitter_template_${n}_${frameMm/10}cm.svg`, new Blob([out.join('\n')],{type:'image/svg+xml'}));
 }
 
 function openInKnitter(){
   try{
-    let pc=document.createElement('canvas');
-    pc.width=Math.round(width);pc.height=Math.round(height);
-    let pCtx=pc.getContext('2d');
-    pCtx.save();
-    pCtx.beginPath();pCtx.arc(x0,y0,radius,0,Math.PI*2);pCtx.clip();
-    pCtx.drawImage(image,imgX,imgY,imgNatW*imgScale,imgNatH*imgScale);
-    pCtx.restore();
+    const pc=photoCanvas(512,false); // подложка: край картинки = круг гвоздей
     const r=lastResult||{};
     localStorage.setItem('ck_from_generator',JSON.stringify({
       sequence,colors:COLORS,mode,
