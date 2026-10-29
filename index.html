@@ -108,6 +108,10 @@ function ColorKnitter() {
   const [speedMultiplier, setSpeedMultiplier] = useState(restored?.speedMultiplier || 1);
   const [targetSteps, setTargetSteps]         = useState(restored?.targetSteps || 0);
   const [findStep, setFindStep]               = useState(restored?.findStep || 1);
+  // Черновики полей «Цель» и «Перейти к шагу»: пока пользователь печатает, храним текст как есть
+  const [targetDraft, setTargetDraft] = useState(null);
+  const [findDraft, setFindDraft]     = useState(null);
+  const findPendingRef = useRef(null), findTimerRef = useRef(null);
   const [savedStates, setSavedStates]         = useState(restored?.savedStates || []);
   const [remainingSteps, setRemainingSteps]   = useState(restored?.remainingSteps || 0);
   const [showNextLine, setShowNextLine]       = useState(restored?.showNextLine || false);
@@ -286,12 +290,26 @@ function ColorKnitter() {
     return temp;
   };
 
+  // «Цель»: пусто или 0 — без цели
+  const applyTarget = (t) => {
+    const v=parseInt(t,10), val=Number.isFinite(v)&&v>0?v:0;
+    setTargetSteps(val); stepCountRef.current=0; setRemainingSteps(val); goalReachedRef.current=false;
+  };
+  // «Перейти к шагу»: только номер внутри схемы, иначе поле вернётся к прежнему значению
+  const goToStep = (t) => {
+    const v=parseInt(t,10), seq=sequenceRef.current;
+    if(v>=1&&v<=seq.length){ setFindStep(v); setCurrentIndex(v-1); speak(seq[v-1]); }
+  };
+
   const handleFileUpload = async (e) => {
     const file=e.target.files[0]; if(!file)return;
+    e.target.value=''; // чтобы тот же файл можно было загрузить ещё раз
     const text=await file.text(); const parsed=parseFile(text);
     const seq=normalizeSequence(parsed.items);
     setNails(parsed.nails); setBoard(parsed.board);
-    setSequence(seq); setCurrentIndex(0); setIsPlaying(false);
+    // фото в файле нет, а подложка от прежней схемы не совпадёт — убираем её
+    loadedImgRef.current=null; setCircleImage(null);
+    setSequence(seq); setCurrentIndex(0); setFindStep(1); setIsPlaying(false);
     setRemainingSteps(targetSteps); stepCountRef.current=0; goalReachedRef.current=false;
     if(seq.length>0)speak(seq[0]);
   };
@@ -575,12 +593,23 @@ function ColorKnitter() {
         <div className="grid2">
           <div>
             <span className="s-input-label">Цель (шагов):</span>
-            <input type="number" value={targetSteps} min={0} onChange={e=>{const v=Number(e.target.value);setTargetSteps(v);stepCountRef.current=0;setRemainingSteps(v);goalReachedRef.current=false;}} />
+            <input type="number" inputMode="numeric" min={0}
+              value={targetDraft ?? String(targetSteps)}
+              onFocus={e=>e.target.select()}
+              onChange={e=>{const t=e.target.value.replace(/^0+(?=\d)/,''); setTargetDraft(t); applyTarget(t);}}
+              onBlur={()=>setTargetDraft(null)}
+              onKeyDown={e=>{if(e.key==='Enter')e.target.blur();}} />
           </div>
           <div>
             <span className="s-input-label">Перейти к шагу:</span>
-            <input type="number" value={findStep} min={1} max={sequence.length||1}
-              onChange={e=>{const v=Number(e.target.value);if(v>=1&&v<=sequence.length){setFindStep(v);setCurrentIndex(v-1);speak(sequence[v-1]);}}} />
+            <input type="number" inputMode="numeric" min={1} max={sequence.length||1}
+              value={findDraft ?? String(findStep)}
+              onFocus={e=>e.target.select()}
+              onChange={e=>{const t=e.target.value.replace(/^0+(?=\d)/,''); setFindDraft(t);
+                findPendingRef.current=t; clearTimeout(findTimerRef.current);
+                findTimerRef.current=setTimeout(()=>{const p=findPendingRef.current; findPendingRef.current=null; goToStep(p);},700);}}
+              onBlur={()=>{clearTimeout(findTimerRef.current); const p=findPendingRef.current; findPendingRef.current=null; if(p!=null)goToStep(p); setFindDraft(null);}}
+              onKeyDown={e=>{if(e.key==='Enter')e.target.blur();}} />
           </div>
         </div>
         <hr className="divider" />

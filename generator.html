@@ -130,10 +130,11 @@
   </div>
   <div id="state-done" style="display:none;flex-direction:column;gap:10px;">
     <button class="big-btn btn-blue" onclick="openInKnitter()">🪡 Открыть в вязалке</button>
-    <div style="display:flex;gap:10px;">
-      <button class="big-btn btn-yellow" onclick="saveImage()" style="flex:1">💾 PNG</button>
-      <button class="big-btn btn-yellow" onclick="downloadTxt()" style="flex:1">📄 TXT</button>
-      <button class="big-btn btn-secondary" onclick="resetAll()" style="flex:1">↺ Сброс</button>
+    <div style="display:flex;gap:8px;">
+      <button class="big-btn btn-yellow small-btn" onclick="saveImage()" title="Картинка из нитей">🧵 PNG</button>
+      <button class="big-btn btn-yellow small-btn" onclick="savePhoto()" title="Выставленное фото в круге">📷 Фото</button>
+      <button class="big-btn btn-yellow small-btn" onclick="downloadTxt()" title="Схема ходами">📄 TXT</button>
+      <button class="big-btn btn-secondary small-btn" onclick="resetAll()">↺ Сброс</button>
     </div>
   </div>
 </div>
