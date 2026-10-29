@@ -57,7 +57,7 @@ function clampIndex(i, len) {
 // Защищает от сохранений старых версий и данных в другом формате.
 function normalizeSequence(seq) {
   if (!Array.isArray(seq)) return [];
-  const out = [];
+  const out = [], lastByColor = new Map();
   for (const item of seq) {
     const isObj = item !== null && typeof item === 'object';
     const value = Number(isObj ? item.value : item);
@@ -66,7 +66,11 @@ function normalizeSequence(seq) {
     const color = Array.isArray(c) && c.length === 3 && c.every(Number.isFinite) ? c : [0, 0, 0];
     const prev = out[out.length - 1];
     const isColorChange = prev ? !prev.color.every((v, i) => v === color[i]) : false;
-    out.push({ value, color, isColorChange });
+    // откуда идёт нить к этому гвоздю: прошлый гвоздь той же нити (у каждого цвета свой путь)
+    const key = color.join(',');
+    const from = lastByColor.has(key) ? lastByColor.get(key) : null;
+    lastByColor.set(key, value);
+    out.push({ value, color, isColorChange, from });
   }
   return out;
 }
@@ -110,6 +114,14 @@ function ColorKnitter() {
   const stepCountRef    = useRef(0);
   const goalReachedRef  = useRef(false);
   const loadedImgRef    = useRef(null);
+  const [imgTick, setImgTick] = useState(0);
+  // Подложка из сохранения: после перезагрузки картинку нужно загрузить заново
+  useEffect(() => {
+    if (!circleImage || (loadedImgRef.current && loadedImgRef.current.src === circleImage)) return;
+    const img = new Image();
+    img.onload = () => { loadedImgRef.current = img; setImgTick(t => t + 1); };
+    img.src = circleImage;
+  }, [circleImage]);
   const sequenceRef     = useRef(sequence);
   const audioRef        = useRef(null);
   sequenceRef.current   = sequence;
@@ -237,7 +249,7 @@ function ColorKnitter() {
   const handleFileUpload = async (e) => {
     const file=e.target.files[0]; if(!file)return;
     const text=await file.text(); const seq=parseFile(text);
-    setSequence(seq); setCurrentIndex(0); setIsPlaying(false);
+    setSequence(normalizeSequence(seq)); setCurrentIndex(0); setIsPlaying(false);
     setRemainingSteps(targetSteps); stepCountRef.current=0; goalReachedRef.current=false;
     if(seq.length>0)speak(seq[0]);
   };
@@ -319,9 +331,10 @@ function ColorKnitter() {
       ctx.globalAlpha=0.7;
       for(let i=0;i<currentIndex;i++){
         if(i>=sequence.length-1)break;
-        const a1=getAngle(getSector(sequence[i].value),getPos(sequence[i].value));
-        const a2=getAngle(getSector(sequence[i+1].value),getPos(sequence[i+1].value));
-        ctx.beginPath(); ctx.strokeStyle=rgbHex(dimColor(sequence[i+1].color,0.6)); ctx.lineWidth=0.2;
+        const it=sequence[i+1]; if(it.from==null) continue;
+        const a1=getAngle(getSector(it.from),getPos(it.from));
+        const a2=getAngle(getSector(it.value),getPos(it.value));
+        ctx.beginPath(); ctx.strokeStyle=rgbHex(dimColor(it.color,0.6)); ctx.lineWidth=0.2;
         ctx.moveTo(cx+radius*Math.cos(a1),cy+radius*Math.sin(a1));
         ctx.lineTo(cx+radius*Math.cos(a2),cy+radius*Math.sin(a2)); ctx.stroke();
       }
@@ -376,9 +389,10 @@ function ColorKnitter() {
     });
 
     // Синяя линия (над фото, под чёрной)
-    if(showNextLine&&currentIndex<sequence.length-1){
-      const a1=getAngle(getSector(sequence[currentIndex].value),getPos(sequence[currentIndex].value));
-      const a2=getAngle(getSector(sequence[currentIndex+1].value),getPos(sequence[currentIndex+1].value));
+    if(showNextLine&&currentIndex<sequence.length-1&&sequence[currentIndex+1].from!=null){
+      const nxt=sequence[currentIndex+1];
+      const a1=getAngle(getSector(nxt.from),getPos(nxt.from));
+      const a2=getAngle(getSector(nxt.value),getPos(nxt.value));
       const nx1=cx+radius*Math.cos(a1),ny1=cy+radius*Math.sin(a1);
       const nx2=cx+radius*Math.cos(a2),ny2=cy+radius*Math.sin(a2);
       ctx.beginPath(); ctx.strokeStyle='#3b82f6'; ctx.lineWidth=2; ctx.setLineDash([6,4]);
@@ -392,9 +406,10 @@ function ColorKnitter() {
     }
 
     // Чёрная линия (самая верхняя)
-    if(currentIndex>0){
-      const a1=getAngle(getSector(sequence[currentIndex-1].value),getPos(sequence[currentIndex-1].value));
-      const a2=getAngle(getSector(sequence[currentIndex].value),getPos(sequence[currentIndex].value));
+    if(currentIndex>0&&sequence[currentIndex]&&sequence[currentIndex].from!=null){
+      const curItem=sequence[currentIndex];
+      const a1=getAngle(getSector(curItem.from),getPos(curItem.from));
+      const a2=getAngle(getSector(curItem.value),getPos(curItem.value));
       const x1=cx+radius*Math.cos(a1),y1=cy+radius*Math.sin(a1);
       const x2=cx+radius*Math.cos(a2),y2=cy+radius*Math.sin(a2);
       ctx.beginPath(); ctx.strokeStyle='black'; ctx.lineWidth=2;
@@ -416,7 +431,7 @@ function ColorKnitter() {
       ctx.strokeStyle='#ff0000'; ctx.lineWidth=2; ctx.stroke();
     }
    } catch(e) { console.error('Ошибка отрисовки круга:', e); }
-  },[currentIndex,sequence,showNextLine,circleImage,imageOpacity]);
+  },[currentIndex,sequence,showNextLine,circleImage,imageOpacity,imgTick]);
 
   const renderSteps = () => {
     if(!sequence.length)return null;
